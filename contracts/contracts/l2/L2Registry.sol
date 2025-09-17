@@ -63,14 +63,14 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver {
      * @dev Initializes the L2Registry with the parent domain
      * @param tokenName The name of the ERC721 token
      * @param tokenSymbol The symbol of the ERC721 token
-     * @param ensName The parent ENS name (e.g., "celo")
+     * @param _parentNode The namehash of parent ENS name (e.g., "namehash(celo.eth)")
      */
     constructor(
         string memory tokenName,
         string memory tokenSymbol,
-        string memory ensName
+        bytes32 _parentNode
     ) ERC721(tokenName, tokenSymbol) {
-        parentNode = EnsUtils.labelhash(ensName);
+        parentNode = _parentNode;
     }
 
     // ============ Public Functions ============
