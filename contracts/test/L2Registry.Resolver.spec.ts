@@ -8,7 +8,7 @@ import type { GetContractReturnType } from '@nomicfoundation/hardhat-viem/types'
 import type { L2Registry$Type } from '../artifacts/contracts/l2/L2Registry.sol/L2Registry';
 import { namehash } from 'viem';
 
-describe('L2Registry - Access Control', () => {
+describe('L2Registry Access Control', () => {
   const deployRegistryFixture = async () => {
     const [owner, registrar, admin, user01, user02] =
       await viem.getWalletClients();
