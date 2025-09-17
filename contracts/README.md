@@ -46,21 +46,25 @@ contracts/
 ### Installation
 
 1. Install dependencies:
+
 ```bash
 npm install
 ```
 
 2. Compile contracts:
+
 ```bash
 npm run compile
 ```
 
 3. Run tests:
+
 ```bash
 npm test
 ```
 
 4. Run tests with gas reporting:
+
 ```bash
 npm run test:gas
 ```
@@ -68,11 +72,13 @@ npm run test:gas
 ### Deployment
 
 Deploy to local network:
+
 ```bash
 npm run deploy:local
 ```
 
 Deploy to mainnet/testnet:
+
 ```bash
 npm run deploy
 ```
@@ -114,6 +120,7 @@ The test suite includes comprehensive coverage for:
 - Edge cases and error handling
 
 Run the full test suite:
+
 ```bash
 npm test
 ```

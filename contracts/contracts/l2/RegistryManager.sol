@@ -1,46 +1,120 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 
+/**
+ * @title RegistryManager
+ * @dev Manages access control for the L2 Registry using Ownable and custom role mappings
+ * @notice This contract defines roles for administrators and registrars who can manage subdomains
+ * The owner can assign admin and registrar roles to other accounts
+ */
 abstract contract RegistryManager is Ownable {
-    mapping(address => bool) registrars;
-    mapping(address => bool) admins;
+  // ============ Custom Errors ============
+  
+  /// @dev Thrown when attempting to set a role that is already set to the same value
+  error RoleAlreadySet(address account, string role, bool enabled);
+  
+  /// @dev Thrown when attempting to perform an action without the required role
+  error InsufficientRole(string requiredRole, address account);
 
-    event AdminChanged(address manager, bool enabled);
-    event RegistrarChanged(address controller, bool enabled);
+  // ============ State Variables ============
+  
+  /// @dev Mapping of addresses to admin status
+  mapping(address => bool) public admins;
+  
+  /// @dev Mapping of addresses to registrar status
+  mapping(address => bool) public registrars;
 
-    modifier onlyAdmin() {
-        require(isAdmin(_msgSender()));
-        _;
+  // ============ Events ============
+  
+  /// @dev Emitted when an admin role is granted or revoked
+  event AdminRoleChanged(address indexed account, bool enabled);
+  
+  /// @dev Emitted when a registrar role is granted or revoked
+  event RegistrarRoleChanged(address indexed account, bool enabled);
+
+  // ============ Constructor ============
+  
+  /**
+   * @dev Initializes the contract and sets up the owner
+   * @notice The deployer becomes the owner and can grant/revoke other roles
+   */
+  constructor() Ownable(_msgSender()) {}
+
+  // ============ Modifiers ============
+  
+  /**
+   * @dev Restricts access to accounts with admin role
+   * @notice Only admins can revoke subdomains
+   */
+  modifier onlyAdmin() {
+    if (!admins[_msgSender()]) {
+      revert InsufficientRole("ADMIN", _msgSender());
+    }
+    _;
+  }
+
+  /**
+   * @dev Restricts access to accounts with registrar role
+   * @notice Only registrars can register subdomains and set expiry
+   */
+  modifier onlyRegistrar() {
+    if (!registrars[_msgSender()]) {
+      revert InsufficientRole("REGISTRAR", _msgSender());
+    }
+    _;
+  }
+
+  // ============ Public Functions ============
+  
+  /**
+   * @dev Grants or revokes admin role for an account
+   * @param admin The account to grant/revoke admin role
+   * @param enabled True to grant role, false to revoke
+   * @notice Only the contract owner can call this function
+   */
+  function setAdmin(address admin, bool enabled) public onlyOwner {
+    if (admins[admin] == enabled) {
+      revert RoleAlreadySet(admin, "ADMIN", enabled);
     }
 
-    modifier onlyRegistrar() {
-        require(isRegistrar(_msgSender()));
-        _;
+    admins[admin] = enabled;
+    emit AdminRoleChanged(admin, enabled);
+  }
+
+  /**
+   * @dev Grants or revokes registrar role for an account
+   * @param registrar The account to grant/revoke registrar role
+   * @param enabled True to grant role, false to revoke
+   * @notice Only the contract owner can call this function
+   */
+  function setRegistrar(address registrar, bool enabled) public onlyOwner {
+    if (registrars[registrar] == enabled) {
+      revert RoleAlreadySet(registrar, "REGISTRAR", enabled);
     }
 
-    constructor() Ownable(_msgSender()) {}
+    registrars[registrar] = enabled;
+    emit RegistrarRoleChanged(registrar, enabled);
+  }
 
-    function isAdmin(address admin) internal view returns (bool) {
-        return admins[admin];
-    }
+  // ============ View Functions ============
+  
+  /**
+   * @dev Checks if an account has admin role
+   * @param account The account to check
+   * @return True if the account has admin role
+   */
+  function isAdmin(address account) public view returns (bool) {
+    return admins[account];
+  }
 
-    function isRegistrar(address controller) internal view returns (bool) {
-        return registrars[controller];
-    }
-
-    function setAdmin(address admin, bool enabled) public onlyOwner {
-        require(admins[admin] != enabled, "Admin already set");
-
-        admins[admin] = enabled;
-        emit AdminChanged(admin, enabled);
-    }
-
-    function setRegistrar(address registrar, bool enabled) public onlyOwner {
-        require(registrars[registrar] != enabled, "Registrar already set");
-
-        registrars[registrar] = enabled;
-        emit RegistrarChanged(registrar, enabled);
-    }
+  /**
+   * @dev Checks if an account has registrar role
+   * @param account The account to check
+   * @return True if the account has registrar role
+   */
+  function isRegistrar(address account) public view returns (bool) {
+    return registrars[account];
+  }
 }

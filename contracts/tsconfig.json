@@ -14,16 +14,6 @@
     "declarationMap": true,
     "sourceMap": true
   },
-  "include": [
-    "./scripts/**/*",
-    "./test/**/*",
-    "./hardhat.config.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "cache",
-    "artifacts",
-    "typechain-types"
-  ]
+  "include": ["./scripts/**/*", "./test/**/*", "./hardhat.config.ts"],
+  "exclude": ["node_modules", "dist", "cache", "artifacts", "typechain-types"]
 }

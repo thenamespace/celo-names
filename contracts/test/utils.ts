@@ -18,5 +18,5 @@ export function equalsIgnoreCase(str1: string, str2: string): boolean {
  * @returns Promise that resolves after the delay
  */
 export function sleep(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }

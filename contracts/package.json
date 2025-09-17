@@ -10,20 +10,27 @@
     "deploy": "hardhat run scripts/deploy.ts",
     "deploy:local": "hardhat run scripts/deploy.ts --network localhost",
     "node": "hardhat node",
-    "clean": "hardhat clean"
+    "clean": "hardhat clean",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^2.1.0",
+    "@nomicfoundation/hardhat-toolbox": "^6.1.0",
     "@nomicfoundation/hardhat-viem": "^2.0.0",
     "@openzeppelin/contracts": "^5.4.0",
-    "hardhat": "^2.26.3",
-    "viem": "^2.21.0",
-    "chai": "^4.4.1",
+    "@typechain/hardhat": "^9.1.0",
     "@types/chai": "^4.3.0",
     "@types/mocha": "^10.0.0",
-    "mocha": "^10.0.0"
+    "chai": "^4.4.1",
+    "hardhat": "^2.26.3",
+    "mocha": "^10.0.0",
+    "prettier": "^3.6.2",
+    "typechain": "^8.3.2",
+    "viem": "^2.21.0"
   }
 }
