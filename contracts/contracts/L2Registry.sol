@@ -46,6 +46,9 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver, IL2Registry {
   /// @dev Immutable parent node hash (e.g., "celo.eth")
   bytes32 public immutable rootNode;
 
+  /// @dev Base metadata URI for token metadata
+  string public metadataUri;
+
   /// @dev Variable to keep track of the number of issues subnames
   // at any level
   uint256 public totalSupply;
@@ -76,15 +79,18 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver, IL2Registry {
    * Contract doesn't enfore rootName == namehash(rootName),
    * _rootNode should match namehash(_rootName)
    * @param _rootNode The namehash of parent ENS name (e.g., "namehash(celo.eth)")
+   * @param _metadataUri Base metadata URI for token metadata
    */
   constructor(
     string memory tokenName,
     string memory tokenSymbol,
     string memory _rootName,
-    bytes32 _rootNode
+    bytes32 _rootNode,
+    string memory _metadataUri
   ) ERC721(tokenName, tokenSymbol) {
     rootNode = _rootNode;
     names[_rootNode] = _rootName;
+    metadataUri = _metadataUri;
   }
 
   // ============ Public Functions ============
@@ -349,5 +355,21 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver, IL2Registry {
     bytes4 interfaceId
   ) public view override(ERC721, L2Resolver) returns (bool) {
     return super.supportsInterface(interfaceId);
+  }
+
+  /**
+   * @dev Returns the metadata URI for a given token ID
+   * @param tokenId The token ID to get metadata for
+   * @return The metadata URI string
+   */
+  function tokenURI(uint256 tokenId) public view override returns (string memory) {
+    bytes32 node = bytes32(tokenId);
+    string memory name = names[node];
+    
+    if (bytes(name).length == 0) {
+      revert("Token does not exist");
+    }
+    
+    return string(abi.encodePacked(metadataUri, "/", name));
   }
 }

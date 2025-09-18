@@ -1,6 +1,6 @@
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { viem } from 'hardhat';
-import { PARENT_ENS, PARENT_NODE, TOKEN_NAME, TOKEN_SYMBOL } from './vars';
+import { PARENT_ENS, PARENT_NODE, TOKEN_NAME, TOKEN_SYMBOL, METADATA_URI } from './vars';
 import { expect } from 'chai';
 import type { GetContractReturnType } from '@nomicfoundation/hardhat-viem/types';
 import type { L2Registry$Type } from '../artifacts/contracts/L2Registry.sol/L2Registry';
@@ -16,6 +16,7 @@ describe('It should do basic test', () => {
         TOKEN_SYMBOL,
         PARENT_ENS,
         PARENT_NODE,
+        METADATA_URI,
       ]);
     const client = await viem.getPublicClient();
 
@@ -46,6 +47,7 @@ describe('It should do basic test', () => {
     const contractOwner = await registryContract.read.owner();
     const tokenName: string = await registryContract.read.name();
     const tokenSymbol: string = await registryContract.read.symbol();
+    const metadataUri: string = await registryContract.read.metadataUri();
 
     // You can now use these with proper type checking
     expect(contractOwner.toLowerCase()).to.equal(
@@ -53,5 +55,6 @@ describe('It should do basic test', () => {
     );
     expect(tokenName).to.equal(TOKEN_NAME);
     expect(tokenSymbol).to.equal(TOKEN_SYMBOL);
+    expect(metadataUri).to.equal(METADATA_URI);
   });
 });

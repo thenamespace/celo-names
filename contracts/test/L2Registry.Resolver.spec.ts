@@ -6,6 +6,7 @@ import {
   PARENT_NODE,
   TOKEN_NAME,
   TOKEN_SYMBOL,
+  METADATA_URI,
   RESOLVER_ABI,
 } from './vars';
 import { expect } from 'chai';
@@ -31,6 +32,7 @@ describe('L2Registry - Resolver', () => {
         TOKEN_SYMBOL,
         PARENT_ENS,
         PARENT_NODE,
+        METADATA_URI,
       ]);
     const client = await viem.getPublicClient();
 

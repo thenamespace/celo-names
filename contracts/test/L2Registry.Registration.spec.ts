@@ -7,6 +7,7 @@ import {
   RESOLVER_ABI,
   TOKEN_NAME,
   TOKEN_SYMBOL,
+  METADATA_URI,
 } from './vars';
 import { expect } from 'chai';
 import '@nomicfoundation/hardhat-chai-matchers';
@@ -31,6 +32,7 @@ describe('L2Registry - Registration', () => {
         TOKEN_SYMBOL,
         PARENT_ENS,
         PARENT_NODE,
+        METADATA_URI,
       ]);
     const client = await viem.getPublicClient();
 

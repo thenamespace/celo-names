@@ -4,6 +4,7 @@ export const TOKEN_NAME = 'Celo ENS';
 export const TOKEN_SYMBOL = 'CENS';
 export const PARENT_ENS = 'celo.eth';
 export const PARENT_NODE = namehash(PARENT_ENS);
+export const METADATA_URI = 'https://metadata.example.com';
 
 export const RESOLVER_ABI = parseAbi([
   'function setText(bytes32 node, string key, string value) public',

@@ -1,7 +1,7 @@
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { time } from '@nomicfoundation/hardhat-network-helpers';
 import { viem } from 'hardhat';
-import { PARENT_ENS, PARENT_NODE, TOKEN_NAME, TOKEN_SYMBOL } from './vars';
+import { PARENT_ENS, PARENT_NODE, TOKEN_NAME, TOKEN_SYMBOL, METADATA_URI } from './vars';
 import { expect } from 'chai';
 import type { GetContractReturnType } from '@nomicfoundation/hardhat-viem/types';
 import type { L2Registry$Type } from '../artifacts/contracts/L2Registry.sol/L2Registry';
@@ -20,6 +20,7 @@ describe('L2Registry - Expiry', () => {
         TOKEN_SYMBOL,
         PARENT_ENS,
         PARENT_NODE,
+        METADATA_URI,
       ]);
     const client = await viem.getPublicClient();
 
