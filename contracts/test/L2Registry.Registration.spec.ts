@@ -7,7 +7,7 @@ import {
   RESOLVER_ABI,
   TOKEN_NAME,
   TOKEN_SYMBOL,
-} from './fixtures';
+} from './vars';
 import { expect } from 'chai';
 import '@nomicfoundation/hardhat-chai-matchers';
 import { ERRORS, expectContractCallToFail } from './errors';
@@ -29,6 +29,7 @@ describe('L2Registry - Registration', () => {
       await viem.deployContract('L2Registry', [
         TOKEN_NAME,
         TOKEN_SYMBOL,
+        PARENT_ENS,
         PARENT_NODE,
       ]);
     const client = await viem.getPublicClient();
@@ -79,10 +80,6 @@ describe('L2Registry - Registration', () => {
       // Verify expiry is set correctly
       const storedExpiry = await registryContract.read.expiries([subnode]);
       expect(storedExpiry).to.equal(expiry);
-
-      // Verify label is stored correctly
-      const storedLabel = await registryContract.read.labels([subnode]);
-      expect(storedLabel).to.equal(label);
 
       // Verify transfer works
       await expect(
@@ -437,6 +434,45 @@ describe('L2Registry - Registration', () => {
 
       const description = await registryContract.read.text([childNode, 'description']);
       expect(description).to.equal('nested subdomain');
+    });
+
+    it('Should return string representation of a name using node', async () => {
+      const { registryContract, registrar, user01, user02 } = await loadFixture(
+        deployRegistryFixture
+      );
+
+      const expiry = BigInt(Math.floor(Date.now() / 1000) + 86400);
+
+      // Register first level: test.celo.eth
+      const firstLevelLabel = 'test';
+      const firstLevelName = `${firstLevelLabel}.${PARENT_ENS}`;
+      const firstLevelNode = namehash(firstLevelName);
+      
+      await registryContract.write.register(
+        [firstLevelLabel, expiry, user01.account.address, []],
+        { account: registrar.account }
+      );
+
+      // Register second level: nested.test.celo.eth
+      const secondLevelLabel = 'nested';
+      const secondLevelName = `${secondLevelLabel}.${firstLevelName}`;
+      const secondLevelNode = namehash(secondLevelName);
+
+      await registryContract.write.register(
+        [secondLevelLabel, firstLevelNode, expiry, user02.account.address, []],
+        { account: registrar.account }
+      );
+
+      // Verify names mapping resolves correctly
+      const firstLevelResolvedName = await registryContract.read.names([firstLevelNode]);
+      const secondLevelResolvedName = await registryContract.read.names([secondLevelNode]);
+      
+      expect(firstLevelResolvedName).to.equal('test.celo.eth');
+      expect(secondLevelResolvedName).to.equal('nested.test.celo.eth');
+
+      // Verify root name is stored correctly
+      const rootName = await registryContract.read.names([PARENT_NODE]);
+      expect(rootName).to.equal('celo.eth');
     });
   });
 });

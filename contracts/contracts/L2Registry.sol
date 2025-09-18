@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import {ERC721} from '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
+import {Strings} from '@openzeppelin/contracts/utils/Strings.sol';
 import {RegistryManager} from './RegistryManager.sol';
 import {L2Resolver} from './L2Resolver.sol';
 import {EnsUtils} from './common/EnsUtils.sol';
@@ -39,11 +40,15 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver {
   /// @dev Maps node hash to expiration timestamp
   mapping(bytes32 => uint256) public expiries;
 
-  /// @dev Maps node hash to label string for reference
-  mapping(bytes32 => string) public labels;
+  /// @dev Maps node hash to names in its string format
+  mapping(bytes32 => string) public names;
 
   /// @dev Immutable parent node hash (e.g., "celo.eth")
   bytes32 public immutable rootNode;
+
+  /// @dev Variable to keep track of the number of issues subnames
+  // at any level
+  uint256 public totalSupply;
 
   // ============ Events ============
 
@@ -68,14 +73,19 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver {
    * @dev Initializes the L2Registry with the parent domain
    * @param tokenName The name of the ERC721 token
    * @param tokenSymbol The symbol of the ERC721 token
+   * @param _rootName String representation of the root ens name "celo.eth"
+   * Contract doesn't enfore rootName == namehash(rootName),
+   * _rootNode should match namehash(_rootName)
    * @param _rootNode The namehash of parent ENS name (e.g., "namehash(celo.eth)")
    */
   constructor(
     string memory tokenName,
     string memory tokenSymbol,
+    string memory _rootName,
     bytes32 _rootNode
   ) ERC721(tokenName, tokenSymbol) {
     rootNode = _rootNode;
+    names[_rootNode] = _rootName;
   }
 
   // ============ Public Functions ============
@@ -102,7 +112,7 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver {
   }
 
   /**
-   * @dev Register subdomain under custom parent node (enables multi-level subnames like test.test.test.root.eth)
+   * @dev Register subdomain under custom parent node (enables multi-level subnames like test.test.root.eth)
    * @param parentNode Node hash of parent domain - use existing subdomain's node for nesting
    */
   function register(
@@ -130,7 +140,7 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver {
    * Requirements:
    * - Caller must be an authorized registrar
    * - Subdomain must not already be expired
-   * - New expiry must be in the future
+   * - New expiry must be in the future and greather than current expiry
    */
   function setExpiry(bytes32 node, uint256 expiry) external onlyRegistrar {
     if (_isExpired(node)) {
@@ -200,12 +210,12 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver {
     bool hasResolverData = resolverData.length > 0;
     address initialOwner = hasResolverData ? _msgSender() : owner;
 
-    // Set up subdomain state
     expiries[node] = expiry;
-    labels[node] = label;
+    _setName(label, node, parent);
 
     // Mint NFT to initial owner
     _safeMint(initialOwner, tokenId);
+    totalSupply++;
 
     // Execute resolver data if provided
     if (hasResolverData) {
@@ -216,7 +226,6 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver {
     if (initialOwner != owner) {
       _safeTransfer(initialOwner, owner, tokenId);
     }
-
     emit NewName(label, expiry, owner, node, parent);
   }
 
@@ -229,10 +238,10 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver {
 
     // Clear all state
     delete expiries[node];
-    delete labels[node];
 
     // Burn the NFT
     _burn(tokenId);
+    totalSupply--;
 
     // Clear resolver records
     _clearRecords(node);
@@ -251,6 +260,20 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver {
     }
 
     return _ownerOf(tokenId);
+  }
+
+  /**
+   * @dev Stores the string representation of name
+   * for an easy lookup/resolution of name based on node
+   * @param label string label
+   * @param node namehash representation of name
+   * @param parent parent namehash representation
+  */
+  function _setName(string calldata label, bytes32 node, bytes32 parent) internal {
+    // Check if name is not already set by checking string length
+    if (bytes(names[node]).length == 0) {
+      names[node] = string(abi.encodePacked(label, '.', names[parent]));
+    }
   }
 
   /**

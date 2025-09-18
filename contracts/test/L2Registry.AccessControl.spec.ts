@@ -1,6 +1,6 @@
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { viem } from 'hardhat';
-import { PARENT_ENS, PARENT_NODE, TOKEN_NAME, TOKEN_SYMBOL } from './fixtures';
+import { PARENT_ENS, PARENT_NODE, TOKEN_NAME, TOKEN_SYMBOL } from './vars';
 import { expect } from 'chai';
 import '@nomicfoundation/hardhat-chai-matchers';
 import { ERRORS, expectContractCallToFail } from './errors';
@@ -17,6 +17,7 @@ describe('L2Registry - Access Control', () => {
       await viem.deployContract('L2Registry', [
         TOKEN_NAME,
         TOKEN_SYMBOL,
+        PARENT_ENS,
         PARENT_NODE,
       ]);
     const client = await viem.getPublicClient();

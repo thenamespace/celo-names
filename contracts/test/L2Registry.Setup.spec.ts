@@ -1,8 +1,7 @@
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { viem } from 'hardhat';
-import { PARENT_NODE, TOKEN_NAME, TOKEN_SYMBOL } from './fixtures';
+import { PARENT_ENS, PARENT_NODE, TOKEN_NAME, TOKEN_SYMBOL } from './vars';
 import { expect } from 'chai';
-import { equalsIgnoreCase } from './utils';
 import type { GetContractReturnType } from '@nomicfoundation/hardhat-viem/types';
 import type { L2Registry$Type } from '../artifacts/contracts/L2Registry.sol/L2Registry';
 
@@ -15,6 +14,7 @@ describe('It should do basic test', () => {
       await viem.deployContract('L2Registry', [
         TOKEN_NAME,
         TOKEN_SYMBOL,
+        PARENT_ENS,
         PARENT_NODE,
       ]);
     const client = await viem.getPublicClient();
