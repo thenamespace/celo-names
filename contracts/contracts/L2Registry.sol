@@ -6,6 +6,7 @@ import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {Strings} from '@openzeppelin/contracts/utils/Strings.sol';
 import {RegistryManager} from './RegistryManager.sol';
 import {L2Resolver} from './L2Resolver.sol';
+import {IL2Registry} from './interfaces/IL2Registry.sol';
 
 /**
  * @title L2Registry
@@ -15,7 +16,7 @@ import {L2Resolver} from './L2Resolver.sol';
  * while admins can revoke any subdomain. Each subdomain is represented as
  * an NFT that can be transferred, with automatic expiration handling.
  */
-contract L2Registry is ERC721, RegistryManager, L2Resolver {
+contract L2Registry is ERC721, RegistryManager, L2Resolver, IL2Registry {
   // ============ Custom Errors ============
 
   /// @dev Thrown when attempting to register a subdomain that is already taken
@@ -56,7 +57,7 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver {
     string label,
     uint64 expiry,
     address indexed owner,
-    bytes32 indexed node,
+    bytes32 indexed node
   );
 
   /// @dev Emitted when a subdomain's expiry is updated
@@ -185,7 +186,7 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver {
       revert EmptyLabel();
     }
 
-    bytes32 node = _namehash(parent, label);
+    bytes32 node = _namehash(label, parent);
     uint256 tokenId = uint256(node);
 
     // Validate subdomain availability
@@ -279,10 +280,10 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver {
   }
 
   function _namehash(
-    string memory label,
+    string calldata label,
     bytes32 parent
-  ) internal view returns (bytes32) {
-    return keccak256(abi.encodePacked(parentNode, labelhash(nameLabel)));
+  ) internal pure returns (bytes32) {
+    return keccak256(abi.encodePacked(parent, keccak256(bytes(label))));
   }
 
   /**
