@@ -5,7 +5,7 @@ export const ERRORS = {
   ROLE_ALREADY_SET: 'RoleAlreadySet',
   SUBDOMAIN_ALREADY_TAKEN: 'SubdomainAlreadyTaken',
   INVALID_EXPIRY_TIME: 'InvalidExpiryTime',
-  SUBDOMAIN_ALREADY_EXPIRED: 'SubdomainAlreadyExpired',
+  SUBDOMAIN_EXPIRED: 'SubdomainExpired',
   EMPTY_LABEL: 'EmptyLabel',
   CANNOT_TRANSFER_EXPIRED_NFT: 'CannotTransferExpiredNFT',
   PARENT_NODE_NOT_VALID: "ParentNodeNotValid"
