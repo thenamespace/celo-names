@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {ResolverBase} from "../ResolverBase.sol";
+import {ResolverBase} from "./ResolverBase.sol";
 import {ITextResolver} from "./ITextResolver.sol";
 
 abstract contract TextResolver is ITextResolver, ResolverBase {

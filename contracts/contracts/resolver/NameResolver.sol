@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "../ResolverBase.sol";
+import "./ResolverBase.sol";
 import "./INameResolver.sol";
 
 abstract contract NameResolver is INameResolver, ResolverBase {

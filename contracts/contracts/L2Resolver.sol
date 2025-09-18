@@ -1,15 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {AddrResolver} from "../common/resolver/AddrResolver.sol";
-import {ContentHashResolver} from "../common/resolver/ContentHashResolver.sol";
-import {TextResolver} from "../common/resolver/TextResolver.sol";
-import {Multicallable} from "../common/Multicallable.sol";
-import {InterfaceResolver} from "../common/resolver/InterfaceResolver.sol";
-import {PubkeyResolver} from "../common/resolver/PubkeyResolver.sol";
-import {NameResolver} from "../common/resolver/NameResolver.sol";
-import {ABIResolver} from "../common/resolver/ABIResolver.sol";
-import {ExtendedResolver} from "../common/resolver/ExtendedResolver.sol";
+import {AddrResolver} from "./resolver/AddrResolver.sol";
+import {ContentHashResolver} from "./resolver/ContentHashResolver.sol";
+import {TextResolver} from "./resolver/TextResolver.sol";
+import {Multicallable} from "./common/Multicallable.sol";
+import {InterfaceResolver} from "./resolver/InterfaceResolver.sol";
+import {PubkeyResolver} from "./resolver/PubkeyResolver.sol";
+import {NameResolver} from "./resolver/NameResolver.sol";
+import {ABIResolver} from "./resolver/ABIResolver.sol";
+import {ExtendedResolver} from "./resolver/ExtendedResolver.sol";
 
 /**
  * @title L2Resolver

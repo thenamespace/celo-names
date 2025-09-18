@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {IABIResolver} from "./IABIResolver.sol";
-import {ResolverBase} from "../ResolverBase.sol";
+import {ResolverBase} from "./ResolverBase.sol";
 
 abstract contract ABIResolver is IABIResolver, ResolverBase {
     mapping(uint64 => mapping(bytes32 => mapping(uint256 => bytes))) versionable_abis;

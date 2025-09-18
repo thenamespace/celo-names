@@ -12,12 +12,11 @@ import { expect } from 'chai';
 import '@nomicfoundation/hardhat-chai-matchers';
 import { ERRORS, expectContractCallToFail } from './errors';
 import type { GetContractReturnType } from '@nomicfoundation/hardhat-viem/types';
-import type { L2Registry$Type } from '../artifacts/contracts/l2/L2Registry.sol/L2Registry';
+import type { L2Registry$Type } from '../artifacts/contracts/L2Registry.sol/L2Registry';
 import {
   encodeFunctionData,
   Hash,
   namehash,
-  parseAbi,
   zeroAddress,
 } from 'viem';
 
@@ -242,6 +241,202 @@ describe('L2Registry - Registration', () => {
       // Verify text record is set correctly
       const avatarText = await registryContract.read.text([node, 'avatar']);
       expect(avatarText).to.equal('test-avatar');
+    });
+  });
+
+  describe('Multi-level Subdomain Registration', () => {
+    it('Should register nested subdomains (test.test.celo.eth)', async () => {
+      const { registryContract, registrar, user01, user02 } = await loadFixture(
+        deployRegistryFixture
+      );
+
+      const expiry = BigInt(Math.floor(Date.now() / 1000) + 86400);
+
+      // Register first level: test.celo.eth
+      const firstLevelLabel = 'test';
+      const firstLevelName = `${firstLevelLabel}.${PARENT_ENS}`;
+      const firstLevelNode = namehash(firstLevelName);
+      
+      await registryContract.write.register(
+        [firstLevelLabel, expiry, user01.account.address, []],
+        { account: registrar.account }
+      );
+
+      // Register second level: test.test.celo.eth
+      const secondLevelLabel = 'test';
+      const secondLevelName = `${secondLevelLabel}.${firstLevelName}`;
+      const secondLevelNode = namehash(secondLevelName);
+
+      await registryContract.write.register(
+        [secondLevelLabel, firstLevelNode, expiry, user02.account.address, []],
+        { account: registrar.account }
+      );
+
+      // Verify both registrations
+      const firstOwner = await registryContract.read.ownerOf([BigInt(firstLevelNode)]);
+      const secondOwner = await registryContract.read.ownerOf([BigInt(secondLevelNode)]);
+      
+      expect(firstOwner.toLowerCase()).to.equal(user01.account.address.toLowerCase());
+      expect(secondOwner.toLowerCase()).to.equal(user02.account.address.toLowerCase());
+    });
+
+    it('Should register three-level nested subdomains (test.test.test.celo.eth)', async () => {
+      const { registryContract, registrar, user01, user02, admin } = await loadFixture(
+        deployRegistryFixture
+      );
+
+      const expiry = BigInt(Math.floor(Date.now() / 1000) + 86400);
+
+      // Level 1: test.celo.eth
+      const level1Label = 'test';
+      const level1Name = `${level1Label}.${PARENT_ENS}`;
+      const level1Node = namehash(level1Name);
+      
+      await registryContract.write.register(
+        [level1Label, expiry, user01.account.address, []],
+        { account: registrar.account }
+      );
+
+      // Level 2: test.test.celo.eth
+      const level2Label = 'test';
+      const level2Name = `${level2Label}.${level1Name}`;
+      const level2Node = namehash(level2Name);
+
+      await registryContract.write.register(
+        [level2Label, level1Node, expiry, user02.account.address, []],
+        { account: registrar.account }
+      );
+
+      // Level 3: test.test.test.celo.eth
+      const level3Label = 'test';
+      const level3Name = `${level3Label}.${level2Name}`;
+      const level3Node = namehash(level3Name);
+
+      await registryContract.write.register(
+        [level3Label, level2Node, expiry, admin.account.address, []],
+        { account: registrar.account }
+      );
+
+      // Verify all three levels
+      const level1Owner = await registryContract.read.ownerOf([BigInt(level1Node)]);
+      const level2Owner = await registryContract.read.ownerOf([BigInt(level2Node)]);
+      const level3Owner = await registryContract.read.ownerOf([BigInt(level3Node)]);
+      
+      expect(level1Owner.toLowerCase()).to.equal(user01.account.address.toLowerCase());
+      expect(level2Owner.toLowerCase()).to.equal(user02.account.address.toLowerCase());
+      expect(level3Owner.toLowerCase()).to.equal(admin.account.address.toLowerCase());
+    });
+
+    it('Should fail to register under non-existent parent', async () => {
+      const { registryContract, registrar, user01 } = await loadFixture(
+        deployRegistryFixture
+      );
+
+      const expiry = BigInt(Math.floor(Date.now() / 1000) + 86400);
+      
+      // Try to register under non-existent parent node
+      const fakeParentNode = namehash("vitalik.eth");
+      
+      await expectContractCallToFail(
+        () =>
+          registryContract.write.register(
+            ['subdomain', fakeParentNode, expiry, user01.account.address, []],
+            { account: registrar.account }
+          ),
+        ERRORS.PARENT_NODE_NOT_VALID
+      );
+    });
+
+    it('Should fail to register under expired parent', async () => {
+      const { registryContract, registrar, user01, user02 } = await loadFixture(
+        deployRegistryFixture
+      );
+
+      const oneYearInSeconds = 365 * 24 * 60 * 60;
+      const currentTime = await time.latest();
+      const oneYearExpiry = BigInt(currentTime + oneYearInSeconds);
+
+      // Register parent with 1 year expiry
+      const parentLabel = 'parent';
+      const parentName = `${parentLabel}.${PARENT_ENS}`;
+      const parentNode = namehash(parentName);
+      
+      await registryContract.write.register(
+        [parentLabel, oneYearExpiry, user01.account.address, []],
+        { account: registrar.account }
+      );
+
+      // Advance time by 2 years to expire parent
+      await time.increase(2 * oneYearInSeconds);
+
+      // Try to register under expired parent - should fail
+      const newTime = await time.latest();
+      const futureExpiry = BigInt(newTime + 86400); // 24 hours from new time
+      
+      await expectContractCallToFail(
+        () =>
+          registryContract.write.register(
+            ['child', parentNode, futureExpiry, user02.account.address, []],
+            { account: registrar.account }
+          ),
+        ERRORS.PARENT_NODE_NOT_VALID
+      );
+    });
+
+    it('Should register nested subdomain with resolver data', async () => {
+      const { registryContract, registrar, user01, user02 } = await loadFixture(
+        deployRegistryFixture
+      );
+
+      const expiry = BigInt(Math.floor(Date.now() / 1000) + 86400);
+      const resolverData: Hash[] = [];
+
+      // Register parent
+      const parentLabel = 'parent';
+      const parentName = `${parentLabel}.${PARENT_ENS}`;
+      const parentNode = namehash(parentName);
+      
+      await registryContract.write.register(
+        [parentLabel, expiry, user01.account.address, []],
+        { account: registrar.account }
+      );
+
+      // Register child with resolver data
+      const childLabel = 'child';
+      const childName = `${childLabel}.${parentName}`;
+      const childNode = namehash(childName);
+
+      // Set resolver data for child
+      resolverData.push(
+        encodeFunctionData({
+          abi: RESOLVER_ABI,
+          functionName: 'setAddr',
+          args: [childNode, user02.account.address],
+        })
+      );
+
+      resolverData.push(
+        encodeFunctionData({
+          abi: RESOLVER_ABI,
+          functionName: 'setText',
+          args: [childNode, 'description', 'nested subdomain'],
+        })
+      );
+
+      await registryContract.write.register(
+        [childLabel, parentNode, expiry, user02.account.address, resolverData],
+        { account: registrar.account }
+      );
+
+      // Verify child registration and resolver data
+      const childOwner = await registryContract.read.ownerOf([BigInt(childNode)]);
+      expect(childOwner.toLowerCase()).to.equal(user02.account.address.toLowerCase());
+
+      const ethAddress: string = await registryContract.read.addr([childNode]);
+      expect(ethAddress.toLowerCase()).to.equal(user02.account.address.toLowerCase());
+
+      const description = await registryContract.read.text([childNode, 'description']);
+      expect(description).to.equal('nested subdomain');
     });
   });
 });

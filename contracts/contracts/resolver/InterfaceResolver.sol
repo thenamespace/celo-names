@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
-import "../ResolverBase.sol";
+import "./ResolverBase.sol";
 import "./AddrResolver.sol";
 import "./IInterfaceResolver.sol";
 

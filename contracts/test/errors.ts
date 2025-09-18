@@ -8,6 +8,7 @@ export const ERRORS = {
   SUBDOMAIN_ALREADY_EXPIRED: 'SubdomainAlreadyExpired',
   EMPTY_LABEL: 'EmptyLabel',
   CANNOT_TRANSFER_EXPIRED_NFT: 'CannotTransferExpiredNFT',
+  PARENT_NODE_NOT_VALID: "ParentNodeNotValid"
 } as const;
 
 export interface ContractError extends Error {

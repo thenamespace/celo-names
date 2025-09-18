@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import "../ResolverBase.sol";
+import "./ResolverBase.sol";
 import "./IPubkeyResolver.sol";
 
 abstract contract PubkeyResolver is IPubkeyResolver, ResolverBase {

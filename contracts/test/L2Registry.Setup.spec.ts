@@ -4,7 +4,7 @@ import { PARENT_NODE, TOKEN_NAME, TOKEN_SYMBOL } from './fixtures';
 import { expect } from 'chai';
 import { equalsIgnoreCase } from './utils';
 import type { GetContractReturnType } from '@nomicfoundation/hardhat-viem/types';
-import type { L2Registry$Type } from '../artifacts/contracts/l2/L2Registry.sol/L2Registry';
+import type { L2Registry$Type } from '../artifacts/contracts/L2Registry.sol/L2Registry';
 
 describe('It should do basic test', () => {
   const deployRegistryFixture = async () => {

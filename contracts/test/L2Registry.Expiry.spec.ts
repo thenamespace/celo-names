@@ -3,7 +3,7 @@ import { viem } from 'hardhat';
 import { PARENT_ENS, PARENT_NODE, TOKEN_NAME, TOKEN_SYMBOL } from './fixtures';
 import { expect } from 'chai';
 import type { GetContractReturnType } from '@nomicfoundation/hardhat-viem/types';
-import type { L2Registry$Type } from '../artifacts/contracts/l2/L2Registry.sol/L2Registry';
+import type { L2Registry$Type } from '../artifacts/contracts/L2Registry.sol/L2Registry';
 import '@nomicfoundation/hardhat-chai-matchers';
 
 describe('L2Registry - Expiry', () => {

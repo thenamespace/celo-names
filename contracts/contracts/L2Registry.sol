@@ -5,7 +5,7 @@ import {ERC721} from '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {RegistryManager} from './RegistryManager.sol';
 import {L2Resolver} from './L2Resolver.sol';
-import {EnsUtils} from '../common/EnsUtils.sol';
+import {EnsUtils} from './common/EnsUtils.sol';
 
 /**
  * @title L2Registry
@@ -24,14 +24,15 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver {
   /// @dev Thrown when attempting to set expiry to a past time
   error InvalidExpiryTime(uint256 expiry, uint256 currentTime);
 
-  /// @dev Thrown when attempting to update an already expired subdomain
-  error SubdomainAlreadyExpired(bytes32 node, uint256 expiry);
+  /// @dev Thrown when doing operation on expired name
+  error SubdomainExpired(bytes32 node, uint256 expiry);
 
   /// @dev Thrown when attempting to register with an empty label
   error EmptyLabel();
 
-  /// @dev Thrown when attempting to transfer an expired name
-  error CannotTransferExpiredName(bytes32 node, uint256 expiry);
+  /// @dev Thrown when attempting to register subname
+  /// under unexsiting node
+  error ParentNodeNotValid(bytes32 parentNode);
 
   // ============ State Variables ============
 
@@ -42,16 +43,17 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver {
   mapping(bytes32 => string) public labels;
 
   /// @dev Immutable parent node hash (e.g., "celo.eth")
-  bytes32 public immutable parentNode;
+  bytes32 public immutable rootNode;
 
   // ============ Events ============
 
   /// @dev Emitted when a new subdomain is registered
   event NewName(
-    string indexed label,
+    string label,
     uint64 expiry,
     address indexed owner,
-    uint256 timestamp
+    bytes32 indexed node,
+    bytes32 parentNode
   );
 
   /// @dev Emitted when a subdomain's expiry is updated
@@ -66,14 +68,14 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver {
    * @dev Initializes the L2Registry with the parent domain
    * @param tokenName The name of the ERC721 token
    * @param tokenSymbol The symbol of the ERC721 token
-   * @param _parentNode The namehash of parent ENS name (e.g., "namehash(celo.eth)")
+   * @param _rootNode The namehash of parent ENS name (e.g., "namehash(celo.eth)")
    */
   constructor(
     string memory tokenName,
     string memory tokenSymbol,
-    bytes32 _parentNode
+    bytes32 _rootNode
   ) ERC721(tokenName, tokenSymbol) {
-    parentNode = _parentNode;
+    rootNode = _rootNode;
   }
 
   // ============ Public Functions ============
@@ -96,7 +98,28 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver {
     address owner,
     bytes[] calldata resolverData
   ) external onlyRegistrar {
-    _register(label, expiry, owner, resolverData);
+    _register(label, rootNode, expiry, owner, resolverData);
+  }
+
+  /**
+   * @dev Register subdomain under custom parent node (enables multi-level subnames like test.test.test.root.eth)
+   * @param parentNode Node hash of parent domain - use existing subdomain's node for nesting
+   */
+  function register(
+    string calldata label,
+    bytes32 parentNode,
+    uint64 expiry,
+    address owner,
+    bytes[] calldata resolverData
+  ) external onlyRegistrar {
+    uint256 tokenId = uint256(parentNode);
+
+    // Verify parent exists if not root
+    if (parentNode != rootNode && _ownerOfExpirable(tokenId) == address(0)) {
+      revert ParentNodeNotValid(parentNode);
+    }
+
+    _register(label, parentNode, expiry, owner, resolverData);
   }
 
   /**
@@ -111,7 +134,7 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver {
    */
   function setExpiry(bytes32 node, uint256 expiry) external onlyRegistrar {
     if (_isExpired(node)) {
-      revert SubdomainAlreadyExpired(node, expiries[node]);
+      revert SubdomainExpired(node, expiries[node]);
     }
 
     if (expiry <= block.timestamp || expiry <= expiries[node]) {
@@ -145,6 +168,7 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver {
    */
   function _register(
     string calldata label,
+    bytes32 parent,
     uint64 expiry,
     address owner,
     bytes[] calldata resolverData
@@ -153,7 +177,7 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver {
       revert EmptyLabel();
     }
 
-    bytes32 node = EnsUtils.namehash(parentNode, label);
+    bytes32 node = EnsUtils.namehash(parent, label);
     uint256 tokenId = uint256(node);
 
     // Validate subdomain availability
@@ -193,7 +217,7 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver {
       _safeTransfer(initialOwner, owner, tokenId);
     }
 
-    emit NewName(label, expiry, owner, block.timestamp);
+    emit NewName(label, expiry, owner, node, parent);
   }
 
   /**
@@ -215,10 +239,10 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver {
   }
 
   /**
-    * @dev Override ERC721 _ownerOf to handle expired tokens
-    * @param tokenId The token ID to check ownership for
-    * @return owner The owner address, or zero address if expired/non-existent
-  */
+   * @dev Override ERC721 _ownerOf to handle expired tokens
+   * @param tokenId The token ID to check ownership for
+   * @return owner The owner address, or zero address if expired/non-existent
+   */
   function _ownerOfExpirable(uint256 tokenId) internal view returns (address) {
     bytes32 node = bytes32(tokenId);
 
@@ -261,7 +285,7 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver {
     return owner == _msgSender() || isApprovedForAll(owner, _msgSender());
   }
 
-  function ownerOf(uint256 tokenId) public view override returns(address) {
+  function ownerOf(uint256 tokenId) public view override returns (address) {
     return _ownerOfExpirable(tokenId);
   }
 
@@ -278,11 +302,10 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver {
   ) public override {
     bytes32 node = bytes32(tokenId);
     if (_isExpired(node)) {
-      revert CannotTransferExpiredName(node, expiries[node]);
+      revert SubdomainExpired(node, expiries[node]);
     }
     super.transferFrom(from, to, tokenId);
   }
-
 
   /**
    * @dev Returns true if this contract implements the interface defined by `interfaceId`

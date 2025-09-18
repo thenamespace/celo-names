@@ -2,7 +2,7 @@
 pragma solidity ^0.8.24;
 
 import {ERC165} from "@openzeppelin/contracts/utils/introspection/ERC165.sol";
-import {IVersionableResolver} from "./resolver/IVersionableResolver.sol";
+import {IVersionableResolver} from "./IVersionableResolver.sol";
 
 abstract contract ResolverBase is ERC165, IVersionableResolver {
     mapping(bytes32 => uint64) public recordVersions;
