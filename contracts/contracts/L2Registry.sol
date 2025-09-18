@@ -6,7 +6,6 @@ import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {Strings} from '@openzeppelin/contracts/utils/Strings.sol';
 import {RegistryManager} from './RegistryManager.sol';
 import {L2Resolver} from './L2Resolver.sol';
-import {EnsUtils} from './common/EnsUtils.sol';
 
 /**
  * @title L2Registry
@@ -58,7 +57,6 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver {
     uint64 expiry,
     address indexed owner,
     bytes32 indexed node,
-    bytes32 parentNode
   );
 
   /// @dev Emitted when a subdomain's expiry is updated
@@ -187,7 +185,7 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver {
       revert EmptyLabel();
     }
 
-    bytes32 node = EnsUtils.namehash(parent, label);
+    bytes32 node = _namehash(parent, label);
     uint256 tokenId = uint256(node);
 
     // Validate subdomain availability
@@ -226,7 +224,7 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver {
     if (initialOwner != owner) {
       _safeTransfer(initialOwner, owner, tokenId);
     }
-    emit NewName(label, expiry, owner, node, parent);
+    emit NewName(label, expiry, owner, node);
   }
 
   /**
@@ -268,12 +266,23 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver {
    * @param label string label
    * @param node namehash representation of name
    * @param parent parent namehash representation
-  */
-  function _setName(string calldata label, bytes32 node, bytes32 parent) internal {
+   */
+  function _setName(
+    string calldata label,
+    bytes32 node,
+    bytes32 parent
+  ) internal {
     // Check if name is not already set by checking string length
     if (bytes(names[node]).length == 0) {
       names[node] = string(abi.encodePacked(label, '.', names[parent]));
     }
+  }
+
+  function _namehash(
+    string memory label,
+    bytes32 parent
+  ) internal view returns (bytes32) {
+    return keccak256(abi.encodePacked(parentNode, labelhash(nameLabel)));
   }
 
   /**
