@@ -35,6 +35,9 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver, IL2Registry {
   /// under unexsiting node
   error ParentNodeNotValid(bytes32 parentNode);
 
+  /// @dev Thrown when token does not exist
+  error TokenDoesNotExist();
+
   // ============ State Variables ============
 
   /// @dev Maps node hash to expiration timestamp
@@ -281,7 +284,7 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver, IL2Registry {
   ) internal {
     // Check if name is not already set by checking string length
     if (bytes(names[node]).length == 0) {
-      names[node] = string(abi.encodePacked(label, '.', names[parent]));
+      names[node] = string.concat(label, ".", names[parent]);
     }
   }
 
@@ -367,9 +370,9 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver, IL2Registry {
     string memory name = names[node];
     
     if (bytes(name).length == 0) {
-      revert("Token does not exist");
+      revert TokenDoesNotExist();
     }
     
-    return string(abi.encodePacked(metadataUri, "/", name));
+    return string.concat(metadataUri, "/", name);
   }
 }
