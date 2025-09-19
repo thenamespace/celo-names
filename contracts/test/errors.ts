@@ -12,7 +12,8 @@ export const ERRORS = {
   TOKEN_DOES_NOT_EXIST: 'TokenDoesNotExist',
   INVALID_LABEL_LENGTH: 'InvalidLabelLength',
   INVALID_DURATION: 'InvalidDuration',
-  INSUFFICIENT_FUNDS: 'InsufficientFunds'
+  INSUFFICIENT_FUNDS: 'InsufficientFunds',
+  SUBNAME_DOES_NOT_EXIST: 'SubnameDoesNotExist'
 } as const;
 
 export interface ContractError extends Error {

@@ -144,7 +144,7 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder {
   /// @param durationInYears Additional registration duration in years (1-10000)
   function renew(string calldata label, uint64 durationInYears) external payable {
     bytes32 node = _namehash(label, registry.rootNode());
-    if (!_available(node)) {
+    if (_available(node)) {
       revert SubnameDoesNotExist(node);
     }
 
@@ -153,8 +153,12 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder {
     }
 
     uint256 price = _price(label, durationInYears);
+
+    if (msg.value < price) {
+      revert InsufficientFunds(msg.value, price);
+    }
     uint256 currentExpiry = registry.expiries(node);
-    registry.setExpiry(node, currentExpiry + _toExpiry(durationInYears));
+    registry.setExpiry(node, currentExpiry + _durationInSeconds(durationInYears));
 
     _sendFees(price);
     
@@ -242,29 +246,29 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder {
   function _register(
     string calldata label,
     bytes32 parentNode,
-    uint64 expiryInYears,
+    uint64 durationInYears,
     address owner,
     bytes[] calldata resolverData
   ) internal {
-    if (!_isValidDuration(expiryInYears)) {
-      revert InvalidDuration(expiryInYears, MIN_EXPIRY_YEARS, MAX_EXPIRY_YEARS);
+    if (!_isValidDuration(durationInYears)) {
+      revert InvalidDuration(durationInYears, MIN_EXPIRY_YEARS, MAX_EXPIRY_YEARS);
     }
     if (!_isValidLabelLen(label)) {
       revert InvalidLabelLength(label.strlen(), minLabelLength, maxLabelLength);
     }
 
-    uint256 price = _price(label, expiryInYears);
+    uint256 price = _price(label, durationInYears);
 
     if (msg.value < price) {
       revert InsufficientFunds(msg.value, price);
     }
 
-    uint64 expiry = _toExpiry(expiryInYears);
+    uint64 expiry = _toExpiry(durationInYears);
     registry.createSubnode(label, parentNode, expiry, owner, resolverData);
 
     _sendFees(price);
     
-    emit NameRegistered(label, owner, expiryInYears, price, parentNode);
+    emit NameRegistered(label, owner, durationInYears, price, parentNode);
   }
 
   function _isValidDuration(uint64 durationInYears) internal pure returns (bool) {
@@ -305,6 +309,10 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder {
   function _toExpiry(uint64 expiryInYears) internal view returns (uint64) {
     uint64 expiry = expiryInYears * SECONDS_IN_YEAR;
     return uint64(block.timestamp + expiry);
+  }
+
+  function _durationInSeconds(uint64 durationInYears) internal pure returns (uint64) {
+    return durationInYears * SECONDS_IN_YEAR;
   }
 
   function _namehash(
