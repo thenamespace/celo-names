@@ -67,7 +67,7 @@ describe('L2Registry - Resolver', () => {
       const expiry = BigInt(Math.floor(Date.now() / 1000) + 86400);
 
       // Register the name
-      await registryContract.write.register(
+      await registryContract.write.createSubnode(
         [label, expiry, user01.account.address, []],
         { account: registrar.account }
       );
@@ -125,7 +125,7 @@ describe('L2Registry - Resolver', () => {
       const expiry = BigInt(Math.floor(Date.now() / 1000) + 86400);
 
       // Register the name under user01
-      await registryContract.write.register(
+      await registryContract.write.createSubnode(
         [label, expiry, user01.account.address, []],
         { account: registrar.account }
       );
@@ -172,7 +172,7 @@ describe('L2Registry - Resolver', () => {
       const expiry = BigInt(Math.floor(Date.now() / 1000) + 86400);
 
       // Register the name
-      await registryContract.write.register(
+      await registryContract.write.createSubnode(
         [label, expiry, user01.account.address, []],
         { account: registrar.account }
       );
@@ -276,7 +276,7 @@ describe('L2Registry - Resolver', () => {
       const currentTime = await time.latest();
       const oneYearExpiry = BigInt(currentTime + oneYearInSeconds);
 
-      await registryContract.write.register(
+      await registryContract.write.createSubnode(
         [label, oneYearExpiry, user01.account.address, []],
         { account: registrar.account }
       );
@@ -327,7 +327,7 @@ describe('L2Registry - Resolver', () => {
       const newTime = await time.latest();
       const newExpiry = BigInt(newTime + oneYearInSeconds);
 
-      await registryContract.write.register(
+      await registryContract.write.createSubnode(
         [label, newExpiry, user02.account.address, []],
         { account: registrar.account }
       );

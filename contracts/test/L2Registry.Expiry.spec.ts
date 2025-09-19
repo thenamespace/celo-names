@@ -60,7 +60,7 @@ describe('L2Registry - Expiry', () => {
       const oneYearExpiry = BigInt(currentTime + oneYearInSeconds);
 
       // First registration
-      await registryContract.write.register(
+      await registryContract.write.createSubnode(
         [label, oneYearExpiry, user01.account.address, []],
         { account: registrar.account }
       );
@@ -82,7 +82,7 @@ describe('L2Registry - Expiry', () => {
       const newTime = await time.latest();
       const newExpiry = BigInt(newTime + oneYearInSeconds);
       
-      await registryContract.write.register(
+      await registryContract.write.createSubnode(
         [label, newExpiry, user02.account.address, []],
         { account: registrar.account }
       );
@@ -113,7 +113,7 @@ describe('L2Registry - Expiry', () => {
       const currentTime = await time.latest();
       const shortExpiry = BigInt(currentTime + oneDayInSeconds);
 
-      await registryContract.write.register(
+      await registryContract.write.createSubnode(
         [label, shortExpiry, user01.account.address, []],
         { account: registrar.account }
       );
@@ -151,7 +151,7 @@ describe('L2Registry - Expiry', () => {
       const currentTime = await time.latest();
       const shortExpiry = BigInt(currentTime + oneDayInSeconds);
 
-      await registryContract.write.register(
+      await registryContract.write.createSubnode(
         [label, shortExpiry, user01.account.address, []],
         { account: registrar.account }
       );
@@ -198,7 +198,7 @@ describe('L2Registry - Expiry', () => {
       const currentTime = await time.latest();
       const almostExpired = BigInt(currentTime + 2);
 
-      await registryContract.write.register(
+      await registryContract.write.createSubnode(
         [label, almostExpired, user01.account.address, []],
         { account: registrar.account }
       );
@@ -238,7 +238,7 @@ describe('L2Registry - Expiry', () => {
       const currentTime = await time.latest();
       const longExpiry = BigInt(currentTime + oneYearInSeconds);
 
-      await registryContract.write.register(
+      await registryContract.write.createSubnode(
         [label, longExpiry, user01.account.address, []],
         { account: registrar.account }
       );

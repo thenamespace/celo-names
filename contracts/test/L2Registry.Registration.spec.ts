@@ -68,7 +68,7 @@ describe('L2Registry - Registration', () => {
       const expiry = BigInt(Math.floor(Date.now() / 1000) + 86400); // 24 hours from now
 
       // Register the subname
-      await registryContract.write.register(
+      await registryContract.write.createSubnode(
         [label, expiry, user01.account.address, []],
         { account: registrar.account }
       );
@@ -113,7 +113,7 @@ describe('L2Registry - Registration', () => {
       const currentTime = await time.latest();
       const oneYearExpiry = BigInt(currentTime + oneYearInSeconds);
 
-      await registryContract.write.register(
+      await registryContract.write.createSubnode(
         [label, oneYearExpiry, user01.account.address, []],
         { account: registrar.account }
       );
@@ -134,7 +134,7 @@ describe('L2Registry - Registration', () => {
       // Register the same name again with different owner
       const newTime = await time.latest();
       const newExpiry = BigInt(newTime + oneYearInSeconds);
-      await registryContract.write.register(
+      await registryContract.write.createSubnode(
         [label, newExpiry, user02.account.address, []],
         { account: registrar.account }
       );
@@ -161,7 +161,7 @@ describe('L2Registry - Registration', () => {
       const expiry = BigInt(Math.floor(Date.now() / 1000) + 86400);
 
       // Register the subname
-      await registryContract.write.register(
+      await registryContract.write.createSubnode(
         [label, expiry, user01.account.address, []],
         { account: registrar.account }
       );
@@ -175,7 +175,7 @@ describe('L2Registry - Registration', () => {
       // Try to register the same name again - should fail
       await expectContractCallToFail(
         () =>
-          registryContract.write.register(
+          registryContract.write.createSubnode(
             [label, expiry, user02.account.address, []],
             { account: registrar.account }
           ),
@@ -222,7 +222,7 @@ describe('L2Registry - Registration', () => {
 
       const futureExpiry = BigInt(Math.floor(Date.now() / 1000) + 86400); // 24 hours from now
       
-      await registryContract.write.register([
+      await registryContract.write.createSubnode([
         label,
         futureExpiry,
         minterAddress,
@@ -256,7 +256,7 @@ describe('L2Registry - Registration', () => {
       const firstLevelName = `${firstLevelLabel}.${PARENT_ENS}`;
       const firstLevelNode = namehash(firstLevelName);
       
-      await registryContract.write.register(
+      await registryContract.write.createSubnode(
         [firstLevelLabel, expiry, user01.account.address, []],
         { account: registrar.account }
       );
@@ -266,7 +266,7 @@ describe('L2Registry - Registration', () => {
       const secondLevelName = `${secondLevelLabel}.${firstLevelName}`;
       const secondLevelNode = namehash(secondLevelName);
 
-      await registryContract.write.register(
+      await registryContract.write.createSubnode(
         [secondLevelLabel, firstLevelNode, expiry, user02.account.address, []],
         { account: registrar.account }
       );
@@ -291,7 +291,7 @@ describe('L2Registry - Registration', () => {
       const level1Name = `${level1Label}.${PARENT_ENS}`;
       const level1Node = namehash(level1Name);
       
-      await registryContract.write.register(
+      await registryContract.write.createSubnode(
         [level1Label, expiry, user01.account.address, []],
         { account: registrar.account }
       );
@@ -301,7 +301,7 @@ describe('L2Registry - Registration', () => {
       const level2Name = `${level2Label}.${level1Name}`;
       const level2Node = namehash(level2Name);
 
-      await registryContract.write.register(
+      await registryContract.write.createSubnode(
         [level2Label, level1Node, expiry, user02.account.address, []],
         { account: registrar.account }
       );
@@ -311,7 +311,7 @@ describe('L2Registry - Registration', () => {
       const level3Name = `${level3Label}.${level2Name}`;
       const level3Node = namehash(level3Name);
 
-      await registryContract.write.register(
+      await registryContract.write.createSubnode(
         [level3Label, level2Node, expiry, admin.account.address, []],
         { account: registrar.account }
       );
@@ -338,7 +338,7 @@ describe('L2Registry - Registration', () => {
       
       await expectContractCallToFail(
         () =>
-          registryContract.write.register(
+          registryContract.write.createSubnode(
             ['subdomain', fakeParentNode, expiry, user01.account.address, []],
             { account: registrar.account }
           ),
@@ -360,7 +360,7 @@ describe('L2Registry - Registration', () => {
       const parentName = `${parentLabel}.${PARENT_ENS}`;
       const parentNode = namehash(parentName);
       
-      await registryContract.write.register(
+      await registryContract.write.createSubnode(
         [parentLabel, oneYearExpiry, user01.account.address, []],
         { account: registrar.account }
       );
@@ -374,7 +374,7 @@ describe('L2Registry - Registration', () => {
       
       await expectContractCallToFail(
         () =>
-          registryContract.write.register(
+          registryContract.write.createSubnode(
             ['child', parentNode, futureExpiry, user02.account.address, []],
             { account: registrar.account }
           ),
@@ -395,7 +395,7 @@ describe('L2Registry - Registration', () => {
       const parentName = `${parentLabel}.${PARENT_ENS}`;
       const parentNode = namehash(parentName);
       
-      await registryContract.write.register(
+      await registryContract.write.createSubnode(
         [parentLabel, expiry, user01.account.address, []],
         { account: registrar.account }
       );
@@ -422,7 +422,7 @@ describe('L2Registry - Registration', () => {
         })
       );
 
-      await registryContract.write.register(
+      await registryContract.write.createSubnode(
         [childLabel, parentNode, expiry, user02.account.address, resolverData],
         { account: registrar.account }
       );
@@ -450,7 +450,7 @@ describe('L2Registry - Registration', () => {
       const firstLevelName = `${firstLevelLabel}.${PARENT_ENS}`;
       const firstLevelNode = namehash(firstLevelName);
       
-      await registryContract.write.register(
+      await registryContract.write.createSubnode(
         [firstLevelLabel, expiry, user01.account.address, []],
         { account: registrar.account }
       );
@@ -460,7 +460,7 @@ describe('L2Registry - Registration', () => {
       const secondLevelName = `${secondLevelLabel}.${firstLevelName}`;
       const secondLevelNode = namehash(secondLevelName);
 
-      await registryContract.write.register(
+      await registryContract.write.createSubnode(
         [secondLevelLabel, firstLevelNode, expiry, user02.account.address, []],
         { account: registrar.account }
       );

@@ -74,7 +74,7 @@ describe('L2Registry - Setup', () => {
     // Register a subname
     const currentTime = await time.latest();
     const expiry = currentTime + 365 * 24 * 60 * 60; // 1 year from now
-    await registryContract.write.register([
+    await registryContract.write.createSubnode([
       label,
       BigInt(expiry),
       user01.account.address,
@@ -108,7 +108,7 @@ describe('L2Registry - Setup', () => {
     const expiry = currentTime + 365 * 24 * 60 * 60; // 1 year from now
 
     // Register first subname
-    await registryContract.write.register([
+    await registryContract.write.createSubnode([
       label1,
       BigInt(expiry),
       user01.account.address,
@@ -118,7 +118,7 @@ describe('L2Registry - Setup', () => {
     });
 
     // Register second subname
-    await registryContract.write.register([
+    await registryContract.write.createSubnode([
       label2,
       BigInt(expiry),
       user02.account.address,

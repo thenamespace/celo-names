@@ -98,7 +98,7 @@ describe('L2Registry - Access Control', () => {
 
       // Registrar should be able to register
       await expect(
-        registryContract.write.register(
+        registryContract.write.createSubnode(
           [label, expiry, user01.account.address, []],
           { account: registrar.account }
         )
@@ -107,7 +107,7 @@ describe('L2Registry - Access Control', () => {
       // Non-registrar should not be able to register
       await expectContractCallToFail(
         () =>
-          registryContract.write.register(
+          registryContract.write.createSubnode(
             [label + '2', expiry, user01.account.address, []],
             { account: user01.account }
           ),
@@ -127,7 +127,7 @@ describe('L2Registry - Access Control', () => {
       const expiry = BigInt(Math.floor(Date.now() / 1000) + 84000);
 
       // First register a subname
-      await registryContract.write.register(
+      await registryContract.write.createSubnode(
         [label, expiry, user01.account.address, []],
         { account: registrar.account }
       );
@@ -159,7 +159,7 @@ describe('L2Registry - Access Control', () => {
       const label = 'test';
       const expiry = BigInt(Math.floor(Date.now() / 1000) + 86400);
       // First register a subname
-      await registryContract.write.register(
+      await registryContract.write.createSubnode(
         [label, expiry, user01.account.address, []],
         { account: registrar.account }
       );

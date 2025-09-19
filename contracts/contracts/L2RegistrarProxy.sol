@@ -1,0 +1,3 @@
+contract L2RegistrarProxy {
+
+}

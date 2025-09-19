@@ -99,7 +99,7 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver, IL2Registry {
   // ============ Public Functions ============
 
   /**
-   * @dev Registers a new subdomain with optional resolver data
+   * @dev Creates a new subdomain with optional resolver data
    * @param label The subdomain label to register
    * @param expiry The expiration timestamp for the subdomain
    * @param owner The address that will own the subdomain NFT
@@ -110,20 +110,20 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver, IL2Registry {
    * - Subdomain must not already be taken (unless expired)
    * - Expiry must be in the future
    */
-  function register(
+  function createSubnode(
     string calldata label,
     uint64 expiry,
     address owner,
     bytes[] calldata resolverData
   ) external onlyRegistrar {
-    _register(label, rootNode, expiry, owner, resolverData);
+    _createSubnode(label, rootNode, expiry, owner, resolverData);
   }
 
   /**
-   * @dev Register subdomain under custom parent node (enables multi-level subnames like test.test.root.eth)
+   * @dev Creates subdomain under custom parent node (enables multi-level subnames like test.test.root.eth)
    * @param parentNode Node hash of parent domain - use existing subdomain's node for nesting
    */
-  function register(
+  function createSubnode(
     string calldata label,
     bytes32 parentNode,
     uint64 expiry,
@@ -137,7 +137,7 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver, IL2Registry {
       revert ParentNodeNotValid(parentNode);
     }
 
-    _register(label, parentNode, expiry, owner, resolverData);
+    _createSubnode(label, parentNode, expiry, owner, resolverData);
   }
 
   /**
@@ -184,7 +184,7 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver, IL2Registry {
    * @param owner The intended owner of the subdomain
    * @param resolverData Optional resolver function calls
    */
-  function _register(
+  function _createSubnode(
     string calldata label,
     bytes32 parent,
     uint64 expiry,
