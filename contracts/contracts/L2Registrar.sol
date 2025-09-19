@@ -73,6 +73,26 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder {
   /// @dev Thrown when arrays length mismatch in setLabelPrices
   error ArraysLengthMismatch(uint256 lengthsLength, uint256 pricesLength);
 
+  // ============ Events ============
+
+  /// @dev Emitted when a name is registered
+  event NameRegistered(
+    string label,
+    address owner,
+    uint64 durationInYears,
+    uint256 price,
+    bytes32 parentNode
+  );
+
+  /// @dev Emitted when a name is renewed
+  event NameRenewed(
+    string label,
+    bytes32 parentNode,
+    uint64 durationInYears,
+    uint256 price,
+    address indexed extender
+  );
+
   // ============ Constructor ============
 
   constructor(
@@ -137,6 +157,8 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder {
     registry.setExpiry(node, currentExpiry + _toExpiry(durationInYears));
 
     _sendFees(price);
+    
+    emit NameRenewed(label, registry.rootNode(), durationInYears, price, msg.sender);
   }
 
   /// @dev Get registration price for label and duration
@@ -241,6 +263,8 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder {
     registry.createSubnode(label, parentNode, expiry, owner, resolverData);
 
     _sendFees(price);
+    
+    emit NameRegistered(label, owner, expiryInYears, price, parentNode);
   }
 
   function _isValidDuration(uint64 durationInYears) internal pure returns (bool) {
