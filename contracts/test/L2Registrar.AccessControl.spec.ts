@@ -24,7 +24,7 @@ describe("L2Registrar - AccessControl", () => {
       ]);
 
     // Deploy mock USD oracle (using a simple contract for testing)
-    const mockOracle = await viem.deployContract('MockedUsdOracle', []);
+    const mockOracle = await viem.deployContract('MockedUsdOracle', [2000_00000000n]); // $2000 ETH price
 
     // Deploy L2Registrar
     const registrar: GetContractReturnType<L2Registrar$Type['abi']> = 
