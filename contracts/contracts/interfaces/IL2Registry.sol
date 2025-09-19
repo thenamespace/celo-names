@@ -36,4 +36,6 @@ interface IL2Registry {
     function rootNode() external view returns (bytes32);
     
     function totalSupply() external view returns (uint256);
+
+    function ownerOf(uint256 token) external view returns(address);
 }

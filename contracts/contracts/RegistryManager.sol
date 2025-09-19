@@ -68,12 +68,9 @@ abstract contract RegistryManager is Ownable {
 
   // ============ Public Functions ============
   
-  /**
-   * @dev Grants or revokes admin role for an account
-   * @param admin The account to grant/revoke admin role
-   * @param enabled True to grant role, false to revoke
-   * @notice Only the contract owner can call this function
-   */
+  /// @dev Grants or revokes admin role for an account
+  /// @param admin The account to grant/revoke admin role
+  /// @param enabled True to grant role, false to revoke
   function setAdmin(address admin, bool enabled) public onlyOwner {
     if (admins[admin] == enabled) {
       revert RoleAlreadySet(admin, "ADMIN", enabled);
@@ -83,12 +80,9 @@ abstract contract RegistryManager is Ownable {
     emit AdminRoleChanged(admin, enabled);
   }
 
-  /**
-   * @dev Grants or revokes registrar role for an account
-   * @param registrar The account to grant/revoke registrar role
-   * @param enabled True to grant role, false to revoke
-   * @notice Only the contract owner can call this function
-   */
+  /// @dev Grants or revokes registrar role for an account
+  /// @param registrar The account to grant/revoke registrar role
+  /// @param enabled True to grant role, false to revoke
   function setRegistrar(address registrar, bool enabled) public onlyOwner {
     if (registrars[registrar] == enabled) {
       revert RoleAlreadySet(registrar, "REGISTRAR", enabled);
@@ -100,20 +94,16 @@ abstract contract RegistryManager is Ownable {
 
   // ============ View Functions ============
   
-  /**
-   * @dev Checks if an account has admin role
-   * @param account The account to check
-   * @return True if the account has admin role
-   */
+  /// @dev Checks if an account has admin role
+  /// @param account The account to check
+  /// @return True if the account has admin role
   function isAdmin(address account) public view returns (bool) {
     return admins[account];
   }
 
-  /**
-   * @dev Checks if an account has registrar role
-   * @param account The account to check
-   * @return True if the account has registrar role
-   */
+  /// @dev Checks if an account has registrar role
+  /// @param account The account to check
+  /// @return True if the account has registrar role
   function isRegistrar(address account) public view returns (bool) {
     return registrars[account];
   }
