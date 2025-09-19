@@ -21,6 +21,8 @@ import {
   zeroAddress,
 } from 'viem';
 
+const YEAR_IN_SECONDS = 365 * 24 * 60 * 60;
+
 describe('L2Registry - Registration', () => {
   const deployRegistryFixture = async () => {
     const [owner, registrar, admin, user01, user02] =
@@ -65,7 +67,8 @@ describe('L2Registry - Registration', () => {
       const fullname = `${label}.${PARENT_ENS}`;
       const subnode = namehash(fullname);
       const tokenId = BigInt(subnode);
-      const expiry = BigInt(Math.floor(Date.now() / 1000) + 86400); // 24 hours from now
+      const currentTime = await time.latest();
+      const expiry = BigInt(currentTime + 86400); // 24 hours from now
 
       // Register the subname
       await registryContract.write.createSubnode(
@@ -109,9 +112,8 @@ describe('L2Registry - Registration', () => {
       const tokenId = BigInt(subnode);
 
       // Register with 1 year expiry
-      const oneYearInSeconds = 365 * 24 * 60 * 60; // 1 year
       const currentTime = await time.latest();
-      const oneYearExpiry = BigInt(currentTime + oneYearInSeconds);
+      const oneYearExpiry = BigInt(currentTime + YEAR_IN_SECONDS);
 
       await registryContract.write.createSubnode(
         [label, oneYearExpiry, user01.account.address, []],
@@ -125,7 +127,7 @@ describe('L2Registry - Registration', () => {
       );
 
       // Advance time by 2 years to make the token expired
-      await time.increase(2 * oneYearInSeconds);
+      await time.increase(2 * YEAR_IN_SECONDS);
 
       // Verify token is now expired (ownerOf returns zero address)
       const expiredOwner = await registryContract.read.ownerOf([tokenId]);
@@ -133,7 +135,7 @@ describe('L2Registry - Registration', () => {
 
       // Register the same name again with different owner
       const newTime = await time.latest();
-      const newExpiry = BigInt(newTime + oneYearInSeconds);
+      const newExpiry = BigInt(newTime + YEAR_IN_SECONDS);
       await registryContract.write.createSubnode(
         [label, newExpiry, user02.account.address, []],
         { account: registrar.account }
@@ -158,7 +160,8 @@ describe('L2Registry - Registration', () => {
       const label = 'takenname';
       const fullname = `${label}.${PARENT_ENS}`;
       const subnode = namehash(fullname);
-      const expiry = BigInt(Math.floor(Date.now() / 1000) + 86400);
+      const currentTime = await time.latest();
+      const expiry = BigInt(currentTime + 86400);
 
       // Register the subname
       await registryContract.write.createSubnode(
@@ -220,7 +223,8 @@ describe('L2Registry - Registration', () => {
         })
       );
 
-      const futureExpiry = BigInt(Math.floor(Date.now() / 1000) + 86400); // 24 hours from now
+      const currentTime = await time.latest();
+      const futureExpiry = BigInt(currentTime + 86400); // 24 hours from now
       
       await registryContract.write.createSubnode([
         label,
@@ -249,7 +253,8 @@ describe('L2Registry - Registration', () => {
         deployRegistryFixture
       );
 
-      const expiry = BigInt(Math.floor(Date.now() / 1000) + 86400);
+      const currentTime = await time.latest();
+      const expiry = BigInt(currentTime + 86400);
 
       // Register first level: test.celo.eth
       const firstLevelLabel = 'test';
@@ -284,7 +289,8 @@ describe('L2Registry - Registration', () => {
         deployRegistryFixture
       );
 
-      const expiry = BigInt(Math.floor(Date.now() / 1000) + 86400);
+      const currentTime = await time.latest();
+      const expiry = BigInt(currentTime + 86400);
 
       // Level 1: test.celo.eth
       const level1Label = 'test';
@@ -331,7 +337,8 @@ describe('L2Registry - Registration', () => {
         deployRegistryFixture
       );
 
-      const expiry = BigInt(Math.floor(Date.now() / 1000) + 86400);
+      const currentTime = await time.latest();
+      const expiry = BigInt(currentTime + 86400);
       
       // Try to register under non-existent parent node
       const fakeParentNode = namehash("vitalik.eth");
@@ -351,9 +358,8 @@ describe('L2Registry - Registration', () => {
         deployRegistryFixture
       );
 
-      const oneYearInSeconds = 365 * 24 * 60 * 60;
       const currentTime = await time.latest();
-      const oneYearExpiry = BigInt(currentTime + oneYearInSeconds);
+      const oneYearExpiry = BigInt(currentTime + YEAR_IN_SECONDS);
 
       // Register parent with 1 year expiry
       const parentLabel = 'parent';
@@ -366,7 +372,7 @@ describe('L2Registry - Registration', () => {
       );
 
       // Advance time by 2 years to expire parent
-      await time.increase(2 * oneYearInSeconds);
+      await time.increase(2 * YEAR_IN_SECONDS);
 
       // Try to register under expired parent - should fail
       const newTime = await time.latest();
@@ -387,7 +393,8 @@ describe('L2Registry - Registration', () => {
         deployRegistryFixture
       );
 
-      const expiry = BigInt(Math.floor(Date.now() / 1000) + 86400);
+      const currentTime = await time.latest();
+      const expiry = BigInt(currentTime + 86400);
       const resolverData: Hash[] = [];
 
       // Register parent
@@ -443,7 +450,8 @@ describe('L2Registry - Registration', () => {
         deployRegistryFixture
       );
 
-      const expiry = BigInt(Math.floor(Date.now() / 1000) + 86400);
+      const currentTime = await time.latest();
+      const expiry = BigInt(currentTime + 86400);
 
       // Register first level: test.celo.eth
       const firstLevelLabel = 'test';

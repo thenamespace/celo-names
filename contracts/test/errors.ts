@@ -9,7 +9,10 @@ export const ERRORS = {
   EMPTY_LABEL: 'EmptyLabel',
   CANNOT_TRANSFER_EXPIRED_NFT: 'CannotTransferExpiredNFT',
   PARENT_NODE_NOT_VALID: "ParentNodeNotValid",
-  TOKEN_DOES_NOT_EXIST: 'TokenDoesNotExist'
+  TOKEN_DOES_NOT_EXIST: 'TokenDoesNotExist',
+  INVALID_LABEL_LENGTH: 'InvalidLabelLength',
+  INVALID_DURATION: 'InvalidDuration',
+  INSUFFICIENT_FUNDS: 'InsufficientFunds'
 } as const;
 
 export interface ContractError extends Error {

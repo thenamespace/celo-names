@@ -324,7 +324,9 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver, IL2Registry {
     bytes32 node
   ) internal view override returns (bool) {
     address owner = _ownerOfExpirable(uint256(node));
-    return owner == _msgSender() || isApprovedForAll(owner, _msgSender());
+    return owner == _msgSender() || 
+           isApprovedForAll(owner, _msgSender()) ||
+           registrars[_msgSender()];
   }
 
   /// @dev Get the owner of a token, considering expiration

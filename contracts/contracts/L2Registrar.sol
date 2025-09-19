@@ -24,9 +24,6 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder {
   
   /// @dev Current version for price updates
   uint256 private priceVersion;
-  
-  /// @dev Whether to use USD pricing via oracle
-  bool private useUSDPrice = true;
 
   /// @dev Seconds in a year for expiry calculations
   uint64 private constant SECONDS_IN_YEAR = 31_536_000;
@@ -136,9 +133,10 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder {
     }
 
     uint256 price = _price(label, durationInYears);
-    registry.setExpiry(node, _toExpiry(durationInYears));
+    uint256 currentExpiry = registry.expiries(node);
+    registry.setExpiry(node, currentExpiry + _toExpiry(durationInYears));
 
-    _transferFunds(price);
+    _sendFees(price);
   }
 
   /// @dev Get registration price for label and duration
@@ -216,11 +214,7 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder {
       price = versionableLabelPrices[priceVersion][length];
     }
 
-    uint256 totalPrice = price * durationInYears;
-    if (useUSDPrice) {
-      return _convertUsdToEth(totalPrice);
-    }
-    return totalPrice;
+    return _convertToStablePrice(price * durationInYears);
   }
 
   function _register(
@@ -246,7 +240,7 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder {
     uint64 expiry = _toExpiry(expiryInYears);
     registry.createSubnode(label, parentNode, expiry, owner, resolverData);
 
-    _transferFunds(price);
+    _sendFees(price);
   }
 
   function _isValidDuration(uint64 durationInYears) internal pure returns (bool) {
@@ -258,7 +252,7 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder {
     return labelLength >= minLabelLength && labelLength <= maxLabelLength;
   }
 
-  function _transferFunds(uint256 value) internal {
+  function _sendFees(uint256 value) internal {
     if (msg.value == 0) return;
     
     uint256 remainder = msg.value - value;
@@ -296,7 +290,7 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder {
     return keccak256(abi.encodePacked(parent, keccak256(bytes(label))));
   }
 
-  function _convertUsdToEth(uint256 usdPrice) internal view returns (uint256) {
+  function _convertToStablePrice(uint256 usdPrice) internal view returns (uint256) {
     if (address(usdOracle) == address(0)) {
       revert PriceFeedNotSet();
     }
