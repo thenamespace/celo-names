@@ -1,0 +1,328 @@
+# GraphQL Queries for Names and Records
+
+# Get all names with their matching records
+# Note: This requires two separate queries since GraphQL doesn't have automatic joins
+# The client should match records by ID (node) to names
+query GetAllNamesWithRecords {
+  namess {
+    items {
+      id
+      label
+      expiry
+      owner
+      blockNumber
+      txHash
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
+  }
+  recordss {
+    items {
+      id
+      addresses
+      texts
+      contenthash
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
+  }
+}
+
+# Get names with their records - this is the main query you wanted!
+# Since GraphQL doesn't have automatic joins, you need to fetch both and match by ID
+query GetNamesWithRecords {
+  namess {
+    items {
+      id
+      label
+      expiry
+      owner
+      blockNumber
+      txHash
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
+  }
+  recordss {
+    items {
+      id
+      addresses
+      texts
+      contenthash
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
+  }
+}
+
+# Alternative: Get all names and then fetch records individually
+# This shows how to get a complete name with its record
+query GetAllNames {
+  namess {
+    items {
+      id
+      label
+      expiry
+      owner
+      blockNumber
+      txHash
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
+  }
+}
+
+# Get a complete name with its record data by ID
+# This shows how to fetch both name and record for a specific node
+query GetCompleteNameData($nodeId: String!) {
+  name: names(id: $nodeId) {
+    id
+    label
+    expiry
+    owner
+    blockNumber
+    txHash
+  }
+  record: records(id: $nodeId) {
+    id
+    addresses
+    texts
+    contenthash
+  }
+}
+
+# Get all names with pagination
+query GetAllNames($limit: Int, $after: String) {
+  namess(limit: $limit, after: $after) {
+    items {
+      id
+      label
+      expiry
+      owner
+      blockNumber
+      txHash
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
+  }
+}
+
+# Get all records with pagination
+query GetAllRecords($limit: Int, $after: String) {
+  recordss(limit: $limit, after: $after) {
+    items {
+      id
+      addresses
+      texts
+      contenthash
+    }
+    pageInfo {
+      hasNextPage
+      hasPreviousPage
+      startCursor
+      endCursor
+    }
+    totalCount
+  }
+}
+
+# Get a specific name by ID (node)
+query GetNameById($id: String!) {
+  names(id: $id) {
+    id
+    label
+    expiry
+    owner
+    blockNumber
+    txHash
+  }
+}
+
+# Get a specific record by ID (node)
+query GetRecordById($id: String!) {
+  records(id: $id) {
+    id
+    addresses
+    texts
+    contenthash
+  }
+}
+
+# Get names by owner address
+query GetNamesByOwner($owner: String!) {
+  namess(where: { owner: { equals: $owner } }) {
+    items {
+      id
+      label
+      expiry
+      owner
+      blockNumber
+      txHash
+    }
+    totalCount
+  }
+}
+
+# Get names by label
+query GetNamesByLabel($label: String!) {
+  namess(where: { label: { equals: $label } }) {
+    items {
+      id
+      label
+      expiry
+      owner
+      blockNumber
+      txHash
+    }
+    totalCount
+  }
+}
+
+# Get expired names (expiry < current timestamp)
+query GetExpiredNames($currentTime: BigInt!) {
+  namess(where: { expiry: { lt: $currentTime } }) {
+    items {
+      id
+      label
+      expiry
+      owner
+      blockNumber
+      txHash
+    }
+    totalCount
+  }
+}
+
+# Get active names (expiry > current timestamp)
+query GetActiveNames($currentTime: BigInt!) {
+  namess(where: { expiry: { gt: $currentTime } }) {
+    items {
+      id
+      label
+      expiry
+      owner
+      blockNumber
+      txHash
+    }
+    totalCount
+  }
+}
+
+# Get recent names (ordered by blockNumber descending)
+query GetRecentNames($limit: Int) {
+  namess(limit: $limit, orderBy: "blockNumber", orderDirection: "desc") {
+    items {
+      id
+      label
+      expiry
+      owner
+      blockNumber
+      txHash
+    }
+    totalCount
+  }
+}
+
+# Get names with specific text records
+query GetNamesWithTextRecords($textKey: String!) {
+  recordss(where: { texts: { contains: $textKey } }) {
+    items {
+      id
+      addresses
+      texts
+      contenthash
+    }
+    totalCount
+  }
+}
+
+# Get names with specific address records
+query GetNamesWithAddressRecords($coinType: Int!) {
+  recordss(where: { addresses: { contains: $coinType } }) {
+    items {
+      id
+      addresses
+      texts
+      contenthash
+    }
+    totalCount
+  }
+}
+
+# Get names with content hash
+query GetNamesWithContentHash {
+  recordss(where: { contenthash_not: null }) {
+    items {
+      id
+      addresses
+      texts
+      contenthash
+    }
+    totalCount
+  }
+}
+
+# Search names by label pattern
+query SearchNamesByLabel($pattern: String!) {
+  namess(where: { label: { contains: $pattern } }) {
+    items {
+      id
+      label
+      expiry
+      owner
+      blockNumber
+      txHash
+    }
+    totalCount
+  }
+}
+
+# Get names created in a specific block range
+query GetNamesByBlockRange($fromBlock: Int!, $toBlock: Int!) {
+  namess(where: { 
+    AND: [
+      { blockNumber: { gte: $fromBlock } },
+      { blockNumber: { lte: $toBlock } }
+    ]
+  }) {
+    items {
+      id
+      label
+      expiry
+      owner
+      blockNumber
+      txHash
+    }
+    totalCount
+  }
+}

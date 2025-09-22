@@ -1,0 +1,141 @@
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
+scalar BigInt
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String
+  endCursor: String
+}
+
+type Meta {
+  status: JSON
+}
+
+type Query {
+  records(id: String!): records
+  recordss(where: recordsFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): recordsPage!
+  names(id: String!): names
+  namess(where: namesFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): namesPage!
+  _meta: Meta
+}
+
+type records {
+  id: String!
+  addresses: JSON
+  texts: JSON
+  contenthash: String
+  name: names
+}
+
+type names {
+  id: String!
+  label: String!
+  expiry: BigInt!
+  owner: String!
+  blockNumber: Int!
+  txHash: String!
+  record: records
+}
+
+type recordsPage {
+  items: [records!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input recordsFilter {
+  AND: [recordsFilter]
+  OR: [recordsFilter]
+  id: String
+  id_not: String
+  id_in: [String]
+  id_not_in: [String]
+  id_contains: String
+  id_not_contains: String
+  id_starts_with: String
+  id_ends_with: String
+  id_not_starts_with: String
+  id_not_ends_with: String
+  contenthash: String
+  contenthash_not: String
+  contenthash_in: [String]
+  contenthash_not_in: [String]
+  contenthash_contains: String
+  contenthash_not_contains: String
+  contenthash_starts_with: String
+  contenthash_ends_with: String
+  contenthash_not_starts_with: String
+  contenthash_not_ends_with: String
+}
+
+type namesPage {
+  items: [names!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input namesFilter {
+  AND: [namesFilter]
+  OR: [namesFilter]
+  id: String
+  id_not: String
+  id_in: [String]
+  id_not_in: [String]
+  id_contains: String
+  id_not_contains: String
+  id_starts_with: String
+  id_ends_with: String
+  id_not_starts_with: String
+  id_not_ends_with: String
+  label: String
+  label_not: String
+  label_in: [String]
+  label_not_in: [String]
+  label_contains: String
+  label_not_contains: String
+  label_starts_with: String
+  label_ends_with: String
+  label_not_starts_with: String
+  label_not_ends_with: String
+  expiry: BigInt
+  expiry_not: BigInt
+  expiry_in: [BigInt]
+  expiry_not_in: [BigInt]
+  expiry_gt: BigInt
+  expiry_lt: BigInt
+  expiry_gte: BigInt
+  expiry_lte: BigInt
+  owner: String
+  owner_not: String
+  owner_in: [String]
+  owner_not_in: [String]
+  owner_contains: String
+  owner_not_contains: String
+  owner_starts_with: String
+  owner_ends_with: String
+  owner_not_starts_with: String
+  owner_not_ends_with: String
+  blockNumber: Int
+  blockNumber_not: Int
+  blockNumber_in: [Int]
+  blockNumber_not_in: [Int]
+  blockNumber_gt: Int
+  blockNumber_lt: Int
+  blockNumber_gte: Int
+  blockNumber_lte: Int
+  txHash: String
+  txHash_not: String
+  txHash_in: [String]
+  txHash_not_in: [String]
+  txHash_contains: String
+  txHash_not_contains: String
+  txHash_starts_with: String
+  txHash_ends_with: String
+  txHash_not_starts_with: String
+  txHash_not_ends_with: String
+}
