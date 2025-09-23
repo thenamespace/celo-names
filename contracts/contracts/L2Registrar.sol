@@ -158,6 +158,9 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder, IL2Registrar {
     return _price(label, durationInYears);
   }
 
+  /// @dev Check if a subname is available for registration
+  /// @param label The subdomain label to check availability for
+  /// @return True if the subname is available (not registered), false otherwise
   function available(string calldata label) external view returns(bool) {
     bytes32 node = _namehash(label, registry.rootNode());
     return registry.ownerOf(uint256(node)) == address(0);
@@ -165,8 +168,12 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder, IL2Registrar {
 
   // ============ Owner Functions ============
 
-  /// @dev Configure the registration prices
-  /// In one method call
+  /// @dev Configure all registration pricing and limits in a single transaction
+  /// @param _basePrice Base price in USD for one year of registration
+  /// @param lengths Array of label lengths to set custom prices for
+  /// @param prices Array of custom prices in USD corresponding to each length
+  /// @param _minLength Minimum allowed label length (inclusive)
+  /// @param _maxLength Maximum allowed label length (inclusive)
   function configure(
     uint256 _basePrice,
     uint256[] calldata lengths,

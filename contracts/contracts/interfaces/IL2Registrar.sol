@@ -15,9 +15,9 @@ interface IL2Registrar {
         bytes[] calldata resolverData
     ) payable external;
     
-    function getPrice(string calldata label, uint256 expiryInYears) external returns(uint256);
+    function rentPrice(string calldata label, uint64 expiryInYears) external returns(uint256);
 
-    function renew(string calldata label, uint256 expiryInYears) external;
+    function renew(string calldata label, uint64 expiryInYears) payable external;
 
     function available(string calldata label) external returns(bool);
 }
