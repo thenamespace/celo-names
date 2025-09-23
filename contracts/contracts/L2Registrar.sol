@@ -104,7 +104,7 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder, IL2Registrar {
     bytes32 parentNode,
     uint64 durationInYears,
     uint256 price,
-    address indexed extender
+    address extender
   );
 
   // ============ Constructor ============

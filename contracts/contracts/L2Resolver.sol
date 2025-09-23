@@ -141,7 +141,8 @@ abstract contract L2Resolver is
             InterfaceResolver,
             PubkeyResolver,
             NameResolver,
-            Multicallable
+            Multicallable,
+            ExtendedResolver
         )
         returns (bool)
     {
