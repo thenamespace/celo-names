@@ -13,7 +13,7 @@ contract ExtendedResolver is IExtendedResolver, ERC165 {
   }
 
   function _resolve(
-    bytes calldata name,
+    bytes calldata /** name **/,
     bytes calldata data
   ) internal view returns (bytes memory) {
     (bool success, bytes memory result) = address(this).staticcall(data);
