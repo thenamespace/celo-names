@@ -9,14 +9,14 @@ import {NameResolver} from './resolver/NameResolver.sol';
 import {TextResolver} from './resolver/TextResolver.sol';
 import {Multicallable} from './common/Multicallable.sol';
 import {InterfaceResolver} from './resolver/InterfaceResolver.sol';
-import {ENS} from '@ensdomains/ens-contracts/contracts/registry/ENS.sol';
-import {INameWrapper} from '@ensdomains/ens-contracts/contracts/wrapper/INameWrapper.sol';
-import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {IOffchainResolver} from './interfaces/IOffchainResolver.sol';
-import {ExtendedResolver} from "./resolver/ExtendedResolver.sol";
-import {ENSDNSUtils} from "./common/ENSDNSUtils.sol";
+import {ExtendedResolver} from './resolver/ExtendedResolver.sol';
+import {ENSDNSUtils} from './common/ENSDNSUtils.sol';
+import {IENSRegistry} from './interfaces/IENSRegistry.sol';
+import {INameWrapper} from './interfaces/INameWrapper.sol';
 
-import '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
+import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
+import {ECDSA} from '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 
 // This resolver serves two pupropses
 // 1. It will act as a resolver for storing records for "parent name" -> celo.eth
@@ -38,7 +38,9 @@ contract L1Resolver is
   event SignerChanged(address[] signers);
   event OffchainUrlsChanged(string[] urls);
 
-  ENS immutable ens = ENS(address(0));
+  IENSRegistry immutable ens =
+    IENSRegistry(0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e);
+  INameWrapper immutable name_wrapper;
 
   error OffchainLookup(
     address sender,
@@ -51,20 +53,21 @@ contract L1Resolver is
   constructor(
     address[] memory _signers,
     string[] memory _ccip_gateway_urls,
-    string memory _root_name
+    string memory _root_name,
+    address _name_wrapper
   ) Ownable(_msgSender()) {
     setSigners(_signers);
     setOffchainGatewayUrls(_ccip_gateway_urls);
     root_name = _root_name;
+    name_wrapper = INameWrapper(_name_wrapper);
   }
 
   function resolve(
     bytes calldata name,
     bytes calldata data
   ) external view override returns (bytes memory) {
-
     string memory dns_decoded = ENSDNSUtils.dnsDecode(name);
-    if (dns_decoded == root_name) {
+    if (_hash(dns_decoded) == _hash(root_name)) {
       return _resolve(name, data);
     }
 
@@ -167,7 +170,18 @@ contract L1Resolver is
   function isAuthorisedToUpdateRecords(
     bytes32 node
   ) internal view override returns (bool) {
-    return true;
+    return
+      ens.owner(node) == _msgSender() ||
+      name_wrapper.canModifyName(node, _msgSender());
+  }
+
+  /**
+   * @dev Helper function to hash a string for comparison
+   * @param str The string to hash
+   * @return The keccak256 hash of the string
+   */
+  function _hash(string memory str) internal pure returns (bytes32) {
+    return keccak256(bytes(str));
   }
 
   function setSigners(address[] memory _signers) public onlyOwner {
