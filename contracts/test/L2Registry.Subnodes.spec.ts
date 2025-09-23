@@ -474,14 +474,14 @@ describe('L2Registry - Registration', () => {
       );
 
       // Verify names mapping resolves correctly
-      const firstLevelResolvedName = await registryContract.read.names([firstLevelNode]);
-      const secondLevelResolvedName = await registryContract.read.names([secondLevelNode]);
+      const firstLevelResolvedName = await registryContract.read.nameLookup([firstLevelNode]);
+      const secondLevelResolvedName = await registryContract.read.nameLookup([secondLevelNode]);
       
       expect(firstLevelResolvedName).to.equal('test.celo.eth');
       expect(secondLevelResolvedName).to.equal('nested.test.celo.eth');
 
       // Verify root name is stored correctly
-      const rootName = await registryContract.read.names([PARENT_NODE]);
+      const rootName = await registryContract.read.nameLookup([PARENT_NODE]);
       expect(rootName).to.equal('celo.eth');
     });
   });

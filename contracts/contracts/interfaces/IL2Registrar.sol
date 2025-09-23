@@ -15,13 +15,5 @@ interface IL2Registrar {
         bytes[] calldata resolverData
     ) external;
     
-    function register(
-        string calldata label,
-        bytes32 parentNode,
-        uint64 expiry,
-        address owner,
-        bytes[] calldata resolverData
-    ) external;
-    
     function getPrice(string calldata label, uint256 expiryInYears) external returns(uint256);
 }

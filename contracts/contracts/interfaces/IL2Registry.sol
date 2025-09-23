@@ -31,7 +31,7 @@ interface IL2Registry {
     
     function expiries(bytes32 node) external view returns (uint256);
     
-    function names(bytes32 node) external view returns (string memory);
+    function nameLookup(bytes32 node) external view returns (string memory);
     
     function rootNode() external view returns (bytes32);
     

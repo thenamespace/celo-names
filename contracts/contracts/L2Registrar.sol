@@ -7,6 +7,8 @@ import {Pausable} from '@openzeppelin/contracts/utils/Pausable.sol';
 import {ERC721Holder} from '@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol';
 import {StringUtils} from './common/StringUtils.sol';
 import {AggregatorV3Interface} from './interfaces/AggregatorV3Interface.sol';
+import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import {IERC20Permit} from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol';
 
 contract L2Registrar is Ownable, Pausable, ERC721Holder {
   using StringUtils for string;
@@ -15,40 +17,45 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder {
 
   /// @dev Base price in USD for one year of registration
   uint256 public basePrice;
-  
+
   /// @dev Minimum allowed label length
   uint256 public minLabelLength = 1;
-  
+
   /// @dev Maximum allowed label length
   uint256 public maxLabelLength = 55;
-  
+
   /// @dev Current version for price updates
   uint256 private priceVersion;
 
   /// @dev Seconds in a year for expiry calculations
   uint64 private constant SECONDS_IN_YEAR = 31_536_000;
-  
+
   /// @dev Maximum allowed registration duration in years
   uint64 private constant MAX_EXPIRY_YEARS = 10_000;
-  
+
   /// @dev Minimum allowed registration duration in years
   uint64 private constant MIN_EXPIRY_YEARS = 1;
-  
+
   /// @dev Registry contract for subdomain management
   IL2Registry private immutable registry;
-  
+
   /// @dev USD price oracle for ETH conversion
   AggregatorV3Interface private immutable usdOracle;
 
   /// @dev Custom prices per version and label length
   mapping(uint256 => mapping(uint256 => uint256))
     private versionableLabelPrices;
-    
+
   /// @dev Tracks which label lengths have custom prices set
   mapping(uint256 => mapping(uint256 => bool)) private versionableLabelPriceSet;
 
   /// @dev Treasury address for collecting registration fees
   address private treasury;
+
+  address immutable NATIVE_CURENCY = address(0);
+
+  /// @dev Supported ERC20 payment tokens (token => supported)
+  mapping(address => bool) public supportedPaymentTokens;
 
   // ============ Custom Errors ============
 
@@ -56,10 +63,18 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder {
   error SubnameDoesNotExist(bytes32 node);
 
   /// @dev Thrown when duration is outside valid range
-  error InvalidDuration(uint64 duration, uint64 minDuration, uint64 maxDuration);
+  error InvalidDuration(
+    uint64 duration,
+    uint64 minDuration,
+    uint64 maxDuration
+  );
 
   /// @dev Thrown when label length is outside valid range
-  error InvalidLabelLength(uint256 length, uint256 minLength, uint256 maxLength);
+  error InvalidLabelLength(
+    uint256 length,
+    uint256 minLength,
+    uint256 maxLength
+  );
 
   /// @dev Thrown when insufficient funds are provided for registration
   error InsufficientFunds(uint256 provided, uint256 required);
@@ -121,48 +136,16 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder {
     _register(label, registry.rootNode(), durationInYears, owner, resolverData);
   }
 
-  /// @dev Register a subname under specified parent node
-  /// @param label The subdomain label to register
-  /// @param parentNode Parent node hash under which to register the subname
-  /// @param durationInYears Registration duration in years (1-10000)
-  /// @param owner Address that will own the registered subname
-  /// @param resolverData Optional resolver function calls for initial setup
-  function register(
-    string calldata label,
-    bytes32 parentNode,
-    uint64 durationInYears,
-    address owner,
-    bytes[] calldata resolverData
-  ) external payable whenNotPaused {
-    _register(label, parentNode, durationInYears, owner, resolverData);
-  }
-
   /// @dev Extend subname registration duration
   /// We currently only support renewals for 3 level domains level.example.eth
   /// and not for deeper levels
   /// @param label The subdomain label to renew
   /// @param durationInYears Additional registration duration in years (1-10000)
-  function renew(string calldata label, uint64 durationInYears) external payable {
-    bytes32 node = _namehash(label, registry.rootNode());
-    if (_available(node)) {
-      revert SubnameDoesNotExist(node);
-    }
-
-    if (!_isValidDuration(durationInYears)) {
-      revert InvalidDuration(durationInYears, MIN_EXPIRY_YEARS, MAX_EXPIRY_YEARS);
-    }
-
-    uint256 price = _price(label, durationInYears);
-
-    if (msg.value < price) {
-      revert InsufficientFunds(msg.value, price);
-    }
-    uint256 currentExpiry = registry.expiries(node);
-    registry.setExpiry(node, currentExpiry + _durationInSeconds(durationInYears));
-
-    _sendFees(price);
-    
-    emit NameRenewed(label, registry.rootNode(), durationInYears, price, msg.sender);
+  function renew(
+    string calldata label,
+    uint64 durationInYears
+  ) external payable {
+    _renew(label, registry.rootNode(), durationInYears);
   }
 
   /// @dev Get registration price for label and duration
@@ -178,9 +161,23 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder {
 
   // ============ Owner Functions ============
 
+  /// @dev Configure the registration prices
+  /// In one method call
+  function configure(
+    uint256 _basePrice,
+    uint256[] calldata lengths,
+    uint256[] calldata prices,
+    uint256 _minLength,
+    uint256 _maxLength
+  ) external onlyOwner {
+    setBasePrice(_basePrice);
+    setLabelLengthLimits(_minLength, _maxLength);
+    setLabelPrices(lengths, prices);
+  }
+
   /// @dev Set base price for registration
   /// @param _basePrice Base price in USD for one year of registration
-  function setBasePrice(uint256 _basePrice) external onlyOwner {
+  function setBasePrice(uint256 _basePrice) public onlyOwner {
     basePrice = _basePrice;
   }
 
@@ -190,7 +187,7 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder {
   function setLabelPrices(
     uint256[] calldata lengths,
     uint256[] calldata prices
-  ) external onlyOwner {
+  ) public onlyOwner {
     if (lengths.length != prices.length) {
       revert ArraysLengthMismatch(lengths.length, prices.length);
     }
@@ -209,7 +206,7 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder {
   function setLabelLengthLimits(
     uint256 _minLength,
     uint256 _maxLength
-  ) external onlyOwner {
+  ) public onlyOwner {
     minLabelLength = _minLength;
     maxLabelLength = _maxLength;
   }
@@ -218,6 +215,13 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder {
   /// @param _treasury Address where registration fees will be sent
   function setTreasury(address _treasury) external onlyOwner {
     treasury = _treasury;
+  }
+
+  /// @dev Set or unset a supported ERC20 payment token
+  /// @param token ERC20 token address
+  /// @param supported Whether the token is supported
+  function setPaymentToken(address token, bool supported) external onlyOwner {
+    supportedPaymentTokens[token] = supported;
   }
 
   /// @dev Pause contract operations
@@ -232,7 +236,10 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder {
 
   // ============ Internal Functions ============
 
-  function _price(string calldata label, uint64 durationInYears) internal view returns (uint256) {
+  function _price(
+    string calldata label,
+    uint64 durationInYears
+  ) internal view returns (uint256) {
     uint256 length = label.strlen();
 
     uint256 price = basePrice;
@@ -243,6 +250,46 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder {
     return _convertToStablePrice(price * durationInYears);
   }
 
+  function _renew(
+    string calldata label,
+    bytes32 parentNode,
+    uint64 durationInYears
+  ) internal {
+    bytes32 node = _namehash(label, parentNode);
+    if (_available(node)) {
+      revert SubnameDoesNotExist(node);
+    }
+
+    if (!_isValidDuration(durationInYears)) {
+      revert InvalidDuration(
+        durationInYears,
+        MIN_EXPIRY_YEARS,
+        MAX_EXPIRY_YEARS
+      );
+    }
+
+    uint256 price = _price(label, durationInYears);
+
+    if (msg.value < price) {
+      revert InsufficientFunds(msg.value, price);
+    }
+    uint256 currentExpiry = registry.expiries(node);
+    registry.setExpiry(
+      node,
+      currentExpiry + _durationInSeconds(durationInYears)
+    );
+
+    _sendFees(price);
+
+    emit NameRenewed(
+      label,
+      registry.rootNode(),
+      durationInYears,
+      price,
+      msg.sender
+    );
+  }
+
   function _register(
     string calldata label,
     bytes32 parentNode,
@@ -251,7 +298,11 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder {
     bytes[] calldata resolverData
   ) internal {
     if (!_isValidDuration(durationInYears)) {
-      revert InvalidDuration(durationInYears, MIN_EXPIRY_YEARS, MAX_EXPIRY_YEARS);
+      revert InvalidDuration(
+        durationInYears,
+        MIN_EXPIRY_YEARS,
+        MAX_EXPIRY_YEARS
+      );
     }
     if (!_isValidLabelLen(label)) {
       revert InvalidLabelLength(label.strlen(), minLabelLength, maxLabelLength);
@@ -267,37 +318,43 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder {
     registry.createSubnode(label, parentNode, expiry, owner, resolverData);
 
     _sendFees(price);
-    
+
     emit NameRegistered(label, owner, durationInYears, price, parentNode);
   }
 
-  function _isValidDuration(uint64 durationInYears) internal pure returns (bool) {
-    return durationInYears <= MAX_EXPIRY_YEARS && durationInYears >= MIN_EXPIRY_YEARS;
+  function _isValidDuration(
+    uint64 durationInYears
+  ) internal pure returns (bool) {
+    return
+      durationInYears <= MAX_EXPIRY_YEARS &&
+      durationInYears >= MIN_EXPIRY_YEARS;
   }
 
-  function _isValidLabelLen(string calldata label) internal view returns (bool) {
+  function _isValidLabelLen(
+    string calldata label
+  ) internal view returns (bool) {
     uint256 labelLength = label.strlen();
     return labelLength >= minLabelLength && labelLength <= maxLabelLength;
   }
 
   function _sendFees(uint256 value) internal {
     if (msg.value == 0) return;
-    
+
     uint256 remainder = msg.value - value;
-    
+
     // Transfer required amount to treasury
     if (value > 0) {
-      (bool success, ) = treasury.call{value: value}("");
+      (bool success, ) = treasury.call{value: value}('');
       if (!success) {
-        revert("Treasury transfer failed");
+        revert('Treasury transfer failed');
       }
     }
-    
+
     // Return remainder to sender
     if (remainder > 0) {
-      (bool success, ) = msg.sender.call{value: remainder}("");
+      (bool success, ) = msg.sender.call{value: remainder}('');
       if (!success) {
-        revert("Refund transfer failed");
+        revert('Refund transfer failed');
       }
     }
   }
@@ -311,7 +368,9 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder {
     return uint64(block.timestamp + expiry);
   }
 
-  function _durationInSeconds(uint64 durationInYears) internal pure returns (uint64) {
+  function _durationInSeconds(
+    uint64 durationInYears
+  ) internal pure returns (uint64) {
     return durationInYears * SECONDS_IN_YEAR;
   }
 
@@ -322,18 +381,15 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder {
     return keccak256(abi.encodePacked(parent, keccak256(bytes(label))));
   }
 
-  function _convertToStablePrice(uint256 usdPrice) internal view returns (uint256) {
+  function _convertToStablePrice(
+    uint256 usdPrice
+  ) internal view returns (uint256) {
     if (address(usdOracle) == address(0)) {
       revert PriceFeedNotSet();
     }
 
-    (
-      uint80 roundId,
-      int256 answer,
-      ,
-      ,
-      uint80 answeredInRound
-    ) = usdOracle.latestRoundData();
+    (uint80 roundId, int256 answer, , , uint80 answeredInRound) = usdOracle
+      .latestRoundData();
 
     // Check if round is complete
     if (answeredInRound != roundId) {
@@ -356,5 +412,4 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder {
 
     return ethWei;
   }
-
 }

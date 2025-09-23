@@ -44,7 +44,7 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver, IL2Registry {
   mapping(bytes32 => uint256) public expiries;
 
   /// @dev Maps node hash to names in its string format
-  mapping(bytes32 => string) public names;
+  mapping(bytes32 => string) private names;
 
   /// @dev Immutable parent node hash (e.g., "celo.eth")
   bytes32 public immutable rootNode;
@@ -173,6 +173,14 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver, IL2Registry {
   function revoke(bytes32 node) external onlyAdmin {
     _revoke(node);
     emit NameRevoked(node, _msgSender());
+  }
+
+   /**
+   * @dev Returns a string representation of name
+   * @param node The node hash of the subdomain to revoke
+   */
+  function nameLookup(bytes32 node) external view returns(string memory) {
+    return names[node];
   }
 
   // ============ Internal Functions ============
