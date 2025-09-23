@@ -18,10 +18,12 @@ import {INameWrapper} from './interfaces/INameWrapper.sol';
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {ECDSA} from '@openzeppelin/contracts/utils/cryptography/ECDSA.sol';
 
-// This resolver serves two pupropses
-// 1. It will act as a resolver for storing records for "parent name" -> celo.eth
-// 2. It will use wildcard resolution for proxying subname resolution requests
-// towards the gateway ccip server
+/**
+ * @title L1Resolver
+ * @dev This resolver serves two purposes:
+ * 1. Acts as a resolver for storing records for the "parent name" -> celo.eth
+ * 2. Uses wildcard resolution for proxying subname resolution requests towards the gateway CCIP server
+ */
 contract L1Resolver is
   Ownable,
   AddrResolver,
@@ -30,17 +32,37 @@ contract L1Resolver is
   ExtendedResolver,
   IOffchainResolver
 {
+  // ============ State Variables ============
+
+  /// @dev Mapping of signer versions to authorized signers
   mapping(uint32 => mapping(address => bool)) private versionable_signers;
+
+  /// @dev Current version for signer management
   uint32 private signers_version;
+
+  /// @dev Array of CCIP gateway URLs for offchain resolution
   string[] private ccip_gateway_urls;
+
+  /// @dev Root name for this resolver (e.g., "celo.eth")
   string private root_name;
 
-  event SignerChanged(address[] signers);
-  event OffchainUrlsChanged(string[] urls);
-
+  /// @dev ENS registry contract
   IENSRegistry immutable ens;
+
+  /// @dev ENS name wrapper contract
   INameWrapper immutable name_wrapper;
 
+  // ============ Events ============
+
+  /// @dev Emitted when signers are updated
+  event SignerChanged(address[] signers);
+
+  /// @dev Emitted when offchain gateway URLs are updated
+  event OffchainUrlsChanged(string[] urls);
+
+  // ============ Custom Errors ============
+
+  /// @dev Thrown for CCIP offchain lookup requests
   error OffchainLookup(
     address sender,
     string[] urls,
@@ -49,6 +71,20 @@ contract L1Resolver is
     bytes extraData
   );
 
+  /// @dev Thrown when signature verification fails
+  error InvalidSignature(address signer);
+
+  /// @dev Thrown when signature has expired
+  error SignatureExpired(uint64 expires, uint256 currentTime);
+
+  // ============ Constructor ============
+
+  /// @dev Initialize the L1Resolver with signers, gateway URLs, and contracts
+  /// @param _signers Array of authorized signer addresses
+  /// @param _ccip_gateway_urls Array of CCIP gateway URLs for offchain resolution
+  /// @param _root_name Root name for this resolver (e.g., "celo.eth")
+  /// @param _name_wrapper Address of the ENS name wrapper contract
+  /// @param _ens_registry Address of the ENS registry contract
   constructor(
     address[] memory _signers,
     string[] memory _ccip_gateway_urls,
@@ -63,6 +99,12 @@ contract L1Resolver is
     ens = IENSRegistry(_ens_registry);
   }
 
+  // ============ Public Functions ============
+
+  /// @dev Main resolution function that handles both onchain and offchain resolution
+  /// @param name DNS-encoded name to resolve
+  /// @param data ABI encoded data for the underlying resolution function
+  /// @return ABI encoded result from the resolution function
   function resolve(
     bytes calldata name,
     bytes calldata data
@@ -75,10 +117,11 @@ contract L1Resolver is
     return _resolveOffchain(name, data, ccip_gateway_urls);
   }
 
-  // Resolves a name, as specified by ENSIP 10.
-  // @param name The DNS-encoded name to resolve.
-  // @param data The ABI encoded data for the underlying resolution function (Eg, addr(bytes32), text(bytes32,string), etc).
-  // @return The return data, ABI encoded identically to the underlying function.
+  /// @dev Resolves a name using offchain lookup as specified by ENSIP 10
+  /// @param name The DNS-encoded name to resolve
+  /// @param data The ABI encoded data for the underlying resolution function
+  /// @param urls Array of gateway URLs for the offchain lookup
+  /// @return The return data, ABI encoded identically to the underlying function
   function _resolveOffchain(
     bytes memory name,
     bytes memory data,
@@ -99,29 +142,31 @@ contract L1Resolver is
     );
   }
 
-  /**
-   * Callback used by CCIP read compatible clients to verify and parse the response.
-   */
+  /// @dev Callback used by CCIP read compatible clients to verify and parse the response
+  /// @param response ABI encoded response from the offchain resolver
+  /// @param extraData Additional data for verification
+  /// @return ABI encoded result from the offchain resolution
   function resolveWithProof(
     bytes calldata response,
     bytes calldata extraData
   ) external view returns (bytes memory) {
     (address signer, bytes memory result) = verify(extraData, response);
 
-    require(
-      versionable_signers[signers_version][signer],
-      'Signature: Invalid signature'
-    );
+    if (!versionable_signers[signers_version][signer]) {
+      revert InvalidSignature(signer);
+    }
 
     return result;
   }
 
-  /**
-   * @dev Generates a hash for signing/verifying.
-   * @param target: The address the signature is for.
-   * @param request: The original request that was sent.
-   * @param result: The `result` field of the response (not including the signature part).
-   */
+  // ============ Internal Functions ============
+
+  /// @dev Generates a hash for signing/verifying CCIP responses
+  /// @param target The address the signature is for
+  /// @param expires Expiration timestamp for the signature
+  /// @param request The original request that was sent
+  /// @param result The result field of the response (not including the signature part)
+  /// @return The hash to be signed
   function makeSignatureHash(
     address target,
     uint64 expires,
@@ -140,14 +185,11 @@ contract L1Resolver is
       );
   }
 
-  /**
-   * @dev Verifies a signed message returned from a callback.
-   * @param request: The original request that was sent.
-   * @param response: An ABI encoded tuple of `(bytes result, uint64 expires, bytes sig)`, where `result` is the data to return
-   *        to the caller, and `sig` is the (r,s,v) encoded message signature.
-   * @return signer: The address that signed this message.
-   * @return result: The `result` decoded from `response`.
-   */
+  /// @dev Verifies a signed message returned from a callback
+  /// @param request The original request that was sent
+  /// @param response ABI encoded tuple of (bytes result, uint64 expires, bytes sig)
+  /// @return signer The address that signed this message
+  /// @return result The result decoded from response
   function verify(
     bytes calldata request,
     bytes calldata response
@@ -164,10 +206,17 @@ contract L1Resolver is
       makeSignatureHash(sender, expires, extraData, result),
       sig
     );
-    require(expires >= block.timestamp, 'SignatureVerifier: Signature expired');
+    
+    if (expires < block.timestamp) {
+      revert SignatureExpired(expires, block.timestamp);
+    }
+    
     return (signer, result);
   }
 
+  /// @dev Checks if the caller is authorized to update records for a given node
+  /// @param node The ENS node to check authorization for
+  /// @return True if the caller is authorized to update records
   function isAuthorisedToUpdateRecords(
     bytes32 node
   ) internal view override returns (bool) {
@@ -176,15 +225,15 @@ contract L1Resolver is
       name_wrapper.canModifyName(node, _msgSender());
   }
 
-  /**
-   * @dev Helper function to hash a string for comparison
-   * @param str The string to hash
-   * @return The keccak256 hash of the string
-   */
+  
   function _hash(string memory str) internal pure returns (bytes32) {
     return keccak256(bytes(str));
   }
 
+  // ============ Owner Functions ============
+
+  /// @dev Set authorized signers for offchain resolution
+  /// @param _signers Array of signer addresses to authorize
   function setSigners(address[] memory _signers) public onlyOwner {
     signers_version++;
     for (uint i = 0; i < _signers.length; i++) {
@@ -193,6 +242,8 @@ contract L1Resolver is
     emit SignerChanged(_signers);
   }
 
+  /// @dev Set CCIP gateway URLs for offchain resolution
+  /// @param _ccip_gateway_urls Array of gateway URLs for CCIP requests
   function setOffchainGatewayUrls(
     string[] memory _ccip_gateway_urls
   ) public onlyOwner {
@@ -200,11 +251,6 @@ contract L1Resolver is
     emit OffchainUrlsChanged(_ccip_gateway_urls);
   }
 
-  /**
-   * @dev Returns true if this contract implements the interface defined by `interfaceId`
-   * @param interfaceId The interface identifier to check
-   * @return supported True if the interface is supported
-   */
   function supportsInterface(
     bytes4 interfaceId
   )
