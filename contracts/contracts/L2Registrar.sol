@@ -7,10 +7,9 @@ import {Pausable} from '@openzeppelin/contracts/utils/Pausable.sol';
 import {ERC721Holder} from '@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol';
 import {StringUtils} from './common/StringUtils.sol';
 import {AggregatorV3Interface} from './interfaces/AggregatorV3Interface.sol';
-import {IERC20} from '@openzeppelin/contracts/token/ERC20/IERC20.sol';
-import {IERC20Permit} from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Permit.sol';
+import {IL2Registrar} from "./interfaces/IL2Registrar.sol";
 
-contract L2Registrar is Ownable, Pausable, ERC721Holder {
+contract L2Registrar is Ownable, Pausable, ERC721Holder, IL2Registrar {
   using StringUtils for string;
 
   // ============ State Variables ============
@@ -157,6 +156,11 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder {
     uint64 durationInYears
   ) public view returns (uint256) {
     return _price(label, durationInYears);
+  }
+
+  function available(string calldata label) external view returns(bool) {
+    bytes32 node = _namehash(label, registry.rootNode());
+    return registry.ownerOf(uint256(node)) == address(0);
   }
 
   // ============ Owner Functions ============
