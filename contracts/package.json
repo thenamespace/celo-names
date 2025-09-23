@@ -23,7 +23,6 @@
     "@nomicfoundation/hardhat-chai-matchers": "^2.1.0",
     "@nomicfoundation/hardhat-toolbox": "^6.1.0",
     "@nomicfoundation/hardhat-viem": "^2.0.0",
-    "@openzeppelin/contracts": "^5.4.0",
     "@typechain/hardhat": "^9.1.0",
     "@types/chai": "^4.3.0",
     "@types/mocha": "^10.0.0",
@@ -33,10 +32,10 @@
     "prettier": "^3.6.2",
     "solidity-coverage": "^0.8.16",
     "typechain": "^8.3.2",
-    "viem": "^2.21.0"
+    "viem": "^2.21.0",
+    "dotenv": "^17.2.2"
   },
   "dependencies": {
-    "@ensdomains/ens-contracts": "^1.6.0",
-    "dotenv": "^17.2.2"
+    "@openzeppelin/contracts": "^5.4.0"
   }
 }
