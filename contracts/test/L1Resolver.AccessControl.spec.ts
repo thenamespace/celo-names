@@ -25,6 +25,9 @@ describe('L1Resolver - Access Control', () => {
     
     // Name wrapper address (using zero address for testing)
     const nameWrapper = '0x0000000000000000000000000000000000000000';
+    
+    // ENS registry address (using zero address for testing)
+    const ensRegistry = '0x0000000000000000000000000000000000000000';
 
     const l1Resolver: GetContractReturnType<L1Resolver$Type['abi']> =
       await viem.deployContract('L1Resolver', [
@@ -32,6 +35,7 @@ describe('L1Resolver - Access Control', () => {
         initialGatewayUrls,
         rootName,
         nameWrapper,
+        ensRegistry,
       ]);
 
     const client = await viem.getPublicClient();

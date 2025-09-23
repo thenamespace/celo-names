@@ -11,7 +11,9 @@ export const RESOLVER_ABI = parseAbi([
   'function setText(bytes32 node, string key, string value) public',
   'function setAddr(bytes32 node, uint256 coinType, bytes value) public',
   'function setAddr(bytes32 node, address value) public',
-  'function setContenthash(bytes32 node, bytes content) public'
+  'function setContenthash(bytes32 node, bytes content) public',
+  'function text(bytes32 node, string key) public view returns (string memory)',
+  'function addr(bytes32 node) public view returns (address)'
 ]);
 
 // Pricing Constants

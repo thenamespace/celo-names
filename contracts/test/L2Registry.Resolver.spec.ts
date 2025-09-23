@@ -17,7 +17,7 @@ import type { L2Registry$Type } from '../artifacts/contracts/L2Registry.sol/L2Re
 import { namehash, encodeFunctionData, Hash, zeroAddress } from 'viem';
 
 const AVATAR = 'avatar';
-const AVATAR_VALUE = 'https://euc.li.artii.eth';
+const AVATAR_VALUE = 'https://euc.li/artii.eth';
 const CONTENTHASH_VALUE =
   '0x0000000000000000000000000000000000000000000000000000000000001234';
 

@@ -38,8 +38,7 @@ contract L1Resolver is
   event SignerChanged(address[] signers);
   event OffchainUrlsChanged(string[] urls);
 
-  IENSRegistry immutable ens =
-    IENSRegistry(0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e);
+  IENSRegistry immutable ens;
   INameWrapper immutable name_wrapper;
 
   error OffchainLookup(
@@ -54,12 +53,14 @@ contract L1Resolver is
     address[] memory _signers,
     string[] memory _ccip_gateway_urls,
     string memory _root_name,
-    address _name_wrapper
+    address _name_wrapper,
+    address _ens_registry
   ) Ownable(_msgSender()) {
     setSigners(_signers);
     setOffchainGatewayUrls(_ccip_gateway_urls);
     root_name = _root_name;
     name_wrapper = INameWrapper(_name_wrapper);
+    ens = IENSRegistry(_ens_registry);
   }
 
   function resolve(
