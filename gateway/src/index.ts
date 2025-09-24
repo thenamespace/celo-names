@@ -1,0 +1,35 @@
+import { Hono } from "hono";
+import { prettyJSON } from "hono/pretty-json";
+import { serve } from "@hono/node-server";
+import dotenv from "dotenv";
+import { CCIPReadHandler } from "./ccip-read/handler";
+
+// Load environment variables
+dotenv.config();
+
+const app = new Hono();
+app.use("*", prettyJSON());
+
+const ccip_handler: CCIPReadHandler = new CCIPReadHandler();
+
+const ALCHEMY_TOKEN = process.env.ALCHEMY_TOKEN || "";
+const SINGER_WALLET = process.env.SINGER_WALLET || "";
+
+// Simple health endpoint
+app.get("/", (c) => c.json({ ok: true }));
+
+// GET /resolve/:sender/:data.json
+app.get("/resolve/:sender/:data", (c) => {
+  return ccip_handler.handle(c.req);
+});
+
+// POST /resolve/:sender/:data.json
+app.post("/resolve/:sender/:data", async (c) => {
+  return ccip_handler.handle(c.req);
+});
+
+const port = Number(process.env.PORT || 3000);
+console.log(`[gateway] starting on http://localhost:${port}`);
+
+serve({ fetch: app.fetch, port });
+

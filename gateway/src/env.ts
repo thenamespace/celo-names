@@ -1,0 +1,4 @@
+interface Env {
+    alchemyToken: string
+    
+}
