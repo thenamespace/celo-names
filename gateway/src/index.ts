@@ -21,8 +21,9 @@ app.post("/resolve/:sender/:data", async (c) => {
   return ccip_handler.handle(c.req);
 });
 
-const port = Number(process.env.PORT || 3000);
-const server = serve({ fetch: app.fetch, port });
+
+const server = serve({ fetch: app.fetch, port: env.app_port });
+console.log(`Listening on port -> ${env.app_port}`);
 
 process.on('SIGINT', () => {
   server.close()

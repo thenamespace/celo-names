@@ -8,6 +8,7 @@ export interface Env {
   signer_wallet_key: string;
   l2_resolver: Address;
   chain: Chain;
+  app_port: number
 }
 
 export const getEnvironment = (): Env => {
@@ -15,6 +16,11 @@ export const getEnvironment = (): Env => {
   const signer_wallet_key = process.env.SIGNER_WALLET_KEY;
   const l2_resolver = process.env.L2_RESOLVER as Address;
   const chain_id = process.env.CHAIN_ID;
+  const app_port =  Number(process.env.PORT || 3000)
+
+  if (!app_port) {
+    throw new Error("APP_PORT environment variable is required");
+  }
 
   if (!signer_wallet_key) {
     throw new Error("SIGNER_WALLET_KEY environment variable is required");
@@ -45,5 +51,6 @@ export const getEnvironment = (): Env => {
     signer_wallet_key,
     l2_resolver,
     chain: current_chain,
+    app_port: app_port
   };
 };
