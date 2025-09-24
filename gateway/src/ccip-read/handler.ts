@@ -17,7 +17,7 @@ export class CCIPReadHandler {
   private web3Client: Web3Client;
 
   constructor(private readonly env: Env) {
-    this.web3Client = new Web3Client();
+    this.web3Client = new Web3Client(env);
   }
 
   async handle(req: HonoRequest): Promise<Response> {

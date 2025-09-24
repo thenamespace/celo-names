@@ -8,27 +8,28 @@ import {
   type Address,
   type Hash,
 } from "viem";
-import {  celo } from "viem/chains";
 import { RESOLVER_ABI } from "./types";
-import { getEnvironment } from "../env";
+import { type Env } from "../env";
 import { sign } from "viem/accounts";
+import { alchemy } from "evm-providers";
 
-const env = getEnvironment();
 // 5 minute cache per request
 const CACHE_EXPIRY_TIME = 5 * 60 * 1000;
 
 export class Web3Client {
-
   // We can store the the 5 minutes resolution cache
   // so we don't hit the rpc on every request
-  private resolveCache: Record<string, { exp: number, result: Hash }> = {};
+  private resolveCache: Record<string, { exp: number; result: Hash }> = {};
   private client: ReturnType<typeof createPublicClient>;
 
-  constructor() {
+  constructor(private readonly env: Env) {
+    const rpc_url = env.alchemy_token
+      ? alchemy(env.chain.id as any, env.alchemy_token)
+      : undefined;
     //@ts-ignore
     this.client = createPublicClient({
-      transport: http(env.rpc_url),
-      chain: celo,
+      transport: http(rpc_url),
+      chain: env.chain,
     });
   }
 
@@ -36,31 +37,30 @@ export class Web3Client {
     dnsName: Hash,
     encodedFunctionCall: Hash
   ): Promise<Hash> {
-
     const cacheKey = this.getCacheKey(dnsName, encodedFunctionCall);
     const cachedResult = this.resolveCache[cacheKey];
     const now = new Date().getTime();
 
-    if (cachedResult && cachedResult.exp > now ) {
-        return cachedResult.result;
+    if (cachedResult && cachedResult.exp > now) {
+      return cachedResult.result;
     }
 
     const result = await this.client.readContract({
       abi: RESOLVER_ABI,
       functionName: "resolve",
       args: [dnsName, encodedFunctionCall],
-      address: env.l2_resolver,
+      address: this.env.l2_resolver,
     });
 
     this.resolveCache[cacheKey] = {
-        exp: now + CACHE_EXPIRY_TIME,
-        result
-    }
+      exp: now + CACHE_EXPIRY_TIME,
+      result,
+    };
 
     return result;
   }
 
-  public async signResolverResponse(
+  public async signedResolverResponse(
     sender: Address,
     originalData: Hash,
     result: Hash
@@ -68,7 +68,7 @@ export class Web3Client {
     const ttl = 1000;
     const validUntil = Math.floor(Date.now() / 1000 + ttl);
 
-    // Specific to `makeSignatureHash()` in the contract https://etherscan.io/address/0xDB34Da70Cfd694190742E94B7f17769Bc3d84D27#code#F2#L14
+    // Specific to `makeSignatureHash()` defined in SignatureVerifier contract
     const messageHash = keccak256(
       encodePacked(
         ["bytes", "address", "uint64", "bytes32", "bytes32"],
@@ -83,7 +83,7 @@ export class Web3Client {
     );
     const sig = await sign({
       hash: messageHash,
-      privateKey: env.signer_wallet_key as any
+      privateKey: this.env.signer_wallet_key as Hash,
     });
 
     // An ABI encoded tuple of `(bytes result, uint64 expires, bytes sig)`, where
@@ -103,5 +103,5 @@ export class Web3Client {
   // Create more optimal cache key mechanism
   private getCacheKey = (dnsName: Hash, functionCall: Hash) => {
     return `${keccak256(dnsName)}-${keccak256(functionCall)}`;
-  }
+  };
 }
