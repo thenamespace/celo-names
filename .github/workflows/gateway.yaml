@@ -12,18 +12,28 @@ env:
 jobs:
   prepare:
     runs-on: ubuntu-latest
+    # export a job-level output named "version" from the step below
     outputs:
-      version: ${{ steps.version.outputs.VERSION }}
+      version: ${{ steps.set_version.outputs.version }}
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set VERSION to short SHA
-        id: version
+      - name: Set short SHA version
+        id: set_version
         run: |
-          SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
+          # create a 7-char short sha
+          SHORT_SHA=${GITHUB_SHA::7}
+          echo "version=$SHORT_SHA" >> $GITHUB_OUTPUT
+          # optional: export to GITHUB_ENV in case you want local step usage in this job
           echo "VERSION=$SHORT_SHA" >> $GITHUB_ENV
-          echo "VERSION=$SHORT_SHA" >> $GITHUB_OUTPUT
+
+  build-and-push:
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
@@ -38,31 +48,18 @@ jobs:
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
 
-  build:
-    needs: prepare
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set VERSION from prepare job
-        run: echo "VERSION=${{ needs.prepare.outputs.version }}" >> $GITHUB_ENV
-
       - name: Build Docker image
-        run: docker build -t ${{ env.IMAGE_NAME }}:${{ env.VERSION }} -f ./gateway/Dockerfile ./gateway
-
-  push:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: Set VERSION from prepare job
-        run: echo "VERSION=${{ needs.prepare.outputs.version }}" >> $GITHUB_ENV
+        run: |
+          VERSION=${{ needs.prepare.outputs.version }}
+          docker build -t ${{ env.IMAGE_NAME }}:${VERSION} -f ./gateway/Dockerfile ./gateway
 
       - name: Tag Docker image for Artifact Registry
         run: |
-          docker tag ${{ env.IMAGE_NAME }}:${{ env.VERSION }} \
-          ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+          VERSION=${{ needs.prepare.outputs.version }}
+          docker tag ${{ env.IMAGE_NAME }}:${VERSION} \
+            ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${VERSION}
 
       - name: Push Docker image
         run: |
-          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
+          VERSION=${{ needs.prepare.outputs.version }}
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${VERSION}
