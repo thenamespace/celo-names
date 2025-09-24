@@ -45,18 +45,16 @@ export class CCIPReadHandler {
       abi: RESOLVER_ABI,
       data: args[1] as any,
     });
+    const { functionName, args: funcArgs } = decodedResolverFunction;
 
-    console.log(
-      `Resolving ${decodedResolverFunction.functionName} for name ${name}, args: ${decodedResolverFunction.args}`
-    );
+    console.log(`Resolving name: ${name}, function: ${functionName}, args: ${funcArgs}`)
 
     const resolvedData = await this.web3Client.performL2ResolverCall(
       dnsEncodedName,
       encodedResolverCall as Hash
     );
 
-    console.log(resolvedData);
 
-    return Response.json("", { status: 200 });
+    return Response.json(resolvedData, { status: 200 });
   }
 }
