@@ -4,12 +4,10 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE_NAME: "gateway"
+  IMAGE_NAME: gateway
   REGION: ${{ secrets.GHEC_REGION }}
   PROJECT_ID: ${{ secrets.GHEC_PROJECT }}
-  AUTH: ${{ secrets.GHEC_AUTH }}
   REPO: ${{ secrets.GHEC_REPOSITORY }}
-
 
 jobs:
   build:
@@ -18,13 +16,17 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      
+      - name: Set VERSION to short SHA
+        id: vars
+        run: echo "VERSION=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
 
       # Authenticate to Google Cloud
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ env.PROJECT_ID }}
-          service_account_key: ${{ env.AUTH }}
+          service_account_key: ${{ secrets.GHEC_AUTH }}
 
       # Configure Docker to use gcloud for Artifact Registry
       - name: Configure Docker for Artifact Registry
@@ -32,15 +34,15 @@ jobs:
 
       # Build Docker image
       - name: Build Docker image
-        run: docker build -t ${{ env.IMAGE_NAME }}:${{ github.sha::7 }} ./gateway
+        run: docker build -t ${{ env.IMAGE_NAME }}:${{ env.VERSION }} ./gateway
 
       # Tag Docker image for Artifact Registry
       - name: Tag Docker image
         run: |
-          docker tag ${{ env.IMAGE_NAME }}:${{ github.sha::7 }} \
-          ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha::7 }}
+          docker tag ${{ env.IMAGE_NAME }}:${{ env.VERSION }} \
+          ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
 
       # Push Docker image
       - name: Push Docker image
         run: |
-          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha::7 }}
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
