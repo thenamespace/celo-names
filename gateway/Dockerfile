@@ -1,58 +1,28 @@
-# Multi-stage build for production
-FROM node:20-alpine AS base
+FROM node:22-alpine AS base
 
-# Install dumb-init for proper signal handling
-RUN apk add --no-cache dumb-init
+FROM base AS builder
 
-# Create a non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S gateway -u 1001
-
-# Set working directory
+RUN apk add --no-cache gcompat
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+COPY package*json tsconfig.json ./
+COPY src ./src
 
-# Install all dependencies (including dev dependencies for build)
-RUN npm install
+RUN npm ci && \
+    npm run build && \
+    npm prune --production
 
-# Copy source code
-COPY . .
-
-# Build the application
-RUN npm run build
-
-# Production stage
-FROM node:20-alpine AS production
-
-# Install dumb-init
-RUN apk add --no-cache dumb-init
-
-# Create the same non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S gateway -u 1001
-
-# Set working directory
+FROM base AS runner
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 hono
 
-# Copy built application from base stage
-COPY --from=base /app/dist ./dist
+COPY --from=builder --chown=hono:nodejs /app/node_modules /app/node_modules
+COPY --from=builder --chown=hono:nodejs /app/dist /app/dist
+COPY --from=builder --chown=hono:nodejs /app/package.json /app/package.json
 
-# Change ownership to non-root user
-RUN chown -R gateway:nodejs /app
-
-# Switch to non-root user
-USER gateway
-
-# Expose port
+USER hono
 EXPOSE 3000
 
-# Use dumb-init to handle signals properly
-ENTRYPOINT ["dumb-init", "--"]
-
-# Start the application
-CMD ["node", "dist/index.js"]
+CMD ["node", "/app/dist/index.js"]
