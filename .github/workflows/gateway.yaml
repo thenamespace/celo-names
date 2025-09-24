@@ -1,4 +1,4 @@
-name: Gateway -> Build & Push
+name: Gateway - Build & Push
 
 on:
   workflow_dispatch:
@@ -10,39 +10,59 @@ env:
   REPO: ${{ secrets.GHEC_REPOSITORY }}
 
 jobs:
-  build:
+  prepare:
     runs-on: ubuntu-latest
-
+    outputs:
+      version: ${{ steps.version.outputs.VERSION }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
-      - name: Set VERSION to short SHA
-        id: vars
-        run: echo "VERSION=$(echo $GITHUB_SHA | cut -c1-7)" >> $GITHUB_ENV
 
-      # Authenticate to Google Cloud
-      - name: Set up gcloud
+      - name: Set VERSION to short SHA
+        id: version
+        run: |
+          SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
+          echo "VERSION=$SHORT_SHA" >> $GITHUB_ENV
+          echo "VERSION=$SHORT_SHA" >> $GITHUB_OUTPUT
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GHEC_AUTH }}
+
+      - name: Set up gcloud CLI
         uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ env.PROJECT_ID }}
-          service_account_key: ${{ secrets.GHEC_AUTH }}
 
-      # Configure Docker to use gcloud for Artifact Registry
       - name: Configure Docker for Artifact Registry
         run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
 
-      # Build Docker image
-      - name: Build Docker image
-        run: docker build -t ${{ env.IMAGE_NAME }}:${{ env.VERSION }} ./gateway
+  build:
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      # Tag Docker image for Artifact Registry
-      - name: Tag Docker image
+      - name: Set VERSION from prepare job
+        run: echo "VERSION=${{ needs.prepare.outputs.version }}" >> $GITHUB_ENV
+
+      - name: Build Docker image
+        run: docker build -t ${{ env.IMAGE_NAME }}:${{ env.VERSION }} -f ./gateway/Dockerfile ./gateway
+
+  push:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set VERSION from prepare job
+        run: echo "VERSION=${{ needs.prepare.outputs.version }}" >> $GITHUB_ENV
+
+      - name: Tag Docker image for Artifact Registry
         run: |
           docker tag ${{ env.IMAGE_NAME }}:${{ env.VERSION }} \
           ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
 
-      # Push Docker image
       - name: Push Docker image
         run: |
           docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${{ env.VERSION }}
