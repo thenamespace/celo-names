@@ -1,0 +1,46 @@
+name: Gateway -> Build & Push
+
+on:
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: "gateway"
+  REGION: ${{ secrets.GHEC_REGION }}
+  PROJECT_ID: ${{ secrets.GHEC_PROJECT }}
+  AUTH: ${{ secrets.GHEC_AUTH }}
+  REPO: ${{ secrets.GHEC_REPOSITORY }}
+
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Authenticate to Google Cloud
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          service_account_key: ${{ env.AUTH }}
+
+      # Configure Docker to use gcloud for Artifact Registry
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      # Build Docker image
+      - name: Build Docker image
+        run: docker build -t ${{ env.IMAGE_NAME }}:${{ github.sha::7 }} ./gateway
+
+      # Tag Docker image for Artifact Registry
+      - name: Tag Docker image
+        run: |
+          docker tag ${{ env.IMAGE_NAME }}:${{ github.sha::7 }} \
+          ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha::7 }}
+
+      # Push Docker image
+      - name: Push Docker image
+        run: |
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha::7 }}
