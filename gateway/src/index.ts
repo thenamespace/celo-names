@@ -3,6 +3,7 @@ import { prettyJSON } from "hono/pretty-json";
 import { serve } from "@hono/node-server";
 import dotenv from "dotenv";
 import { CCIPReadHandler } from "./ccip-read/handler";
+import { getEnvironment } from "./env";
 
 // Load environment variables
 dotenv.config();
@@ -10,10 +11,8 @@ dotenv.config();
 const app = new Hono();
 app.use("*", prettyJSON());
 
-const ccip_handler: CCIPReadHandler = new CCIPReadHandler();
-
-const ALCHEMY_TOKEN = process.env.ALCHEMY_TOKEN || "";
-const SINGER_WALLET = process.env.SINGER_WALLET || "";
+const env = getEnvironment();
+const ccip_handler: CCIPReadHandler = new CCIPReadHandler(env);
 
 // Simple health endpoint
 app.get("/", (c) => c.json({ ok: true }));

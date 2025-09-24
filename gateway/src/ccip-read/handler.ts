@@ -1,18 +1,12 @@
 import type { HonoRequest } from "hono";
-import type { Address, Hash } from "viem";
-import { decodeFunctionData, isAddress, isHex, parseAbi } from "viem/utils";
-import { z } from "zod";
+import { decodeFunctionData, isAddress, isHex } from "viem/utils";
 import type { CCIPReadRequest } from "./types";
 import { dnsDecodeName } from "./utils";
-
-const resolver_abi = parseAbi([
-  "function resolve(bytes name, bytes data) view returns(bytes)",
-  "function addr(bytes32 node) view returns (address)",
-  "function addr(bytes32 node, uint256 coinType) view returns (bytes memory)",
-  "function text(bytes32 node, string key) view returns (string memory)",
-  "function contenthash(bytes32 node) view returns (bytes memory)",
-  "function ABI(bytes32 node, uint256 contentTypes) view returns (uint256, bytes memory)",
-]);
+import { RESOLVER_ABI } from "./types";
+import { z } from "zod";
+import { Web3Client } from "./web3-client";
+import type { Hash } from "viem";
+import { type Env } from "../env";
 
 const schema = z.object({
   sender: z.string().refine((value) => isAddress(value)),
@@ -20,6 +14,12 @@ const schema = z.object({
 });
 
 export class CCIPReadHandler {
+  private web3Client: Web3Client;
+
+  constructor(private readonly env: Env) {
+    this.web3Client = new Web3Client();
+  }
+
   async handle(req: HonoRequest): Promise<Response> {
     const safe = schema.safeParse(req.param());
     if (!safe.success) {
@@ -29,23 +29,33 @@ export class CCIPReadHandler {
       );
     }
 
-    const { sender, data } = safe.data as CCIPReadRequest;
+    const { data } = safe.data as CCIPReadRequest;
 
     const decodedBaseFunction = decodeFunctionData({
-      abi: resolver_abi,
+      abi: RESOLVER_ABI,
       data: data,
     });
 
     const { args } = decodedBaseFunction;
-    const name = dnsDecodeName(args[0]);
+    const dnsEncodedName = args[0];
+    const encodedResolverCall = args[1];
+    const name = dnsDecodeName(dnsEncodedName);
 
     const decodedResolverFunction = decodeFunctionData({
-      abi: resolver_abi,
+      abi: RESOLVER_ABI,
       data: args[1] as any,
     });
 
-    console.log(decodedResolverFunction.args, "RESOLVER ARGS");
-    console.log(decodedResolverFunction.functionName, "RESOLVER FUNCTION NAME");
+    console.log(
+      `Resolving ${decodedResolverFunction.functionName} for name ${name}, args: ${decodedResolverFunction.args}`
+    );
+
+    const resolvedData = await this.web3Client.performL2ResolverCall(
+      dnsEncodedName,
+      encodedResolverCall as Hash
+    );
+
+    console.log(resolvedData);
 
     return Response.json("", { status: 200 });
   }
