@@ -167,6 +167,11 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder, IL2Registrar {
     string calldata label,
     uint64 durationInYears
   ) public view returns (uint256) {
+
+    if (!_isValidLabelLen(label)) {
+      revert InvalidLabelLength(label.strlen(), minLabelLength, maxLabelLength);
+    }    
+
     return _price(label, durationInYears);
   }
 

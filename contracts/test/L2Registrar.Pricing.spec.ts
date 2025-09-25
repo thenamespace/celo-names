@@ -259,4 +259,68 @@ describe('L2Registrar - Pricing', () => {
       ); // Allow for gas costs (0.001 ETH)
     });
   });
+
+  describe('Configure Method Pricing', () => {
+    it('Should properly set prices using configure method and return correct rentPrice', async () => {
+      const { registrarContract, owner } = await loadFixture(deployPricingFixture);
+
+      // Test constants for configure method
+      const CONFIGURE_LABEL_LEN_2_PRICE_DOLLARS = 420n;
+      const CONFIGURE_LABEL_LEN_3_PRICE_DOLLARS = 640n;
+      const CONFIGURE_LABEL_LEN_5_PRICE_DOLLARS = 120n;
+      const CONFIGURE_BASE_PRICE_DOLLARS = 5n;
+      const CONFIGURE_MIN_LABEL_LEN = 2n;
+      const CONFIGURE_MAX_LABEL_LEN = 64n;
+
+      // Configure new pricing: 640->3 letter, 420->2 letter, 120->5 letter, base->5
+      // Also set min label length to 2 to allow 2-letter labels
+      const config = {
+        base_price: CONFIGURE_BASE_PRICE_DOLLARS,
+        min_label_len: CONFIGURE_MIN_LABEL_LEN,
+        max_label_len: CONFIGURE_MAX_LABEL_LEN,
+        label_length: [2n, 3n, 5n],
+        label_price: [CONFIGURE_LABEL_LEN_2_PRICE_DOLLARS, 
+          CONFIGURE_LABEL_LEN_3_PRICE_DOLLARS, CONFIGURE_LABEL_LEN_5_PRICE_DOLLARS]
+      };
+
+      await registrarContract.write.configure([config], {
+        account: owner.account,
+      });
+
+      // Test 2-letter label (should use custom price)
+      const price2Letter = await registrarContract.read.rentPrice(['ab', 1n]);
+      const expectedPrice2Letter = dollarsToEth(CONFIGURE_LABEL_LEN_2_PRICE_DOLLARS, ETH_PRICE_DECIMALS_DOLLARS);
+      expect(price2Letter).to.equal(expectedPrice2Letter);
+
+      // Test 3-letter label (should use custom price)
+      const price3Letter = await registrarContract.read.rentPrice(['abc', 1n]);
+      const expectedPrice3Letter = dollarsToEth(CONFIGURE_LABEL_LEN_3_PRICE_DOLLARS, ETH_PRICE_DECIMALS_DOLLARS);
+      expect(price3Letter).to.equal(expectedPrice3Letter);
+
+      // Test 4-letter label (should use base price)
+      const price4Letter = await registrarContract.read.rentPrice(['abcd', 1n]);
+      const expectedPrice4Letter = dollarsToEth(CONFIGURE_BASE_PRICE_DOLLARS, ETH_PRICE_DECIMALS_DOLLARS);
+      expect(price4Letter).to.equal(expectedPrice4Letter);
+
+      // Test 5-letter label (should use custom price)
+      const price5Letter = await registrarContract.read.rentPrice(['abcde', 1n]);
+      const expectedPrice5Letter = dollarsToEth(CONFIGURE_LABEL_LEN_5_PRICE_DOLLARS, ETH_PRICE_DECIMALS_DOLLARS);
+      expect(price5Letter).to.equal(expectedPrice5Letter);
+
+      // Test 6-letter label (should use base price)
+      const price6Letter = await registrarContract.read.rentPrice(['abcdef', 1n]);
+      const expectedPrice6Letter = dollarsToEth(CONFIGURE_BASE_PRICE_DOLLARS, ETH_PRICE_DECIMALS_DOLLARS);
+      expect(price6Letter).to.equal(expectedPrice6Letter);
+
+      // Test multi-year pricing for 2-letter label
+      const price2LetterMultiYear = await registrarContract.read.rentPrice(['ab', 2n]);
+      const expectedPrice2LetterMultiYear = dollarsToEth(CONFIGURE_LABEL_LEN_2_PRICE_DOLLARS * 2n, ETH_PRICE_DECIMALS_DOLLARS);
+      expect(price2LetterMultiYear).to.equal(expectedPrice2LetterMultiYear);
+
+      // Test multi-year pricing for 3-letter label
+      const price3LetterMultiYear = await registrarContract.read.rentPrice(['abc', 3n]);
+      const expectedPrice3LetterMultiYear = dollarsToEth(CONFIGURE_LABEL_LEN_3_PRICE_DOLLARS * 3n, ETH_PRICE_DECIMALS_DOLLARS);
+      expect(price3LetterMultiYear).to.equal(expectedPrice3LetterMultiYear);
+    });
+  });
 });

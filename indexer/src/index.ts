@@ -27,6 +27,8 @@ async function updateRecord(context: any, node: string, updates: any) {
     .set(updates);
 }
 
+ponder.on("")
+
 
 // NewName event handler
 ponder.on("L2Registry:NewName", async ({ event, context }) => {
