@@ -10,17 +10,26 @@ export const records = onchainTable("records", (t) => ({
 
 // Names table - basic name information
 export const names = onchainTable("names", (t) => ({
-  id: t.text().primaryKey(), // node from event
+  id: t.text().primaryKey(), // node from event ( namehash of name )
   label: t.text().notNull(),
+  full_name: t.text().notNull(),
   expiry: t.bigint().notNull(),
   owner: t.text().notNull(),
-  blockNumber: t.integer().notNull(),
-  txHash: t.text().notNull(),
 }));
+
+export const registrations = onchainTable("registrations", (t) => ({
+  id: t.text().primaryKey(), // node from event ( namehash of name )
+  price_wei: t.bigint().notNull(),
+  tx_hash: t.text().notNull(),
+  block_number: t.bigint().notNull(),
+  registrar_contract: t.text().notNull(),
+  tx_sender: t.text().notNull()
+}))
 
 // Define relationships
 export const namesRelations = relations(names, ({ one }) => ({
   record: one(records, { fields: [names.id], references: [records.id] }),
+  registration: one(registrations, { fields: [names.id], references: [registrations.id] }),
 }));
 
 export const recordsRelations = relations(records, ({ one }) => ({

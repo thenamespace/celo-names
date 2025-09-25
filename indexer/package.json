@@ -12,8 +12,9 @@
     "typecheck": "tsc"
   },
   "dependencies": {
-    "ponder": "^0.13.0",
+    "@ensdomains/address-encoder": "^1.1.4",
     "hono": "^4.5.0",
+    "ponder": "^0.13.0",
     "viem": "^2.21.3"
   },
   "devDependencies": {

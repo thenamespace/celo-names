@@ -21,6 +21,8 @@ type Query {
   recordss(where: recordsFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): recordsPage!
   names(id: String!): names
   namess(where: namesFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): namesPage!
+  registrations(id: String!): registrations
+  registrationss(where: registrationsFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): registrationsPage!
   _meta: Meta
 }
 
@@ -35,11 +37,20 @@ type records {
 type names {
   id: String!
   label: String!
+  full_name: String!
   expiry: BigInt!
   owner: String!
-  blockNumber: Int!
-  txHash: String!
   record: records
+  registration: registrations
+}
+
+type registrations {
+  id: String!
+  price_wei: BigInt!
+  tx_hash: String!
+  block_number: BigInt!
+  registrar_contract: String!
+  tx_sender: String!
 }
 
 type recordsPage {
@@ -102,6 +113,16 @@ input namesFilter {
   label_ends_with: String
   label_not_starts_with: String
   label_not_ends_with: String
+  full_name: String
+  full_name_not: String
+  full_name_in: [String]
+  full_name_not_in: [String]
+  full_name_contains: String
+  full_name_not_contains: String
+  full_name_starts_with: String
+  full_name_ends_with: String
+  full_name_not_starts_with: String
+  full_name_not_ends_with: String
   expiry: BigInt
   expiry_not: BigInt
   expiry_in: [BigInt]
@@ -120,22 +141,71 @@ input namesFilter {
   owner_ends_with: String
   owner_not_starts_with: String
   owner_not_ends_with: String
-  blockNumber: Int
-  blockNumber_not: Int
-  blockNumber_in: [Int]
-  blockNumber_not_in: [Int]
-  blockNumber_gt: Int
-  blockNumber_lt: Int
-  blockNumber_gte: Int
-  blockNumber_lte: Int
-  txHash: String
-  txHash_not: String
-  txHash_in: [String]
-  txHash_not_in: [String]
-  txHash_contains: String
-  txHash_not_contains: String
-  txHash_starts_with: String
-  txHash_ends_with: String
-  txHash_not_starts_with: String
-  txHash_not_ends_with: String
+}
+
+type registrationsPage {
+  items: [registrations!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+input registrationsFilter {
+  AND: [registrationsFilter]
+  OR: [registrationsFilter]
+  id: String
+  id_not: String
+  id_in: [String]
+  id_not_in: [String]
+  id_contains: String
+  id_not_contains: String
+  id_starts_with: String
+  id_ends_with: String
+  id_not_starts_with: String
+  id_not_ends_with: String
+  price_wei: BigInt
+  price_wei_not: BigInt
+  price_wei_in: [BigInt]
+  price_wei_not_in: [BigInt]
+  price_wei_gt: BigInt
+  price_wei_lt: BigInt
+  price_wei_gte: BigInt
+  price_wei_lte: BigInt
+  tx_hash: String
+  tx_hash_not: String
+  tx_hash_in: [String]
+  tx_hash_not_in: [String]
+  tx_hash_contains: String
+  tx_hash_not_contains: String
+  tx_hash_starts_with: String
+  tx_hash_ends_with: String
+  tx_hash_not_starts_with: String
+  tx_hash_not_ends_with: String
+  block_number: BigInt
+  block_number_not: BigInt
+  block_number_in: [BigInt]
+  block_number_not_in: [BigInt]
+  block_number_gt: BigInt
+  block_number_lt: BigInt
+  block_number_gte: BigInt
+  block_number_lte: BigInt
+  registrar_contract: String
+  registrar_contract_not: String
+  registrar_contract_in: [String]
+  registrar_contract_not_in: [String]
+  registrar_contract_contains: String
+  registrar_contract_not_contains: String
+  registrar_contract_starts_with: String
+  registrar_contract_ends_with: String
+  registrar_contract_not_starts_with: String
+  registrar_contract_not_ends_with: String
+  tx_sender: String
+  tx_sender_not: String
+  tx_sender_in: [String]
+  tx_sender_not_in: [String]
+  tx_sender_contains: String
+  tx_sender_not_contains: String
+  tx_sender_starts_with: String
+  tx_sender_ends_with: String
+  tx_sender_not_starts_with: String
+  tx_sender_not_ends_with: String
 }

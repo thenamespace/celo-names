@@ -8,3 +8,4 @@ extend type names {
 extend type records {
   name: names
 }
+

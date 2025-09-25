@@ -1,0 +1,66 @@
+import { ponder } from "ponder:registry";
+import { names, records } from "ponder:schema";
+
+const ROOT_NAME = "celoo.eth";
+
+export class RegistryListener {
+  public async listenOnRegistryEvents() {
+    this.handleNewName();
+    this.handleExpiryExtended();
+    this.handleNameRevoked();
+  }
+
+  private async handleNewName() {
+    ponder.on("Registry:NewName", async ({ context, event }) => {
+      const { node, label, expiry, owner } = event.args;
+      const { db } = context;
+
+      const existingName = await db.find(names, {
+        id: node,
+      });
+
+      const full_name = `${label}.${ROOT_NAME}`;
+      console.log(`New subname received: ${full_name}`);
+      if (!existingName?.id) {
+        await context.db.insert(names).values({
+          id: node,
+          label,
+          expiry: expiry,
+          owner,
+          full_name: full_name,
+        });
+      } else {
+        await db.update(names, { id: node }).set(() => ({
+          owner: owner,
+          expiry: expiry,
+        }));
+      }
+    });
+  }
+
+  private async handleExpiryExtended() {
+    ponder.on("Registry:ExpiryUpdated", async ({ context, event }) => {
+      const { node, expiry } = event.args;
+      const { db } = context;
+
+      const existingName = await db.find(names, {
+        id: node,
+      });
+
+      if (!existingName?.id) {
+        console.log("Cannot set expiry for name that doesn't exist");
+      } else {
+        await db.update(names, { id: node }).set({ expiry });
+      }
+    });
+  }
+
+  private async handleNameRevoked() {
+     ponder.on("Registry:NameRevoked", async ({ context, event }) => {
+      const { node } = event.args;
+      const { db } = context;
+
+      await db.delete(names, { id: node })
+    });
+  }
+}
