@@ -2,7 +2,8 @@ version: '3.8'
 
 services:
   indexer:
-    build: .
+    container_name: test-indexer
+    image: europe-west3-docker.pkg.dev/celo-names/celo-names/ponder:0da3af2
     ports:
       - "42069:42069"
     environment:
@@ -11,7 +12,7 @@ services:
       - DATABASE_SCHEMA=public
       - ROOT_NAME=celoo.eth
       - APP_PORT=42069
-    volumes:
-      # Persist PGlite database
-      - ./data:/app/.ponder
+    # volumes:
+    #   # Persist PGlite database
+    #   # - ./data:/app/.ponder
     restart: unless-stopped

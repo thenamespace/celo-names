@@ -1,5 +1,5 @@
 # Use Node.js 18 LTS
-FROM node:18-alpine
+FROM node:20-alpine
 
 # Set working directory
 WORKDIR /app
@@ -8,7 +8,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci --only=production
+RUN npm install
 
 # Copy source code
 COPY . .
@@ -21,9 +21,6 @@ EXPOSE 42069
 
 # Set environment variables
 ENV NODE_ENV=production
-ENV PONDER_DATABASE_URL="file:.ponder/pglite"
-ENV DATABASE_SCHEMA="public"
-ENV ROOT_NAME="celoo.eth"
 
 # Start the indexer
 CMD ["npm", "start"]
