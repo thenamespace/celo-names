@@ -29,7 +29,7 @@ export class CCIPReadHandler {
       );
     }
 
-    const { data } = safe.data as CCIPReadRequest;
+    const { sender, data } = safe.data as CCIPReadRequest;
 
     const decodedBaseFunction = decodeFunctionData({
       abi: RESOLVER_ABI,
@@ -54,7 +54,10 @@ export class CCIPReadHandler {
       encodedResolverCall as Hash
     );
 
+    const signedResponse = await 
+        this.web3Client.signedResolverResponse(sender, data, resolvedData)
 
-    return Response.json(resolvedData, { status: 200 });
+
+    return Response.json({ data: signedResponse }, { status: 200 });
   }
 }

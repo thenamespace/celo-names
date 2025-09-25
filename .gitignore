@@ -62,4 +62,7 @@ pids
 tmp/
 temp/
 
+# Ponder files
 .ponder
+/generated/
+/.ponder/

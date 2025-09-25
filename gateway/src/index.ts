@@ -2,8 +2,19 @@ import { Hono } from "hono";
 import { serve } from "@hono/node-server";
 import { CCIPReadHandler } from "./ccip-read/handler";
 import { getEnvironment } from "./env";
+import { cors } from "hono/cors";
 
 const app = new Hono();
+
+// CORS configuration
+app.use(
+  "*",
+  cors({
+    origin: "*",
+    allowMethods: ["GET", "POST", "OPTIONS"],
+    allowHeaders: ["Content-Type", "Authorization"],
+  })
+);
 
 const env = getEnvironment();
 const ccip_handler: CCIPReadHandler = new CCIPReadHandler(env);
