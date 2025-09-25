@@ -11,7 +11,8 @@ import {
   LABEL_LEN_2_PRICE_DOLLARS,
   LABEL_LEN_3_PRICE_DOLLARS,
   LABEL_LEN_4_PRICE_DOLLARS,
-  BASE_PRICE_DOLLARS
+  BASE_PRICE_DOLLARS,
+  DEFAULT_REGISTRAR_CONFIG
 } from './vars';
 import { dollarsToEth } from './utils';
 import { expect } from 'chai';
@@ -46,6 +47,7 @@ describe('L2Registrar - Pricing', () => {
         registry.address,
         mockOracle.address,
         treasury.account.address, // treasury
+        DEFAULT_REGISTRAR_CONFIG
       ]);
 
     // Set L2Registrar as a registrar in the registry

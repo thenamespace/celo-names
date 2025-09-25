@@ -3,15 +3,10 @@ import '@nomicfoundation/hardhat-viem';
 import '@nomicfoundation/hardhat-chai-matchers';
 import '@nomicfoundation/hardhat-verify';
 import 'solidity-coverage';
-import { celo } from 'viem/chains';
-import dotenv from 'dotenv';
-import { getEnvironment } from './src/env';
-
-// Load environment variables
+import { celo, mainnet } from 'viem/chains';
+import * as dotenv from "dotenv";
 dotenv.config();
 
-// Get environment variables
-const env = getEnvironment();
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -32,12 +27,17 @@ const config: HardhatUserConfig = {
     },
     celo: {
       chainId: celo.id,
-      url: env.celo_rpc_url,
-      accounts: [env.deployer_key],
+      url: process.env.CELO_RPC_URL,
+      accounts: [process.env.DEPLOYER_KEY || ""],
     },
+    mainnet: {
+      chainId: mainnet.id,
+      url: process.env.MAINNET_RPC_URL,
+      accounts: [process.env.DEPLOYER_KEY || ""]
+    }
   },
   etherscan: {
-    apiKey: env.etherscan_key,
+    apiKey: process.env.ETHERSCAN_KEY,
     customChains: [
       {
         network: 'Celo',

@@ -1,6 +1,6 @@
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { viem } from 'hardhat';
-import { PARENT_ENS, PARENT_NODE } from './vars';
+import { DEFAULT_REGISTRAR_CONFIG, PARENT_ENS, PARENT_NODE } from './vars';
 import { expect } from 'chai';
 import '@nomicfoundation/hardhat-chai-matchers';
 import { ERRORS, expectContractCallToFail } from './errors';
@@ -32,6 +32,7 @@ describe("L2Registrar - AccessControl", () => {
         registry.address,
         mockOracle.address,
         owner.account.address, // treasury
+        DEFAULT_REGISTRAR_CONFIG
       ]);
 
     return {

@@ -5,10 +5,8 @@ import {L2Registrar} from '../L2Registrar.sol';
 import {L2Registry} from '../L2Registry.sol';
 
 contract L2Deployer_V1 {
-  address public _registry;
-  address public _registrar;
-
-  event ContractsDeployed(address registry, address registrar);
+  address public registry;
+  address public registrar;
 
   constructor(
     string memory _root_ens_name,
@@ -18,24 +16,28 @@ contract L2Deployer_V1 {
     string memory metadata_uri,
     address usd_stable_oracle,
     address treasury,
-    address owner
+    address owner,
+    L2Registrar.RegistrarConfig memory config
   ) {
-    L2Registry registry = new L2Registry(
+    L2Registry _registry = new L2Registry(
       token_name,
       token_symbol,
       _root_ens_name,
       _root_ens_namehash,
       metadata_uri
     );
-    _registry = address(registry);
-    L2Registrar registrar = new L2Registrar(_registry, usd_stable_oracle, treasury);
-    _registrar = address(registrar);
+    registry = address(_registry);
+    L2Registrar _registrar = new L2Registrar(
+      registry,
+      usd_stable_oracle,
+      treasury,
+      config
+    );
+    registrar = address(_registrar);
 
-    registry.setRegistrar(_registrar, true);
+    _registry.setRegistrar(registrar, true);
 
-    registrar.transferOwnership(owner);
-    registry.transferOwnership(owner);
-
-    emit ContractsDeployed(_registry, _registrar);
+    _registrar.transferOwnership(owner);
+    _registry.transferOwnership(owner);
   }
 }

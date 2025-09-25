@@ -11,6 +11,18 @@ const USD_STABLE_ORACLE = "0x0568fD19986748cEfF3301e55c0eb1E729E0Ab7e"
 const OWNER_ADDRESS = "0x1D84ad46F1ec91b4Bb3208F645aD2fA7aBEc19f8";
 const TREASURY_ADDRESS = "0x1D84ad46F1ec91b4Bb3208F645aD2fA7aBEc19f8";
 
+  // constructor(
+  //   string memory _root_ens_name,
+  //   bytes32 _root_ens_namehash,
+  //   string memory token_name,
+  //   string memory token_symbol,
+  //   string memory metadata_uri,
+  //   address usd_stable_oracle,
+  //   address treasury,
+  //   address owner
+  //.  RegistryConfig config
+  // ) 
+
 async function main() {
   const treasury = OWNER_ADDRESS;
   const owner = TREASURY_ADDRESS;

@@ -43,8 +43,9 @@ contract L1Resolver is
   /// @dev Array of CCIP gateway URLs for offchain resolution
   string[] private ccip_gateway_urls;
 
-  /// @dev Root name for this resolver (e.g., "celo.eth")
-  string private root_name;
+  /// @dev Root names for this resolver (e.g., _hash("celo.eth") => true)
+  /// these will be resolved onchain and the resolver would not try to use CCIP-read
+  mapping(bytes32 => bool) root_names;
 
   /// @dev ENS registry contract
   IENSRegistry immutable ens;
@@ -94,7 +95,7 @@ contract L1Resolver is
   ) Ownable(_msgSender()) {
     setSigners(_signers);
     setOffchainGatewayUrls(_ccip_gateway_urls);
-    root_name = _root_name;
+    setRootName(_root_name, true);
     name_wrapper = INameWrapper(_name_wrapper);
     ens = IENSRegistry(_ens_registry);
   }
@@ -110,7 +111,7 @@ contract L1Resolver is
     bytes calldata data
   ) external view override returns (bytes memory) {
     string memory dns_decoded = ENSDNSUtils.dnsDecode(name);
-    if (_hash(dns_decoded) == _hash(root_name)) {
+    if (root_names[_hash(dns_decoded)]) {
       return _resolve(name, data);
     }
 
@@ -206,11 +207,11 @@ contract L1Resolver is
       makeSignatureHash(sender, expires, extraData, result),
       sig
     );
-    
+
     if (expires < block.timestamp) {
       revert SignatureExpired(expires, block.timestamp);
     }
-    
+
     return (signer, result);
   }
 
@@ -225,7 +226,6 @@ contract L1Resolver is
       name_wrapper.canModifyName(node, _msgSender());
   }
 
-  
   function _hash(string memory str) internal pure returns (bytes32) {
     return keccak256(bytes(str));
   }
@@ -240,6 +240,17 @@ contract L1Resolver is
       versionable_signers[signers_version][_signers[i]] = true;
     }
     emit SignerChanged(_signers);
+  }
+
+  /// @dev Sets root name in mapping
+  /// The root names are resolved on current resolver
+  /// and do not trigger CCIP-read request
+  /// @param _root_name ENS name in string format
+  function setRootName(
+    string memory _root_name,
+    bool enabled
+  ) public onlyOwner {
+    root_names[_hash(_root_name)] = enabled;
   }
 
   /// @dev Set CCIP gateway URLs for offchain resolution

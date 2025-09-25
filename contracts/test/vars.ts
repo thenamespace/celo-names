@@ -24,3 +24,22 @@ export const LABEL_LEN_2_PRICE_DOLLARS = 500n;
 export const LABEL_LEN_3_PRICE_DOLLARS = 250n;
 export const LABEL_LEN_4_PRICE_DOLLARS = 50n;
 export const BASE_PRICE_DOLLARS = 5n;
+
+export const MAX_LABEL_LEN = 255;
+export const MIN_LABEL_LEN = 1;
+
+export interface RegistrarConfig {
+  base_price: bigint
+  label_price: bigint[]
+  label_length: bigint[]
+  max_label_len: bigint
+  min_label_len: bigint
+}
+
+export const DEFAULT_REGISTRAR_CONFIG: RegistrarConfig = {
+  base_price: BASE_PRICE_DOLLARS,
+  max_label_len: 55n,
+  min_label_len: 1n,
+  label_length: [],
+  label_price: []
+}

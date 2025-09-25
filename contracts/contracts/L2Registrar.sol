@@ -7,7 +7,7 @@ import {Pausable} from '@openzeppelin/contracts/utils/Pausable.sol';
 import {ERC721Holder} from '@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol';
 import {StringUtils} from './common/StringUtils.sol';
 import {AggregatorV3Interface} from './interfaces/AggregatorV3Interface.sol';
-import {IL2Registrar} from "./interfaces/IL2Registrar.sol";
+import {IL2Registrar} from './interfaces/IL2Registrar.sol';
 
 contract L2Registrar is Ownable, Pausable, ERC721Holder, IL2Registrar {
   using StringUtils for string;
@@ -18,10 +18,10 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder, IL2Registrar {
   uint256 public basePrice;
 
   /// @dev Minimum allowed label length
-  uint256 public minLabelLength = 1;
+  uint256 public minLabelLength;
 
   /// @dev Maximum allowed label length
-  uint256 public maxLabelLength = 55;
+  uint256 public maxLabelLength;
 
   /// @dev Current version for price updates
   uint256 private priceVersion;
@@ -107,16 +107,33 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder, IL2Registrar {
     address extender
   );
 
+  // ============ Structs ============
+
+  /// @dev Config struct used to configure
+  /// label and pricing rules
+  struct RegistrarConfig {
+    uint min_label_len;
+    uint max_label_len;
+    uint base_price;
+    uint[] label_length;
+    uint[] label_price;
+  }
+
   // ============ Constructor ============
 
   constructor(
     address _registry,
     address _usdOracle,
-    address _treasury
+    address _treasury,
+    RegistrarConfig memory config
   ) Ownable(_msgSender()) {
     registry = IL2Registry(_registry);
     usdOracle = AggregatorV3Interface(_usdOracle);
     treasury = _treasury;
+    // Configure prices and labels
+    setBasePrice(config.base_price);
+    setLabelLengthLimits(config.min_label_len, config.max_label_len);
+    setLabelPrices(config.label_length, config.label_price);
   }
 
   // ============ Public Functions ============
@@ -161,7 +178,7 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder, IL2Registrar {
   /// @dev Check if a subname is available for registration
   /// @param label The subdomain label to check availability for
   /// @return True if the subname is available (not registered), false otherwise
-  function available(string calldata label) external view returns(bool) {
+  function available(string calldata label) external view returns (bool) {
     bytes32 node = _namehash(label, registry.rootNode());
     return registry.ownerOf(uint256(node)) == address(0);
   }
@@ -169,21 +186,10 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder, IL2Registrar {
   // ============ Owner Functions ============
 
   /// @dev Configure all registration pricing and limits in a single transaction
-  /// @param _basePrice Base price in USD for one year of registration
-  /// @param lengths Array of label lengths to set custom prices for
-  /// @param prices Array of custom prices in USD corresponding to each length
-  /// @param _minLength Minimum allowed label length (inclusive)
-  /// @param _maxLength Maximum allowed label length (inclusive)
-  function configure(
-    uint256 _basePrice,
-    uint256[] calldata lengths,
-    uint256[] calldata prices,
-    uint256 _minLength,
-    uint256 _maxLength
-  ) external onlyOwner {
-    setBasePrice(_basePrice);
-    setLabelLengthLimits(_minLength, _maxLength);
-    setLabelPrices(lengths, prices);
+  function configure(RegistrarConfig calldata config) external onlyOwner {
+    setBasePrice(config.base_price);
+    setLabelLengthLimits(config.min_label_len, config.max_label_len);
+    setLabelPrices(config.label_length, config.label_price);
   }
 
   /// @dev Set base price for registration
@@ -196,8 +202,8 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder, IL2Registrar {
   /// @param lengths Array of label lengths to set custom prices for
   /// @param prices Array of custom prices in USD corresponding to each length
   function setLabelPrices(
-    uint256[] calldata lengths,
-    uint256[] calldata prices
+    uint256[] memory lengths,
+    uint256[] memory prices
   ) public onlyOwner {
     if (lengths.length != prices.length) {
       revert ArraysLengthMismatch(lengths.length, prices.length);

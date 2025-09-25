@@ -4,7 +4,7 @@ pragma solidity ^0.8.24;
 import {L1Resolver} from '../L1Resolver.sol';
 
 contract L1Deployer_V1 {
-  address public _resolver;
+  address public resolver;
   address immutable ens_registry = 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e;
 
   constructor(
@@ -14,15 +14,15 @@ contract L1Deployer_V1 {
     address name_wrapper,
     address owner
   ) {
-    L1Resolver resolver = new L1Resolver(
+    L1Resolver _resolver = new L1Resolver(
       signers,
       gateway_urls,
       root_ens_name,
       name_wrapper,
       ens_registry
     );
-    _resolver = address(resolver);
+    resolver = address(_resolver);
 
-    resolver.transferOwnership(owner);
+    _resolver.transferOwnership(owner);
   }
 }

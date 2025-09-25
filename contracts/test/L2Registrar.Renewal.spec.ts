@@ -10,6 +10,7 @@ import {
   ETH_PRICE_DECIMALS_DOLLARS,
   BASE_PRICE_DOLLARS,
   YEAR_IN_SECONDS,
+  DEFAULT_REGISTRAR_CONFIG,
 } from './vars';
 import { dollarsToEth } from './utils';
 import { expect } from 'chai';
@@ -44,6 +45,7 @@ describe('L2Registrar - Renewal', () => {
         registry.address,
         mockOracle.address,
         treasury.account.address, // treasury
+        DEFAULT_REGISTRAR_CONFIG
       ]);
 
     // Set L2Registrar as a registrar in the registry
