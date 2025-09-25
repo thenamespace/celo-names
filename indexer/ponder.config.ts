@@ -1,9 +1,11 @@
 import { createConfig } from "ponder";
 import { celo } from "viem/chains";
+import { getEnvironment } from "./src/env";
 
-import L2_RESOLVER_ABI from "./abis/l2-resolver.abi";
-import L2_REGISTRY_ABI from "./abis/l2-registry.abi";
-import L2_REGISTRAR_ABI from "./abis/l2-registrar.abi";
+const env = getEnvironment();
+import L2_RESOLVER_ABI from "./src/abis/l2-resolver.abi";
+import L2_REGISTRY_ABI from "./src/abis/l2-registry.abi";
+import L2_REGISTRAR_ABI from "./src/abis/l2-registrar.abi";
 
 export default createConfig({
   chains: {

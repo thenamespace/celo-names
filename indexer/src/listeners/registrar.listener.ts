@@ -1,8 +1,9 @@
 import { ponder } from "ponder:registry";
 import { registrations } from "ponder:schema";
 import { namehash } from "viem";
+import { getEnvironment } from "../env";
 
-const ROOT_NAME = "celoo.eth";
+const env = getEnvironment();
 
 export class RegistrarListener {
  
@@ -13,7 +14,7 @@ export class RegistrarListener {
             const { price, label } = event.args;
             const { number } = event.block
             const { hash } = event.transaction;
-            const node = namehash(`${label}.${ROOT_NAME}`);
+            const node = namehash(`${label}.${env.root_name}`);
 
             await context.db.insert(registrations).values({
                 id: node,

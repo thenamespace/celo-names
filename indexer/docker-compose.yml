@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  indexer:
+    build: .
+    ports:
+      - "42069:42069"
+    environment:
+      - NODE_ENV=production
+      - PONDER_DATABASE_URL=file:.ponder/pglite
+      - DATABASE_SCHEMA=public
+      - ROOT_NAME=celoo.eth
+      - APP_PORT=42069
+    volumes:
+      # Persist PGlite database
+      - ./data:/app/.ponder
+    restart: unless-stopped

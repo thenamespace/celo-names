@@ -40,7 +40,7 @@ type names {
   full_name: String!
   expiry: BigInt!
   owner: String!
-  record: records
+  records: records
   registration: registrations
 }
 

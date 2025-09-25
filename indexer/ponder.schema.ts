@@ -9,7 +9,7 @@ export const records = onchainTable("records", (t) => ({
 }));
 
 // Names table - basic name information
-export const names = onchainTable("names", (t) => ({
+export const names = onchainTable("name", (t) => ({
   id: t.text().primaryKey(), // node from event ( namehash of name )
   label: t.text().notNull(),
   full_name: t.text().notNull(),
@@ -28,7 +28,7 @@ export const registrations = onchainTable("registrations", (t) => ({
 
 // Define relationships
 export const namesRelations = relations(names, ({ one }) => ({
-  record: one(records, { fields: [names.id], references: [records.id] }),
+  records: one(records, { fields: [names.id], references: [records.id] }),
   registration: one(registrations, { fields: [names.id], references: [registrations.id] }),
 }));
 

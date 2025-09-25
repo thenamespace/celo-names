@@ -1,7 +1,8 @@
 import { ponder } from "ponder:registry";
 import { names, records } from "ponder:schema";
+import { getEnvironment } from "../env";
 
-const ROOT_NAME = "celoo.eth";
+const env = getEnvironment();
 
 export class RegistryListener {
   public async listenOnRegistryEvents() {
@@ -19,7 +20,7 @@ export class RegistryListener {
         id: node,
       });
 
-      const full_name = `${label}.${ROOT_NAME}`;
+      const full_name = `${label}.${env.root_name}`;
       console.log(`New subname received: ${full_name}`);
       if (!existingName?.id) {
         await context.db.insert(names).values({

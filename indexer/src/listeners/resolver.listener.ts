@@ -1,7 +1,6 @@
 import { getCoderByCoinType } from "@ensdomains/address-encoder";
 import { ponder } from "ponder:registry";
 import { records } from "ponder:schema";
-import { Hash } from "viem";
 
 export class ResolverListener {
     public async listenOnResolverEvents() {
