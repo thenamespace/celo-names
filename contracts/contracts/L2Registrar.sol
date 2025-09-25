@@ -51,11 +51,6 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder, IL2Registrar {
   /// @dev Treasury address for collecting registration fees
   address private treasury;
 
-  address immutable NATIVE_CURENCY = address(0);
-
-  /// @dev Supported ERC20 payment tokens (token => supported)
-  mapping(address => bool) public supportedPaymentTokens;
-
   // ============ Custom Errors ============
 
   /// @dev Thrown when attempting to renew a subname that doesn't exist
@@ -179,6 +174,11 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder, IL2Registrar {
   /// @param label The subdomain label to check availability for
   /// @return True if the subname is available (not registered), false otherwise
   function available(string calldata label) external view returns (bool) {
+
+    if (!_isValidLabelLen(label)) {
+      return false;
+    }
+
     bytes32 node = _namehash(label, registry.rootNode());
     return registry.ownerOf(uint256(node)) == address(0);
   }
@@ -232,13 +232,6 @@ contract L2Registrar is Ownable, Pausable, ERC721Holder, IL2Registrar {
   /// @param _treasury Address where registration fees will be sent
   function setTreasury(address _treasury) external onlyOwner {
     treasury = _treasury;
-  }
-
-  /// @dev Set or unset a supported ERC20 payment token
-  /// @param token ERC20 token address
-  /// @param supported Whether the token is supported
-  function setPaymentToken(address token, bool supported) external onlyOwner {
-    supportedPaymentTokens[token] = supported;
   }
 
   /// @dev Pause contract operations
