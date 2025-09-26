@@ -36,8 +36,8 @@ L2Registry/Resolver -> Deployed and Verified at https://celoscan.io/address/0x96
 
 ## Indexer/Metadata
 
-Created a base for ponder indexer
+Indexer created and deployed at -> https://celo-indexer.namespace.ninja
 
 ## Webapp
 
-Nothing yet
+Webapp created 60-70% and deployed at -> https://webapp-738104270314.europe-west1.run.app/
