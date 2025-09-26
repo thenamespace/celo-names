@@ -1,9 +1,13 @@
 import { Link, useLocation } from 'react-router-dom'
-import { ConnectButton } from '@rainbow-me/rainbowkit'
+import { ConnectButton, useConnectModal } from '@rainbow-me/rainbowkit'
 import './Navigation.css'
 import Text from '@components/Text'
+import Button from './Button'
+import { useAccount } from 'wagmi'
 function Navigation() {
   const location = useLocation()
+  const {isConnected} = useAccount();
+  const { openConnectModal } = useConnectModal()
 
   return (
     <nav className="navigation">
@@ -52,7 +56,7 @@ function Navigation() {
           </Link>
         </div>
         <div className="nav-right">
-          <ConnectButton />
+          {!isConnected ? <Button onClick={() => openConnectModal?.()}>Connect</Button> : <ConnectButton />}
         </div>
       </div>
     </nav>

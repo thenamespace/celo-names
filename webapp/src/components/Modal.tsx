@@ -12,7 +12,6 @@ interface ModalProps {
 function Modal({
   isOpen,
   onClose,
-  title,
   children,
   className = ''
 }: ModalProps) {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { Link } from "react-router-dom";
-import { Clock, ExternalLink, User } from "lucide-react";
+import { Clock, User } from "lucide-react";
 import Text from "@components/Text";
 import Button from "@components/Button";
 import { useCeloIndexer } from "@/hooks/useCeloIndexer";
@@ -32,11 +32,7 @@ function MyNames() {
     return expiryDate.toLocaleDateString();
   };
 
-  const isExpired = (expiry: string) => {
-    const expiryDate = new Date(parseInt(expiry) * 1000);
-    return expiryDate < new Date();
-  };
-
+ 
   const getShortenedAddress = (name: Name) => {
     const ethAddress = name.records?.addresses?.find(addr => addr.coin === 60)?.value;
     if (ethAddress) {
@@ -122,15 +118,14 @@ function MyNames() {
         {names.length === 0 ? (
           <div className="empty-state">
             <div className="empty-state-content">
-              <User size={64} color="#9CA3AF" />
               <Text size="xl" weight="semibold" color="black" className="mt-4 mb-2">
                 No registered names
               </Text>
               <Text size="base" weight="normal" color="gray" className="mb-6">
                 You haven't registered any CELO names yet. Get started by registering your first name.
               </Text>
-              <Link to="/register">
-                <Button variant="primary">
+              <Link to="/">
+                <Button variant="primary" className="mt-3">
                   <Text size="base" weight="medium" color="black">
                     Register
                   </Text>

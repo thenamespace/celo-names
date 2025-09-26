@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { CheckCircle, XCircle, ExternalLink } from "lucide-react";
 import Text from "./Text";
 import Button from "./Button";
@@ -15,14 +14,6 @@ interface TransactionPendingProps {
 const CELOSCAN_BASE_URL = 'https://celoscan.io/tx/';
 
 export default function TransactionPending({ status, transactionHash, onClose }: TransactionPendingProps) {
-  const [showSuccess, setShowSuccess] = useState(false);
-
-  useEffect(() => {
-    if (status === 'success') {
-      const timer = setTimeout(() => setShowSuccess(true), 500);
-      return () => clearTimeout(timer);
-    }
-  }, [status]);
 
   const getStatusContent = () => {
     switch (status) {
