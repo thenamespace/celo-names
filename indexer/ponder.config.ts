@@ -8,10 +8,14 @@ import L2_REGISTRY_ABI from "./src/abis/l2-registry.abi";
 import L2_REGISTRAR_ABI from "./src/abis/l2-registrar.abi";
 
 export default createConfig({
+  database: {
+    kind: env.db_type,
+    connectionString: env.db_connection_string,
+  },
   chains: {
     celo: {
       id: celo.id,
-      rpc: "https://celo-mainnet.g.alchemy.com/v2/-qUes-gxhpWt7QLPNQBQQ",
+      rpc: process.env.RPC_URL,
     },
   },
   contracts: {
