@@ -71,6 +71,14 @@
   color: #6B7280;
 }
 
+.text-green {
+  color: #10B981;
+}
+
+.text-red {
+  color: #EF4444;
+}
+
 /* Special styling for headings */
 h1.text,
 h2.text,

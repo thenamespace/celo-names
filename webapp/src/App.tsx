@@ -1,9 +1,10 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import Navigation from './components/Navigation'
-import Register from './pages/Register'
-import MyNames from './pages/MyNames'
-import AllNames from './pages/AllNames'
+import Navigation from '@components/Navigation'
+import Register from '@pages/Register'
+import MyNames from '@pages/MyNames'
+import AllNames from '@pages/AllNames'
 import './App.css'
+import "@thenamespace/ens-components/index.css";
 
 function App() {
   return (
