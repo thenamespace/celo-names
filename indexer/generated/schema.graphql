@@ -17,30 +17,30 @@ type Meta {
 }
 
 type Query {
-  records(id: String!): records
-  recordss(where: recordsFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): recordsPage!
-  names(id: String!): names
-  namess(where: namesFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): namesPage!
+  record(id: String!): record
+  records(where: recordFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): recordPage!
+  name(id: String!): name
+  names(where: nameFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): namePage!
   registrations(id: String!): registrations
   registrationss(where: registrationsFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): registrationsPage!
   _meta: Meta
 }
 
-type records {
+type record {
   id: String!
   addresses: JSON
   texts: JSON
   contenthash: String
-  name: names
+  name: name
 }
 
-type names {
+type name {
   id: String!
   label: String!
   full_name: String!
   expiry: BigInt!
   owner: String!
-  records: records
+  records: record
   registration: registrations
 }
 
@@ -53,15 +53,15 @@ type registrations {
   tx_sender: String!
 }
 
-type recordsPage {
-  items: [records!]!
+type recordPage {
+  items: [record!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-input recordsFilter {
-  AND: [recordsFilter]
-  OR: [recordsFilter]
+input recordFilter {
+  AND: [recordFilter]
+  OR: [recordFilter]
   id: String
   id_not: String
   id_in: [String]
@@ -84,15 +84,15 @@ input recordsFilter {
   contenthash_not_ends_with: String
 }
 
-type namesPage {
-  items: [names!]!
+type namePage {
+  items: [name!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-input namesFilter {
-  AND: [namesFilter]
-  OR: [namesFilter]
+input nameFilter {
+  AND: [nameFilter]
+  OR: [nameFilter]
   id: String
   id_not: String
   id_in: [String]

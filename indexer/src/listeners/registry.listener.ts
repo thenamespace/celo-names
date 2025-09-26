@@ -1,5 +1,5 @@
 import { ponder } from "ponder:registry";
-import { names, records } from "ponder:schema";
+import { name, record } from "ponder:schema";
 import { getEnvironment } from "../env";
 
 const env = getEnvironment();
@@ -16,14 +16,14 @@ export class RegistryListener {
       const { node, label, expiry, owner } = event.args;
       const { db } = context;
 
-      const existingName = await db.find(names, {
+      const existingName = await db.find(name, {
         id: node,
       });
 
       const full_name = `${label}.${env.root_name}`;
       console.log(`New subname received: ${full_name}`);
       if (!existingName?.id) {
-        await context.db.insert(names).values({
+        await context.db.insert(name).values({
           id: node,
           label,
           expiry: expiry,
@@ -31,7 +31,7 @@ export class RegistryListener {
           full_name: full_name,
         });
       } else {
-        await db.update(names, { id: node }).set(() => ({
+        await db.update(name, { id: node }).set(() => ({
           owner: owner,
           expiry: expiry,
         }));
@@ -44,14 +44,14 @@ export class RegistryListener {
       const { node, expiry } = event.args;
       const { db } = context;
 
-      const existingName = await db.find(names, {
+      const existingName = await db.find(name, {
         id: node,
       });
 
       if (!existingName?.id) {
         console.log("Cannot set expiry for name that doesn't exist");
       } else {
-        await db.update(names, { id: node }).set({ expiry });
+        await db.update(name, { id: node }).set({ expiry });
       }
     });
   }
@@ -61,7 +61,7 @@ export class RegistryListener {
       const { node } = event.args;
       const { db } = context;
 
-      await db.delete(names, { id: node })
+      await db.delete(name, { id: node })
     });
   }
 }

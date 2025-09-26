@@ -15,7 +15,7 @@ export default createConfig({
   chains: {
     celo: {
       id: celo.id,
-      rpc: process.env.RPC_URL,
+      rpc: env.rpc_url,
     },
   },
   contracts: {

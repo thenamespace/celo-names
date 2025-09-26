@@ -1,5 +1,5 @@
 import { ponder } from "ponder:registry";
-import { registrations } from "ponder:schema";
+import { registration } from "ponder:schema";
 import { namehash } from "viem";
 import { getEnvironment } from "../env";
 
@@ -16,7 +16,7 @@ export class RegistrarListener {
             const { hash } = event.transaction;
             const node = namehash(`${label}.${env.root_name}`);
 
-            await context.db.insert(registrations).values({
+            await context.db.insert(registration).values({
                 id: node,
                 price_wei: price,
                 tx_hash: hash,

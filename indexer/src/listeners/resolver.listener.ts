@@ -1,6 +1,6 @@
 import { getCoderByCoinType } from "@ensdomains/address-encoder";
 import { ponder } from "ponder:registry";
-import { records } from "ponder:schema";
+import { record } from "ponder:schema";
 
 export class ResolverListener {
     public async listenOnResolverEvents() {
@@ -15,10 +15,10 @@ export class ResolverListener {
             const { node, key, value } = event.args;
             const { db } = context;
 
-            const existingRecord = await db.find(records, { id: node });
+            const existingRecord = await db.find(record, { id: node });
 
             if (!existingRecord?.id) {
-                await context.db.insert(records).values({
+                await context.db.insert(record).values({
                     id: node,
                     texts: [{ key, value }],
                 });
@@ -27,7 +27,7 @@ export class ResolverListener {
                 const updatedTexts = texts.filter((t: any) => t.key !== key);
                 updatedTexts.push({ key, value });
 
-                await db.update(records, { id: node }).set({ texts: updatedTexts });
+                await db.update(record, { id: node }).set({ texts: updatedTexts });
             }
         });
     }
@@ -37,10 +37,10 @@ export class ResolverListener {
             const { node, a } = event.args;
             const { db } = context;
 
-            const existingRecord = await db.find(records, { id: node });
+            const existingRecord = await db.find(record, { id: node });
 
             if (!existingRecord?.id) {
-                await context.db.insert(records).values({
+                await context.db.insert(record).values({
                     id: node,
                     addresses: [{ coin: 60, value: a }], // 60 = ETH
                 });
@@ -49,7 +49,7 @@ export class ResolverListener {
                 const updatedAddresses = addresses.filter((addr: any) => addr.coin !== 60);
                 updatedAddresses.push({ coin: 60, value: a });
 
-                await db.update(records, { id: node }).set({ addresses: updatedAddresses });
+                await db.update(record, { id: node }).set({ addresses: updatedAddresses });
             }
         });
     }
@@ -59,11 +59,11 @@ export class ResolverListener {
             const { node, coinType, newAddress } = event.args;
             const { db } = context;
 
-            const existingRecord = await db.find(records, { id: node });
+            const existingRecord = await db.find(record, { id: node });
 
             const coin_type = Number(coinType);
             if (!existingRecord?.id) {
-                await context.db.insert(records).values({
+                await context.db.insert(record).values({
                     id: node,
                     addresses: [{ coin: coin_type, value: this.parseAddress(newAddress, coin_type) }],
                 });
@@ -72,7 +72,7 @@ export class ResolverListener {
                 const updatedAddresses = addresses.filter((addr: any) => addr.coin !== coin_type);
                 updatedAddresses.push({ coin: coin_type, value: this.parseAddress(newAddress, coin_type) });
 
-                await db.update(records, { id: node }).set({ addresses: updatedAddresses });
+                await db.update(record, { id: node }).set({ addresses: updatedAddresses });
             }
         });
     }
@@ -82,15 +82,15 @@ export class ResolverListener {
             const { node, hash } = event.args;
             const { db } = context;
 
-            const existingRecord = await db.find(records, { id: node });
+            const existingRecord = await db.find(record, { id: node });
 
             if (!existingRecord?.id) {
-                await context.db.insert(records).values({
+                await context.db.insert(record).values({
                     id: node,
                     contenthash: hash,
                 });
             } else {
-                await db.update(records, { id: node }).set({ contenthash: hash });
+                await db.update(record, { id: node }).set({ contenthash: hash });
             }
         });
     }
