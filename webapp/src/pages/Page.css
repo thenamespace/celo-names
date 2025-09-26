@@ -1,0 +1,41 @@
+.page {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-content {
+  text-align: center;
+}
+
+.page-content h1 {
+  margin-bottom: 1rem;
+}
+
+.page-content p {
+  margin-bottom: 2rem;
+}
+
+.placeholder-content {
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  padding: 3rem 2rem;
+  margin-top: 2rem;
+}
+
+.placeholder-content p {
+  margin: 0;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .page {
+    padding: 1rem;
+  }
+  
+  
+  .placeholder-content {
+    padding: 2rem 1rem;
+  }
+}
