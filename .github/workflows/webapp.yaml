@@ -1,4 +1,4 @@
-name: Gateway - Build & Push
+name: Webapp - Build & Push
 
 on:
   workflow_dispatch:
