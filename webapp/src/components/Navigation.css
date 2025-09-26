@@ -19,8 +19,11 @@
 }
 
 .celo-logo {
-  height: 28px;
-  width: auto;
+  height: 40px !important;
+  width: 120px !important;
+  max-width: none;
+  flex-shrink: 0;
+  object-fit: contain;
 }
 
 .nav-center {
@@ -86,7 +89,8 @@
   }
   
   .celo-logo {
-    height: 24px;
+    height: 32px !important;
+    width: 100px !important;
   }
   
   

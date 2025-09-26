@@ -40,6 +40,10 @@ export const useRegistrar = () => {
 
     const price = await rentPrice(label, durationInYears);
     const resolverData = convertToResolverData(`${label}.celoo.eth`, records);
+
+    console.log(resolverData, "RESOLVER DATA");
+    console.log(records, "RECORDS FROM RESOLVER DATA!!")
+
     const { request } = await publicClient!.simulateContract({
       address: CONTRACT_ADDRESSES.L2_REGISTRAR,
       abi: ABIS.L2_REGISTRAR,

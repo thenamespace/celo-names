@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { Link } from "react-router-dom";
-import { Clock, ExternalLink, User } from "lucide-react";
+import { Calendar, ExternalLink, User } from "lucide-react";
 import Text from "@components/Text";
 import Button from "@components/Button";
 import { useCeloIndexer } from "@/hooks/useCeloIndexer";
 import type { Name } from "@/types/indexer";
 import "./Page.css";
-import "./MyNames.css";
+import "./Names.css";
 
 function MyNames() {
   const { address, isConnected } = useAccount();
@@ -37,12 +37,12 @@ function MyNames() {
     return expiryDate < new Date();
   };
 
-  const getShortenedAddress = (name: Name) => {
-    const ethAddress = name.records?.addresses?.find(addr => addr.coin === 60)?.value;
-    if (ethAddress) {
-      return `${ethAddress.slice(0, 6)}.${ethAddress.slice(-6)}`;
-    }
-    return null;
+  const getRecordCount = (name: Name) => {
+    let count = 0;
+    if (name.records?.addresses) count += name.records.addresses.length;
+    if (name.records?.texts) count += name.records.texts.length;
+    if (name.records?.contenthash) count += 1;
+    return count;
   };
 
   if (!isConnected) {
@@ -109,14 +109,21 @@ function MyNames() {
     <div className="page">
       <div className="page-content">
         <div className="names-header">
-          <div className="header-content">
+          <div>
             <Text as="h1" size="4xl" weight="semibold" color="black" className="mb-2">
               My Names
             </Text>
             <Text size="lg" weight="normal" color="gray">
-              Your registered CELO names ({names.length})
+              Manage your registered CELO names
             </Text>
           </div>
+          <Link to="/register">
+            <Button variant="primary">
+              <Text size="base" weight="medium" color="black">
+                Register New Name
+              </Text>
+            </Button>
+          </Link>
         </div>
 
         {names.length === 0 ? (
@@ -144,58 +151,53 @@ function MyNames() {
               <div key={name.id} className="name-card">
                 <div className="name-card-header">
                   <div className="name-info">
-                    <div className="name-with-avatar">
-                      <div className="avatar-circle">
-                        {name.records?.texts?.find(text => text.key === 'avatar')?.value ? (
-                          <img 
-                            src={name.records.texts.find(text => text.key === 'avatar')?.value} 
-                            alt="Avatar" 
-                            className="avatar-image"
-                          />
-                        ) : (
-                          <div className="default-avatar"></div>
-                        )}
-                      </div>
-                      <div className="name-details">
-                        <a 
-                          href={`https://app.ens.domains/${name.full_name}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="name-link"
-                        >
-                          <Text size="xl" weight="semibold" color="black">
-                            {name.full_name}
-                          </Text>
-                        </a>
-                        <div className="expiry-with-icon">
-                          <Clock size={16} color="#6B7280" />
-                          <Text size="base" weight="normal" color="gray">
-                            {formatExpiry(name.expiry)}
-                          </Text>
-                        </div>
-                        {name.registration?.price_wei && (
-                          <div className="price-with-icon">
-                            <img src="/celo-logo.svg" alt="CELO" className="celo-icon" />
-                            <Text size="sm" weight="medium" color="black">
-                              {(parseInt(name.registration.price_wei) / 1e18).toFixed(3)} CELO
-                            </Text>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                    <Text size="lg" weight="semibold" color="black">
+                      {name.label}
+                    </Text>
+                    <Text size="sm" weight="normal" color="gray">
+                      {name.full_name}
+                    </Text>
+                  </div>
+                  <div className={`status-badge ${isExpired(name.expiry) ? 'expired' : 'active'}`}>
+                    <Text size="xs" weight="medium" color="white">
+                      {isExpired(name.expiry) ? 'Expired' : 'Active'}
+                    </Text>
                   </div>
                 </div>
 
                 <div className="name-card-details">
-                  {getShortenedAddress(name) && (
+                  <div className="detail-item">
+                    <Calendar size={16} color="#6B7280" />
+                    <Text size="sm" weight="normal" color="gray">
+                      Expires: {formatExpiry(name.expiry)}
+                    </Text>
+                  </div>
+                  
+                  {getRecordCount(name) > 0 && (
                     <div className="detail-item">
                       <User size={16} color="#6B7280" />
                       <Text size="sm" weight="normal" color="gray">
-                        {getShortenedAddress(name)}
+                        {getRecordCount(name)} record{getRecordCount(name) !== 1 ? 's' : ''}
                       </Text>
                     </div>
                   )}
                 </div>
+
+                {name.registration?.tx_hash && (
+                  <div className="name-card-footer">
+                    <a
+                      href={`https://celoscan.io/tx/${name.registration.tx_hash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="tx-link"
+                    >
+                      <ExternalLink size={16} color="#3B82F6" />
+                      <Text size="sm" weight="medium">
+                        View Transaction
+                      </Text>
+                    </a>
+                  </div>
+                )}
               </div>
             ))}
           </div>

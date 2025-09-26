@@ -79,6 +79,10 @@
   color: #EF4444;
 }
 
+.text-white {
+  color: #FFFFFF;
+}
+
 /* Special styling for headings */
 h1.text,
 h2.text,

@@ -21,6 +21,7 @@ import { L2_CHAIN_ID } from "@/constants";
 import { useTransactionModal } from "@/hooks/useTransactionModal";
 
 const ETH_COIN = 60;
+const CELO_COIN = 2147483648;
 
 function Register() {
   const { address, isConnected, chain } = useAccount();
@@ -42,7 +43,7 @@ function Register() {
     if (address && records.addresses.length === 0) {
       setRecords({
         ...records,
-        addresses: [{ coinType: ETH_COIN, value: address }],
+        addresses: [{ coinType: ETH_COIN, value: address }, { coinType: CELO_COIN, value: address }],
       });
     }
   }, [address]);
@@ -138,8 +139,8 @@ function Register() {
 
   const registerName = async () => {
     try {
-      // const tx = await register(label, durationInYears, address!, records);
-      const _tx = "0x00000000"
+      console.log(records, "RECORDS!!")
+      const _tx = await register(label, durationInYears, address!, records);
       console.log(`Registration tx: ${_tx}`);
       
       // Show transaction modal after transaction is sent with hash

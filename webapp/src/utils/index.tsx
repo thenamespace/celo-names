@@ -34,36 +34,36 @@ export const convertToResolverData = (
         args: [node, text.key, text.value],
       });
       resolverMulticallData.push(data);
-
-      records.addresses.forEach((addr) => {
-        const coinEncoder = getCoderByCoinType(addr.coinType);
-        if (!coinEncoder) {
-          throw Error(
-            `Coin type is not supported: ${addr.coinType}. Cannot get an encoder`
-          );
-        }
-        const decode = coinEncoder.decode(addr.value);
-        const hexValue = toHex(decode);
-        const data = encodeFunctionData({
-          functionName: "setAddr",
-          abi: parseAbi([SET_ADDRESS_FUNC]),
-          args: [node, BigInt(addr.coinType), hexValue],
-        });
-        resolverMulticallData.push(data);
-      });
-
-      if (records.contenthash !== undefined) {
-        const { protocol, value } = records.contenthash;
-        const encodedValue = `0x${encode(protocol, value)}`;
-
-        const data = encodeFunctionData({
-          functionName: "setContenthash",
-          abi: parseAbi([SET_CONTENTHASH_FUNC]),
-          args: [node, encodedValue as `0x${string}`],
-        });
-        resolverMulticallData.push(data);
-      }
     });
+
+  records.addresses.forEach((addr) => {
+    const coinEncoder = getCoderByCoinType(addr.coinType);
+    if (!coinEncoder) {
+      throw Error(
+        `Coin type is not supported: ${addr.coinType}. Cannot get an encoder`
+      );
+    }
+    const decode = coinEncoder.decode(addr.value);
+    const hexValue = toHex(decode);
+    const data = encodeFunctionData({
+      functionName: "setAddr",
+      abi: parseAbi([SET_ADDRESS_FUNC]),
+      args: [node, BigInt(addr.coinType), hexValue],
+    });
+    resolverMulticallData.push(data);
+  });
+
+  if (records.contenthash !== undefined) {
+    const { protocol, value } = records.contenthash;
+    const encodedValue = `0x${encode(protocol, value)}`;
+
+    const data = encodeFunctionData({
+      functionName: "setContenthash",
+      abi: parseAbi([SET_CONTENTHASH_FUNC]),
+      args: [node, encodedValue as `0x${string}`],
+    });
+    resolverMulticallData.push(data);
+  }
 
   return resolverMulticallData;
 };
