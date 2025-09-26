@@ -15,6 +15,7 @@ export const name = onchainTable("names", (t) => ({
   full_name: t.text().notNull(),
   expiry: t.bigint().notNull(),
   owner: t.text().notNull(),
+  created_at: t.bigint().notNull()
 }));
 
 export const registration = onchainTable("registrations", (t) => ({
@@ -23,7 +24,8 @@ export const registration = onchainTable("registrations", (t) => ({
   tx_hash: t.text().notNull(),
   block_number: t.bigint().notNull(),
   registrar_contract: t.text().notNull(),
-  tx_sender: t.text().notNull()
+  tx_sender: t.text().notNull(),
+  block_timestamp: t.bigint().notNull()
 }))
 
 // Define relationships

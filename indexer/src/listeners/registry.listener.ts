@@ -14,6 +14,7 @@ export class RegistryListener {
   private async handleNewName() {
     ponder.on("Registry:NewName", async ({ context, event }) => {
       const { node, label, expiry, owner } = event.args;
+      const { timestamp } = event.block;
       const { db } = context;
 
       const existingName = await db.find(name, {
@@ -29,6 +30,7 @@ export class RegistryListener {
           expiry: expiry,
           owner,
           full_name: full_name,
+          created_at: timestamp
         });
       } else {
         await db.update(name, { id: node }).set(() => ({
@@ -51,7 +53,7 @@ export class RegistryListener {
       if (!existingName?.id) {
         console.log("Cannot set expiry for name that doesn't exist");
       } else {
-        await db.update(name, { id: node }).set({ expiry });
+        await db.update(name, { id: node }).set({ expiry: expiry });
       }
     });
   }

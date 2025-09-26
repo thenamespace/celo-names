@@ -23,6 +23,7 @@ export class RegistrarListener {
                 block_number: number,
                 registrar_contract: event.transaction.to as any,
                 tx_sender: event.transaction.from,
+                block_timestamp: event.block.timestamp,
             })
         })
     }
