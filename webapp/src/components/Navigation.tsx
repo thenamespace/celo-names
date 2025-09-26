@@ -1,8 +1,7 @@
 import { Link, useLocation } from 'react-router-dom'
-import Button from './Button'
-import Text from './Text'
+import { ConnectButton } from '@rainbow-me/rainbowkit'
 import './Navigation.css'
-
+import Text from '@components/Text'
 function Navigation() {
   const location = useLocation()
 
@@ -53,11 +52,7 @@ function Navigation() {
           </Link>
         </div>
         <div className="nav-right">
-          <Button variant="primary">
-            <Text size="base" weight="medium" color="black">
-              Connect
-            </Text>
-          </Button>
+          <ConnectButton />
         </div>
       </div>
     </nav>

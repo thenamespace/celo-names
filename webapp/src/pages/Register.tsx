@@ -1,11 +1,13 @@
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect } from "react";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { formatEther } from "viem";
 import { debounce } from "lodash";
+import { Plus, Minus } from "lucide-react";
 import Text from "@components/Text";
 import Button from "@components/Button";
 import Input from "@components/Input";
 import Modal from "@components/Modal";
+import CurrencyDropdown from "@components/CurrencyDropdown";
 import "./Page.css";
 import "./Register.css";
 import {
@@ -13,21 +15,38 @@ import {
   type EnsRecords,
 } from "@thenamespace/ens-components";
 import { useRegistrar } from "@/hooks/useRegistrar";
-import { useAccount } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
+import { normalize } from "viem/ens";
+import { L2_CHAIN_ID } from "@/constants";
+import { useTransactionModal } from "@/hooks/useTransactionModal";
+
+const ETH_COIN = 60;
 
 function Register() {
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chain } = useAccount();
+  const { switchChain } = useSwitchChain()
   const { openConnectModal } = useConnectModal();
   const { register, rentPrice, isNameAvailable } = useRegistrar();
-  
-  const [username, setUsername] = useState("");
+  const { showTransactionModal, updateTransactionStatus, TransactionModal } = useTransactionModal();
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [label, setLabel] = useState("");
+  const [durationInYears, setDurationInYears] = useState(1);
+  const [selectedCurrency, setSelectedCurrency] = useState<'CELO' | 'USDC' | 'USDT'>('CELO');
   const [records, setRecords] = useState<EnsRecords>({
     addresses: [],
     texts: [],
   });
-  
+
+  useEffect(() => {
+    if (address && records.addresses.length === 0) {
+      setRecords({
+        ...records,
+        addresses: [{ coinType: ETH_COIN, value: address }],
+      });
+    }
+  }, [address]);
+
   // Name availability and pricing state
   const [nameStatus, setNameStatus] = useState<{
     isAvailable: boolean | null;
@@ -39,20 +58,40 @@ function Register() {
     loading: false,
   });
 
+  const handleLabelChanged = (value: string) => {
+    if (value.includes(".")) {
+      return;
+    }
+    const _value = value.toLocaleLowerCase();
+
+    try {
+      normalize(_value);
+    } catch (err) {
+      // Invalid character
+      return;
+    }
+
+    setLabel(_value);
+    if (durationInYears > 1) {
+      setDurationInYears(1);
+    }
+
+    setNameStatus({ ...nameStatus, loading: true });
+    debouncedCheckName(_value);
+  };
+
   // Debounced function to check name availability and price
   const debouncedCheckName = useCallback(
     debounce(async (label: string) => {
       if (label.length <= 2) {
-        setNameStatus({ isAvailable: null, price: null, loading: false });
+        setNameStatus({ isAvailable: false, price: "0", loading: false });
         return;
       }
-
-      setNameStatus(prev => ({ ...prev, loading: true }));
 
       try {
         const [available, price] = await Promise.all([
           isNameAvailable(label),
-          rentPrice(label, 1), // 1 year duration
+          rentPrice(label, 1),
         ]);
 
         setNameStatus({
@@ -69,24 +108,55 @@ function Register() {
         });
       }
     }, 500),
-    [isNameAvailable, rentPrice]
+    []
   );
 
-  const handleUsernameChange = (value: string) => {
-    setUsername(value);
-    setLabel(value);
-    debouncedCheckName(value);
-  };
-
   const handleRegister = () => {
-    console.log("Conected");
     if (!isConnected) {
-      console.log("Not connected");
+      // 1. If not connected -> prompt to connect
       openConnectModal?.();
       return;
+    } else if (L2_CHAIN_ID !== chain?.id) {
+      // 2. If not on the right network -> prompt to switch chain
+      switchChain({ chainId: L2_CHAIN_ID });
+      return;
+    } else {
+      // 3. Else register
+      registerName();
     }
-    console.log("Registering username:", username);
   };
+
+  const getRegButtonLabel = () => {
+    if (!isConnected) {
+      return "Connect";
+    } else if (L2_CHAIN_ID !== chain?.id) {
+      return "Switch to CELO";
+    } else {
+      return "Register";
+    }
+  };
+
+  const registerName = async () => {
+    try {
+      // const tx = await register(label, durationInYears, address!, records);
+      const _tx = "0x00000000"
+      console.log(`Registration tx: ${_tx}`);
+      
+      // Show transaction modal after transaction is sent with hash
+      showTransactionModal(_tx);
+      
+      // Simulate transaction processing with 5 second timeout
+      setTimeout(() => {
+        updateTransactionStatus('success');
+      }, 5000);
+      
+    } catch(err) {
+      console.error(err);
+      // Show modal with failed state if transaction fails
+      showTransactionModal();
+      updateTransactionStatus('failed');
+    }
+  }
 
   const handleSetProfile = () => {
     setIsModalOpen(true);
@@ -120,34 +190,122 @@ function Register() {
         <div className="register-form">
           <div className="form-group">
             <Input
-              value={username}
-              onChange={handleUsernameChange}
-              placeholder="Enter your username"
+              value={label}
+              onChange={handleLabelChanged}
+              placeholder="Pick your name"
               suffix={
                 <Text size="base" weight="medium">
                   .celoo.eth
                 </Text>
               }
-              loading={nameStatus.loading}
             />
-            
+
             {/* Name status display */}
-            {username.length > 2 && !nameStatus.loading && (
+            {label.length > 2 && (
               <div className="name-status">
-                {nameStatus.isAvailable !== null && (
-                  <Text 
-                    size="sm" 
-                    weight="medium" 
-                    color={nameStatus.isAvailable ? "green" : "red"}
-                    className="mt-2"
-                  >
-                    {nameStatus.isAvailable ? "✓ Available" : "✗ Not Available"}
-                  </Text>
+                {nameStatus.loading ? (
+                  <div className="loading-status">
+                    <div className="spinner"></div>
+                    <Text
+                      size="lg"
+                      weight="medium"
+                      color="gray"
+                      className="mt-2"
+                    >
+                      Checking availability...
+                    </Text>
+                  </div>
+                ) : nameStatus.isAvailable !== null ? (
+                  <div className="mt-2">
+                    <Text size="lg" weight="medium" color="black">
+                      {label}.celoo.eth is{" "}
+                    </Text>
+                    <Text
+                      size="lg"
+                      weight="medium"
+                      color={nameStatus.isAvailable ? "green" : "red"}
+                    >
+                      {nameStatus.isAvailable ? "available!" : "unavailable"}
+                    </Text>
+                  </div>
+                ) : null}
+
+                {/* Duration controls */}
+                {!nameStatus.loading && nameStatus.isAvailable && (
+                  <div className="duration-controls">
+                    <Text
+                      size="sm"
+                      weight="medium"
+                      color="black"
+                      className="mb-2"
+                    >
+                      Registration Duration:
+                    </Text>
+                    <div className="duration-buttons">
+                      <Button
+                        variant="secondary"
+                        onClick={() =>
+                          setDurationInYears(Math.max(1, durationInYears - 1))
+                        }
+                        className="duration-btn"
+                      >
+                        <Minus size={20} color="black" />
+                      </Button>
+                      <div className="duration-display">
+                        <Text size="lg" weight="semibold" color="black">
+                          {durationInYears}{" "}
+                          {durationInYears === 1 ? "Year" : "Years"}
+                        </Text>
+                      </div>
+                      <Button
+                        variant="secondary"
+                        onClick={() =>
+                          setDurationInYears(Math.min(9999, durationInYears + 1))
+                        }
+                        className="duration-btn"
+                      >
+                        <Plus size={20} color="black" />
+                      </Button>
+                    </div>
+                  </div>
                 )}
-                {nameStatus.price && (
-                  <Text size="sm" weight="normal" color="gray" className="mt-1">
-                    Price: {nameStatus.price} CELO/year
-                  </Text>
+
+                {!nameStatus.loading && nameStatus.isAvailable === true && nameStatus.price && (
+                  <div className="price-display">
+                    <div className="price-row">
+                      <div className="price-section">
+                        <Text
+                          size="sm"
+                          weight="normal"
+                          color="gray"
+                          className="price-label"
+                        >
+                          Total
+                        </Text>
+                        <Text
+                          size="lg"
+                          weight="semibold"
+                          color="black"
+                        >
+                          {(parseFloat(nameStatus.price) * durationInYears).toFixed(2)} {selectedCurrency}
+                        </Text>
+                      </div>
+                      <div className="currency-section">
+                        <Text
+                          size="sm"
+                          weight="normal"
+                          color="gray"
+                          className="currency-label"
+                        >
+                          Select token
+                        </Text>
+                        <CurrencyDropdown
+                          selectedCurrency={selectedCurrency}
+                          onCurrencyChange={setSelectedCurrency}
+                        />
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
             )}
@@ -170,10 +328,16 @@ function Register() {
               variant="primary"
               onClick={handleRegister}
               className="register-button mt-2"
-              disabled={!isConnected && username.length > 2 && nameStatus.isAvailable === false}
+              disabled={
+                getRegButtonLabel() === "Register" && (
+                  label.length <= 2 || 
+                  nameStatus.loading || 
+                  nameStatus.isAvailable === false
+                )
+              }
             >
               <Text size="base" weight="medium" color="black">
-                {isConnected ? "Register" : "Connect"}
+                {getRegButtonLabel()}
               </Text>
             </Button>
           </div>
@@ -191,7 +355,12 @@ function Register() {
           className="p-2 pt-0"
           style={{ background: "#f4f4f4", gap: "7px", display: "flex" }}
         >
-          <Button  onClick={() => setIsModalOpen(false)} variant="secondary" className="w-50" size="large">
+          <Button
+            onClick={() => setIsModalOpen(false)}
+            variant="secondary"
+            className="w-50"
+            size="large"
+          >
             Cancel
           </Button>
           <Button
@@ -201,6 +370,8 @@ function Register() {
           >{`Add (${recordsAdded})`}</Button>
         </div>
       </Modal>
+      
+      <TransactionModal />
       <div></div>
     </div>
   );

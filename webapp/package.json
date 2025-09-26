@@ -10,6 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ensdomains/address-encoder": "^1.1.4",
+    "@ensdomains/content-hash": "^3.0.0",
     "@fontsource/inria-serif": "^5.2.8",
     "@fontsource/roboto": "^5.2.8",
     "@rainbow-me/rainbowkit": "^2.2.8",
