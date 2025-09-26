@@ -21,8 +21,8 @@ type Query {
   records(where: recordFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): recordPage!
   name(id: String!): name
   names(where: nameFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): namePage!
-  registrations(id: String!): registrations
-  registrationss(where: registrationsFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): registrationsPage!
+  registration(id: String!): registration
+  registrations(where: registrationFilter, orderBy: String, orderDirection: String, before: String, after: String, limit: Int): registrationPage!
   _meta: Meta
 }
 
@@ -30,7 +30,7 @@ type record {
   id: String!
   addresses: JSON
   texts: JSON
-  contenthash: String
+  contenthash: JSON
   name: name
 }
 
@@ -41,10 +41,10 @@ type name {
   expiry: BigInt!
   owner: String!
   records: record
-  registration: registrations
+  registration: registration
 }
 
-type registrations {
+type registration {
   id: String!
   price_wei: BigInt!
   tx_hash: String!
@@ -72,16 +72,6 @@ input recordFilter {
   id_ends_with: String
   id_not_starts_with: String
   id_not_ends_with: String
-  contenthash: String
-  contenthash_not: String
-  contenthash_in: [String]
-  contenthash_not_in: [String]
-  contenthash_contains: String
-  contenthash_not_contains: String
-  contenthash_starts_with: String
-  contenthash_ends_with: String
-  contenthash_not_starts_with: String
-  contenthash_not_ends_with: String
 }
 
 type namePage {
@@ -143,15 +133,15 @@ input nameFilter {
   owner_not_ends_with: String
 }
 
-type registrationsPage {
-  items: [registrations!]!
+type registrationPage {
+  items: [registration!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
 
-input registrationsFilter {
-  AND: [registrationsFilter]
-  OR: [registrationsFilter]
+input registrationFilter {
+  AND: [registrationFilter]
+  OR: [registrationFilter]
   id: String
   id_not: String
   id_in: [String]

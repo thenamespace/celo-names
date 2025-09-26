@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@ensdomains/address-encoder": "^1.1.4",
+    "@ensdomains/content-hash": "^3.0.0",
     "hono": "^4.5.0",
     "ponder": "^0.13.0",
     "viem": "^2.21.3"

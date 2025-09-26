@@ -3,9 +3,9 @@ import { onchainTable, relations } from "ponder";
 // Records table - resolver data for a node
 export const record = onchainTable("records", (t) => ({
   id: t.text().primaryKey(), // node from event (one-to-one with names)
-  addresses: t.json(), // Array of { coin: number, value: string }
+  addresses: t.json(), // Array of { coin: number, value: string, name?:string }
   texts: t.json(), // Array of { key: string, value: string }
-  contenthash: t.text(),
+  contenthash: t.json(), // { codec: string, decoded: string, encoded: string }
 }));
 
 // Names table - basic name information
