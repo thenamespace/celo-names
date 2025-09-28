@@ -1,6 +1,11 @@
 import { useMemo, useState, useCallback, useEffect } from "react";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { formatEther } from "viem";
+import {
+  ContractFunctionExecutionError,
+  formatEther,
+  zeroHash,
+  type Hash,
+} from "viem";
 import { debounce } from "lodash";
 import { Plus, Minus } from "lucide-react";
 import Text from "@components/Text";
@@ -11,29 +16,36 @@ import CurrencyDropdown from "@components/CurrencyDropdown";
 import "./Page.css";
 import "./Register.css";
 import {
+  getSupportedAddressByName,
   SelectRecordsForm,
   type EnsRecords,
+  type SupportedEnsAddress,
 } from "@thenamespace/ens-components";
 import { useRegistrar } from "@/hooks/useRegistrar";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount, usePublicClient, useSwitchChain } from "wagmi";
 import { normalize } from "viem/ens";
 import { L2_CHAIN_ID } from "@/constants";
 import { useTransactionModal } from "@/hooks/useTransactionModal";
 
-const ETH_COIN = 60;
-const CELO_COIN = 2147483648;
+const USER_DENIED_TX_ERROR = "User denied transaction";
+const celo_address = getSupportedAddressByName("celo") as SupportedEnsAddress;
+const eth_address = getSupportedAddressByName("eth") as SupportedEnsAddress;
 
 function Register() {
   const { address, isConnected, chain } = useAccount();
-  const { switchChain } = useSwitchChain()
+  const { switchChain } = useSwitchChain();
   const { openConnectModal } = useConnectModal();
   const { register, rentPrice, isNameAvailable } = useRegistrar();
-  const { showTransactionModal, updateTransactionStatus, TransactionModal } = useTransactionModal();
+  const { showTransactionModal, updateTransactionStatus, TransactionModal } =
+    useTransactionModal();
+  const publicClient = usePublicClient({ chainId: L2_CHAIN_ID });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [label, setLabel] = useState("");
   const [durationInYears, setDurationInYears] = useState(1);
-  const [selectedCurrency, setSelectedCurrency] = useState<'CELO' | 'USDC' | 'USDT'>('CELO');
+  const [selectedCurrency, setSelectedCurrency] = useState<
+    "CELO" | "USDC" | "USDT"
+  >("CELO");
   const [records, setRecords] = useState<EnsRecords>({
     addresses: [],
     texts: [],
@@ -43,7 +55,10 @@ function Register() {
     if (address && records.addresses.length === 0) {
       setRecords({
         ...records,
-        addresses: [{ coinType: ETH_COIN, value: address }, { coinType: CELO_COIN, value: address }],
+        addresses: [
+          { coinType: eth_address.coinType, value: address },
+          { coinType: celo_address.coinType, value: address },
+        ],
       });
     }
   }, [address]);
@@ -138,26 +153,53 @@ function Register() {
   };
 
   const registerName = async () => {
+    let _tx: Hash = zeroHash;
     try {
-      console.log(records, "RECORDS!!")
-      const _tx = await register(label, durationInYears, address!, records);
-      console.log(`Registration tx: ${_tx}`);
-      
+      _tx = await register(label, durationInYears, address!, records);
+    } catch (err) {
+      const contractErr = err as ContractFunctionExecutionError;
+      if (
+        contractErr?.details &&
+        contractErr.details.includes(USER_DENIED_TX_ERROR)
+      ) {
+        // no nothing, user denied signature request
+      } else if (false) {
+        // user has no funds and return
+        //
+      } else {
+        // show error message
+      }
+      return;
+    }
+
+    try {
       // Show transaction modal after transaction is sent with hash
       showTransactionModal(_tx);
-      
+
       // Simulate transaction processing with 5 second timeout
+      const start_time = new Date().getTime();
+      // We will add artifical 5 seconds delay to make the registration smoother
+      const artificial_wait_time_miliseconds = 5000;
+
+      await publicClient!.waitForTransactionReceipt({ hash: _tx });
+
+      const end_time = new Date().getTime();
+
+      const real_wait_time = end_time - start_time;
+      const time_to_wait =
+        real_wait_time > artificial_wait_time_miliseconds
+          ? 0
+          : artificial_wait_time_miliseconds - real_wait_time;
+
       setTimeout(() => {
-        updateTransactionStatus('success');
-      }, 5000);
-      
-    } catch(err) {
-      console.error(err);
+        updateTransactionStatus("success");
+      }, time_to_wait);
+    } catch (err: unknown) {
       // Show modal with failed state if transaction fails
       showTransactionModal();
-      updateTransactionStatus('failed');
+      updateTransactionStatus("failed");
     }
-  }
+  };
 
   const handleSetProfile = () => {
     setIsModalOpen(true);
@@ -261,7 +303,9 @@ function Register() {
                       <Button
                         variant="secondary"
                         onClick={() =>
-                          setDurationInYears(Math.min(9999, durationInYears + 1))
+                          setDurationInYears(
+                            Math.min(9999, durationInYears + 1)
+                          )
                         }
                         className="duration-btn"
                       >
@@ -271,43 +315,44 @@ function Register() {
                   </div>
                 )}
 
-                {!nameStatus.loading && nameStatus.isAvailable === true && nameStatus.price && (
-                  <div className="price-display">
-                    <div className="price-row">
-                      <div className="price-section">
-                        <Text
-                          size="sm"
-                          weight="normal"
-                          color="gray"
-                          className="price-label"
-                        >
-                          Total
-                        </Text>
-                        <Text
-                          size="lg"
-                          weight="semibold"
-                          color="black"
-                        >
-                          {(parseFloat(nameStatus.price) * durationInYears).toFixed(2)} {selectedCurrency}
-                        </Text>
-                      </div>
-                      <div className="currency-section">
-                        <Text
-                          size="sm"
-                          weight="normal"
-                          color="gray"
-                          className="currency-label"
-                        >
-                          Select token
-                        </Text>
-                        <CurrencyDropdown
-                          selectedCurrency={selectedCurrency}
-                          onCurrencyChange={setSelectedCurrency}
-                        />
+                {!nameStatus.loading &&
+                  nameStatus.isAvailable === true &&
+                  nameStatus.price && (
+                    <div className="price-display">
+                      <div className="price-row">
+                        <div className="price-section">
+                          <Text
+                            size="sm"
+                            weight="normal"
+                            color="gray"
+                            className="price-label"
+                          >
+                            Total
+                          </Text>
+                          <Text size="lg" weight="semibold" color="black">
+                            {(
+                              parseFloat(nameStatus.price) * durationInYears
+                            ).toFixed(2)}{" "}
+                            {selectedCurrency}
+                          </Text>
+                        </div>
+                        <div className="currency-section">
+                          <Text
+                            size="sm"
+                            weight="normal"
+                            color="gray"
+                            className="currency-label"
+                          >
+                            Select token
+                          </Text>
+                          <CurrencyDropdown
+                            selectedCurrency={selectedCurrency}
+                            onCurrencyChange={setSelectedCurrency}
+                          />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
               </div>
             )}
           </div>
@@ -330,11 +375,10 @@ function Register() {
               onClick={handleRegister}
               className="register-button mt-2"
               disabled={
-                getRegButtonLabel() === "Register" && (
-                  label.length <= 2 || 
-                  nameStatus.loading || 
-                  nameStatus.isAvailable === false
-                )
+                getRegButtonLabel() === "Register" &&
+                (label.length <= 2 ||
+                  nameStatus.loading ||
+                  nameStatus.isAvailable === false)
               }
             >
               <Text size="base" weight="medium" color="black">
@@ -371,7 +415,7 @@ function Register() {
           >{`Add (${recordsAdded})`}</Button>
         </div>
       </Modal>
-      
+
       <TransactionModal />
       <div></div>
     </div>
