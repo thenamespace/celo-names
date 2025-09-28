@@ -1,0 +1,42 @@
+/* Custom toast styles with white background like buttons */
+.Toastify__toast {
+  background: #FFFFFF !important;
+  border: 1px solid #E5E7EB !important;
+  border-radius: 8px !important;
+  padding: 12px 16px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
+  min-width: 300px !important;
+  max-width: 400px !important;
+  color: #000000 !important;
+  font-family: inherit !important;
+}
+
+.Toastify__toast--success {
+  border-left: 4px solid #10B981 !important;
+}
+
+.Toastify__toast--error {
+  border-left: 4px solid #EF4444 !important;
+}
+
+.Toastify__toast--warning {
+  border-left: 4px solid #F59E0B !important;
+}
+
+.Toastify__toast-body {
+  padding: 0 !important;
+  margin: 0 !important;
+  color: #000000 !important;
+}
+
+.Toastify__progress-bar {
+  background: #3B82F6 !important;
+}
+
+.Toastify__close-button {
+  color: #6B7280 !important;
+}
+
+.Toastify__close-button:hover {
+  color: #374151 !important;
+}

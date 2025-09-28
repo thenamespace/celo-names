@@ -8,6 +8,7 @@ import {
 } from "viem";
 import { debounce } from "lodash";
 import { Plus, Minus } from "lucide-react";
+import { toast } from "react-toastify";
 import Text from "@components/Text";
 import Button from "@components/Button";
 import Input from "@components/Input";
@@ -76,6 +77,7 @@ function Register() {
 
   const handleLabelChanged = (value: string) => {
     if (value.includes(".")) {
+      toast.warning("Please enter only the name without the .celoo.eth suffix");
       return;
     }
     const _value = value.toLocaleLowerCase();
@@ -84,6 +86,7 @@ function Register() {
       normalize(_value);
     } catch (err) {
       // Invalid character
+      toast.warning("Invalid character in name. Please use only letters, numbers, and hyphens");
       return;
     }
 
@@ -122,6 +125,7 @@ function Register() {
           price: null,
           loading: false,
         });
+        toast.error("Failed to check name availability. Please try again.");
       }
     }, 500),
     []
@@ -137,7 +141,19 @@ function Register() {
       switchChain({ chainId: L2_CHAIN_ID });
       return;
     } else {
-      // 3. Else register
+      // 3. Else register - add validation
+      if (label.length <= 2) {
+        toast.error("Please enter a name with at least 3 characters");
+        return;
+      }
+      if (nameStatus.isAvailable === false) {
+        toast.error("This name is not available. Please choose a different name.");
+        return;
+      }
+      if (nameStatus.loading) {
+        toast.warning("Please wait while we check name availability");
+        return;
+      }
       registerName();
     }
   };
@@ -162,12 +178,15 @@ function Register() {
         contractErr?.details &&
         contractErr.details.includes(USER_DENIED_TX_ERROR)
       ) {
-        // no nothing, user denied signature request
-      } else if (false) {
-        // user has no funds and return
-        //
+        // User denied transaction - no toast needed
+        return;
+      } else if (contractErr?.details?.includes("insufficient funds")) {
+        toast.error("Insufficient funds. Please add CELO to your wallet.");
+        return;
       } else {
-        // show error message
+        // Generic error message
+        toast.error("Registration failed. Please try again.");
+        console.error("Registration error:", err);
       }
       return;
     }
@@ -193,11 +212,14 @@ function Register() {
 
       setTimeout(() => {
         updateTransactionStatus("success");
+        toast.success(`Successfully registered ${label}.celoo.eth!`);
       }, time_to_wait);
     } catch (err: unknown) {
       // Show modal with failed state if transaction fails
       showTransactionModal();
       updateTransactionStatus("failed");
+      toast.error("Transaction failed. Please try again.");
+      console.error("Transaction error:", err);
     }
   };
 
