@@ -1,4 +1,4 @@
-import { namehash, parseAbi, zeroAddress } from 'viem';
+import { Hash, namehash, parseAbi, zeroAddress } from 'viem';
 
 export const TOKEN_NAME = 'Celo ENS';
 export const TOKEN_SYMBOL = 'CENS';
@@ -45,3 +45,11 @@ export const DEFAULT_REGISTRAR_CONFIG: RegistrarConfig = {
 }
 
 export const NATIVE_TOKEN_ADDRESS = zeroAddress;
+
+export interface IPermit {
+  value: bigint
+  deadline: bigint
+  v: number
+  r: Hash
+  s: Hash
+}

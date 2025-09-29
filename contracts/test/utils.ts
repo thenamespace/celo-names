@@ -1,3 +1,6 @@
+import { Hash } from 'viem';
+import { IPermit } from './vars';
+
 export function equalsIgnoreCase(str1: string, str2: string): boolean {
   return str1.toLowerCase() === str2.toLowerCase();
 }
@@ -38,4 +41,80 @@ export function dnsEncode(name: string): `0x${string}` {
   encoded += '00'; // Null terminator
   
   return encoded as `0x${string}`;
+}
+
+/**
+ * Generate EIP-712 permit signature for ERC20 tokens
+ * @param wallet - Wallet client for signing
+ * @param tokenContract - Token contract to get name and nonce
+ * @param spender - Address to approve (registrar)
+ * @param value - Amount to approve
+ * @param deadline - Permit expiration time
+ * @returns Permit signature object with v, r, s components
+ */
+export async function generatePermitSignature(
+  wallet: any,
+  tokenContract: any,
+  spender: string,
+  value: bigint,
+  deadline: bigint
+): Promise<IPermit> {
+  const { viem } = await import('hardhat');
+  
+  const nonce = await tokenContract.read.nonces([wallet.account.address]);
+  
+  // Get the actual chain ID
+  const client = await viem.getPublicClient();
+  const chainId = await client.getChainId();
+  
+  // Get token name for domain
+  const tokenName = await tokenContract.read.name();
+  
+  // EIP-712 signature data
+  const domain = {
+    name: tokenName,
+    version: '1',
+    chainId: chainId,
+    verifyingContract: tokenContract.address,
+  };
+
+  const types = {
+    Permit: [
+      { name: 'owner', type: 'address' },
+      { name: 'spender', type: 'address' },
+      { name: 'value', type: 'uint256' },
+      { name: 'nonce', type: 'uint256' },
+      { name: 'deadline', type: 'uint256' },
+    ],
+  };
+
+  const message = {
+    owner: wallet.account.address,
+    spender: spender,
+    value: value,
+    nonce: nonce,
+    deadline: deadline,
+  };
+
+  // Sign the permit
+  const signature = await wallet.signTypedData({
+    domain,
+    types,
+    primaryType: 'Permit',
+    message,
+  });
+
+  // Split signature
+  const sig = signature.slice(2);
+  const r = `0x${sig.slice(0, 64)}` as Hash;
+  const s = `0x${sig.slice(64, 128)}` as Hash;
+  const v = parseInt(sig.slice(128, 130), 16);
+
+  return {
+    value,
+    deadline,
+    v,
+    r,
+    s,
+  };
 }
