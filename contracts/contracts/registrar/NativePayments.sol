@@ -1,22 +1,39 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
+
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {AggregatorV3Interface} from '../interfaces/AggregatorV3Interface.sol';
 
+/**
+ * @title NativePayments
+ * @notice Abstract contract for handling native token payments (ETH/CELO) with USD price conversion
+ * @dev Provides secure payment processing for native tokens with:
+ *      - USD to native token price conversion via Chainlink oracles
+ *      - Automatic refund of excess funds
+ *      - Treasury fund management
+ *      - Price feed validation and error handling
+ */
 abstract contract NativePayments is Ownable {
-  /// @dev Thrown when price feed is not set
-  error PriceFeedNotSet();
-
-  /// @dev Thrown when price feed returns invalid data
-  error InvalidPriceFeedAnswer(int256 answer);
-
-  /// @dev USD price oracle for ETH conversion
+  // ============ State Variables ============
+  
+  // USD price oracle for native token (ETH/CELO) conversion
   AggregatorV3Interface private immutable usdOracle;
 
+  // ============ Custom Errors ============
+  
+  error PriceFeedNotSet();
+  error InvalidPriceFeedAnswer(int256 answer);
+
+  // ============ Constructor ============
+  
   constructor(address _usdOracle) {
     usdOracle = AggregatorV3Interface(_usdOracle);
   }
 
+  // ============ INTERNAL FUNCTIONS ============
+
+  /// @notice Transfer native funds to treasury and refund excess
+  /// @param value Amount to transfer to treasury
   function _transferNativeFunds(uint256 value) internal {
     if (msg.value == 0) return;
 
@@ -39,8 +56,9 @@ abstract contract NativePayments is Ownable {
     }
   }
 
-  // Dev converts USD to ETH/CELO equivalent
-  // to its
+  /// @notice Convert USD price to native token (ETH/CELO) equivalent
+  /// @param usdPrice Price in USD (whole dollars)
+  /// @return Price in native token wei
   function _convertToStablePrice(
     uint256 usdPrice
   ) internal view returns (uint256) {
@@ -65,12 +83,12 @@ abstract contract NativePayments is Ownable {
     // e.g. $5 with decimals=8 => 5 * 1e8
     uint256 usdPriceScaled = usdPrice * 1e8;
 
-    // 2. Convert USD → ETH with overflow protection
-    // answer = price of 1 ETH in USD with `decimals`
-    // so: ethWei = (usdPriceScaled * 1e18) / answer
-    uint256 ethWei = (usdPriceScaled * 1e18) / uint256(answer);
+    // 2. Convert USD → native token with overflow protection
+    // answer = price of 1 native token in USD with `decimals`
+    // so: nativeWei = (usdPriceScaled * 1e18) / answer
+    uint256 nativeWei = (usdPriceScaled * 1e18) / uint256(answer);
 
-    return ethWei;
+    return nativeWei;
   }
 
   /// @notice Get treasury address for token transfers
