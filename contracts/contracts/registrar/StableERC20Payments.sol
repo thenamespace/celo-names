@@ -7,6 +7,18 @@ import {SafeERC20} from '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {IERC20Metadata} from '@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol';
 
+
+  // ============ Structs ============
+  
+  /// @notice Permit data structure for ERC20 permit functionality
+  struct ERC20Permit {
+    uint256 value;      // Amount to approve
+    uint256 deadline;   // Permit expiration timestamp
+    uint8 v;           // Signature recovery id
+    bytes32 r;         // Signature r component
+    bytes32 s;         // Signature s component
+  }
+
 /**
  * @title StableERC20Payments
  * @notice Abstract contract for handling ERC20 stablecoin payments with permit functionality
@@ -29,17 +41,6 @@ abstract contract StableERC20Payments is Ownable {
   error TokenNotAllowed();
   error InsufficientPermitAmount();
   error InsufficientApprovalAmount();
-
-  // ============ Structs ============
-  
-  /// @notice Permit data structure for ERC20 permit functionality
-  struct ERC20Permit {
-    uint256 value;      // Amount to approve
-    uint256 deadline;   // Permit expiration timestamp
-    uint8 v;           // Signature recovery id
-    bytes32 r;         // Signature r component
-    bytes32 s;         // Signature s component
-  }
 
   // ============ INTERNAL FUNCTIONS ============
 

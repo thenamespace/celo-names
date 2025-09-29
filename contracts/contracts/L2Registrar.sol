@@ -231,6 +231,17 @@ contract L2Registrar is
   /// @return Price in wei for the registration
   function rentPrice(
     string calldata label,
+    uint64 durationInYears
+  ) public view returns (uint256) {
+    return rentPrice(label, durationInYears, NATIVE_TOKEN_ADDRESS);
+  }
+
+  /// @dev Get registration price for label and duration
+  /// @param label The subdomain label to price
+  /// @param durationInYears Registration duration in years
+  /// @return Price in wei for the registration
+  function rentPrice(
+    string calldata label,
     uint64 durationInYears,
     address paymentToken
   ) public view returns (uint256) {
