@@ -23,6 +23,8 @@ abstract contract NativePayments is Ownable {
   
   error PriceFeedNotSet();
   error InvalidPriceFeedAnswer(int256 answer);
+    /// @dev Thrown when insufficient funds are provided for registration
+  error InsufficientFunds(uint256 provided, uint256 required);
 
   // ============ Constructor ============
   
@@ -35,7 +37,14 @@ abstract contract NativePayments is Ownable {
   /// @notice Transfer native funds to treasury and refund excess
   /// @param value Amount to transfer to treasury
   function _transferNativeFunds(uint256 value) internal {
-    if (msg.value == 0) return;
+
+    if (value == 0) {
+      return;
+    }
+
+    if (msg.value < value) {
+      revert InsufficientFunds(value, msg.value);
+    }
 
     uint256 remainder = msg.value - value;
 

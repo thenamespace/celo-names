@@ -94,7 +94,7 @@ abstract contract StableERC20Payments is Ownable {
   /// @param token Token address to get decimals from
   /// @param usdAmount USD amount to convert
   /// @return Token amount with proper decimal scaling
-  function _tokenPrice(address token, uint256 usdAmount) internal view returns(uint256) {
+  function _stablecoinPrice(address token, uint256 usdAmount) internal view returns(uint256) {
     return usdAmount * (10 ** _decimals(token));
   }
 
