@@ -26,12 +26,6 @@ contract L2Registrar is
   /// @dev Seconds in a year for expiry calculations
   uint64 private constant SECONDS_IN_YEAR = 31_536_000;
 
-  /// @dev Maximum allowed registration duration in years
-  uint64 private constant MAX_EXPIRY_YEARS = 10_000;
-
-  /// @dev Minimum allowed registration duration in years
-  uint64 private constant MIN_EXPIRY_YEARS = 1;
-
   /// @dev Registry contract for subdomain management
   IL2Registry private immutable registry;
 
@@ -44,17 +38,7 @@ contract L2Registrar is
   error SubnameDoesNotExist(bytes32 node);
 
   /// @dev Thrown when duration is outside valid range
-  error InvalidDuration(
-    uint64 duration,
-    uint64 minDuration,
-    uint64 maxDuration
-  );
-
-  /// @dev Thrown when label length is invalid
-  error InvalidLabelLength();
-
-  /// @dev Thrown when arrays length mismatch in setLabelPrices
-  error ArraysLengthMismatch(uint256 lengthsLength, uint256 pricesLength);
+  error InvalidDuration(uint64 duration);
 
   // ============ Events ============
 
@@ -83,14 +67,22 @@ contract L2Registrar is
     address _registry,
     address _usdOracle,
     address __treasury,
-    RegistrarRulesConfig memory _rulesConfig
+    RegistrarRulesConfig memory _rules
   ) Ownable(_msgSender()) NativePayments(_usdOracle) {
     registry = IL2Registry(_registry);
     treasury = __treasury;
+    _configureRules(_rules, false);
   }
 
   // ============ Public Functions ============
 
+  /// @notice Register a subname under root node using ERC20 stablecoin payment
+  /// @param label The subdomain label to register
+  /// @param durationInYears Registration duration in years (1-10000)
+  /// @param owner Address that will own the registered subname
+  /// @param resolverData Optional resolver function calls for initial setup
+  /// @param paymentToken Address of the ERC20 stablecoin for payment
+  /// @param permit Permit signature data for gasless approval
   function registerERC20(
     string calldata label,
     uint64 durationInYears,
@@ -99,26 +91,13 @@ contract L2Registrar is
     address paymentToken,
     ERC20Permit calldata permit
   ) public whenNotPaused {
-    if (!_isValidDuration(durationInYears)) {
-      revert InvalidDuration(
-        durationInYears,
-        MIN_EXPIRY_YEARS,
-        MAX_EXPIRY_YEARS
-      );
-    }
-    if (!_isValidLabelLength(label)) {
-      revert InvalidLabelLength();
-    }
-
-    bytes32 root = registry.rootNode();
+    bytes32 node = _register(label, durationInYears, owner, resolverData);
     uint256 price = _price(label, durationInYears, paymentToken);
-
-    _createSubnode(label, root, durationInYears, owner, resolverData);
-    _sendStableERC20Permit(paymentToken, price, permit);
+    _collectERC20Coins(paymentToken, price, permit);
 
     emit NameRegistered(
       label,
-      _namehash(label, root),
+      node,
       owner,
       durationInYears,
       paymentToken,
@@ -126,7 +105,8 @@ contract L2Registrar is
     );
   }
 
-  /// @dev Register a subname under root node
+  /// @notice Register a subname under root node
+  /// The payment is done in native currency
   /// @param label The subdomain label to register
   /// @param durationInYears Registration duration in years (1-10000)
   /// @param owner Address that will own the registered subname
@@ -137,26 +117,13 @@ contract L2Registrar is
     address owner,
     bytes[] calldata resolverData
   ) external payable whenNotPaused {
-    if (!_isValidDuration(durationInYears)) {
-      revert InvalidDuration(
-        durationInYears,
-        MIN_EXPIRY_YEARS,
-        MAX_EXPIRY_YEARS
-      );
-    }
-    if (!_isValidLabelLength(label)) {
-      revert InvalidLabelLength();
-    }
-
-    bytes32 root = registry.rootNode();
+    bytes32 node = _register(label, durationInYears, owner, resolverData);
     uint256 price = _price(label, durationInYears, NATIVE_TOKEN_ADDRESS);
-
-    _createSubnode(label, root, durationInYears, owner, resolverData);
-    _transferNativeFunds(price);
+    _collectFunds(price);
 
     emit NameRegistered(
       label,
-      _namehash(label, root),
+      node,
       owner,
       durationInYears,
       NATIVE_TOKEN_ADDRESS,
@@ -164,65 +131,36 @@ contract L2Registrar is
     );
   }
 
-  /// @dev Extend subname registration duration
-  /// We currently only support renewals for 3 level domains level.example.eth
-  /// and not for deeper levels
+  /// @notice Extend subname registration duration using native currency payment
   /// @param label The subdomain label to renew
   /// @param durationInYears Additional registration duration in years (1-10000)
   function renew(
     string calldata label,
     uint64 durationInYears
   ) external payable {
-    bytes32 root = registry.rootNode();
-    bytes32 node = _namehash(label, root);
-
-    if (_available(node)) {
-      revert SubnameDoesNotExist(node);
-    }
-
-    if (!_isValidDuration(durationInYears)) {
-      revert InvalidDuration(
-        durationInYears,
-        MIN_EXPIRY_YEARS,
-        MAX_EXPIRY_YEARS
-      );
-    }
-
+    bytes32 node = _renew(label, durationInYears);
     uint256 price = _price(label, durationInYears, NATIVE_TOKEN_ADDRESS);
-    _setNodeExpiry(node, durationInYears);
-    _transferNativeFunds(price);
+    _collectFunds(price);
 
     emit NameRenewed(label, node, durationInYears, NATIVE_TOKEN_ADDRESS, price);
   }
 
+  /// @notice Extend subname registration duration using ERC20 stablecoin payment
+  /// @param label The subdomain label to renew
+  /// @param durationInYears Additional registration duration in years (1-10000)
+  /// @param paymentToken Address of the ERC20 stablecoin for payment
+  /// @param permit Permit signature data for gasless approval
   function renewERC20(
     string calldata label,
     uint64 durationInYears,
     address paymentToken,
     ERC20Permit calldata permit
   ) external {
-    bytes32 root = registry.rootNode();
-    bytes32 node = _namehash(label, root);
-
-    if (_available(node)) {
-      revert SubnameDoesNotExist(node);
-    }
-
-    if (!_isValidDuration(durationInYears)) {
-      revert InvalidDuration(
-        durationInYears,
-        MIN_EXPIRY_YEARS,
-        MAX_EXPIRY_YEARS
-      );
-    }
-
+    bytes32 node = _renew(label, durationInYears);
     uint256 price = _price(label, durationInYears, paymentToken);
-    _sendStableERC20Permit(paymentToken, price, permit);
-    _setNodeExpiry(node, durationInYears);
+    _collectERC20Coins(paymentToken, price, permit);
 
-    _transferNativeFunds(price);
-
-    emit NameRenewed(label, node, durationInYears, NATIVE_TOKEN_ADDRESS, price);
+    emit NameRenewed(label, node, durationInYears, paymentToken, price);
   }
 
   /// @dev Get registration price for label and duration
@@ -256,7 +194,7 @@ contract L2Registrar is
   /// @param label The subdomain label to check availability for
   /// @return True if the subname is available (not registered), false otherwise
   function available(string calldata label) external view returns (bool) {
-    if (!_isValidLabelLength(label)) {
+    if (!_isValidLabelLength(label) || _isBlacklisted(label)) {
       return false;
     }
 
@@ -266,23 +204,70 @@ contract L2Registrar is
 
   // ============ Owner Functions ============
 
-  /// @dev Set treasury address for fund collection
+  /// @notice Set treasury address for fund collection
   /// @param __treasury Address where registration fees will be sent
   function setTreasury(address __treasury) external onlyOwner {
     treasury = __treasury;
   }
 
-  /// @dev Pause contract operations
+  /// @notice Pause contract operations
   function pause() external onlyOwner {
     _pause();
   }
 
-  /// @dev Unpause contract operations
+  /// @notice Unpause contract operations
   function unpause() external onlyOwner {
     _unpause();
   }
 
   // ============ Internal Functions ============
+
+  function _register(
+    string calldata label,
+    uint64 durationInYears,
+    address owner,
+    bytes[] calldata resolverData
+  ) internal returns (bytes32) {
+    if (!_isValidDuration(durationInYears)) {
+      revert InvalidDuration(
+        durationInYears
+      );
+    }
+    if (!_isValidLabelLength(label)) {
+      revert InvalidLabelLength();
+    }
+
+    if (_isBlacklisted(label)) {
+      revert BlacklistedName(label);
+    }
+
+    bytes32 root = registry.rootNode();
+    _createSubnode(label, root, durationInYears, owner, resolverData);
+
+    return _namehash(label, root);
+  }
+
+  function _renew(
+    string calldata label,
+    uint64 durationInYears
+  ) internal returns (bytes32) {
+    bytes32 root = registry.rootNode();
+    bytes32 node = _namehash(label, root);
+
+    if (_available(node)) {
+      revert SubnameDoesNotExist(node);
+    }
+
+    if (!_isValidDuration(durationInYears)) {
+      revert InvalidDuration(
+        durationInYears
+      );
+    }
+
+    _setNodeExpiry(node, durationInYears);
+
+    return node;
+  }
 
   function _price(
     string calldata label,
@@ -292,7 +277,7 @@ contract L2Registrar is
     uint256 usdAmount = _getUsdPriceForLabel(label);
 
     if (paymentToken == NATIVE_TOKEN_ADDRESS) {
-      return _convertToStablePrice(usdAmount * durationInYears);
+      return _convertToNativePrice(usdAmount * durationInYears);
     }
 
     return durationInYears * _stablecoinPrice(paymentToken, usdAmount);
@@ -313,14 +298,6 @@ contract L2Registrar is
     uint256 currentExpiry = registry.expiries(node);
     uint64 durationSeconds = durationInYears * SECONDS_IN_YEAR;
     registry.setExpiry(node, currentExpiry + durationSeconds);
-  }
-
-  function _isValidDuration(
-    uint64 durationInYears
-  ) internal pure returns (bool) {
-    return
-      durationInYears <= MAX_EXPIRY_YEARS &&
-      durationInYears >= MIN_EXPIRY_YEARS;
   }
 
   function _available(bytes32 node) internal view returns (bool) {

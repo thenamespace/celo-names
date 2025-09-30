@@ -21,9 +21,11 @@ abstract contract NativePayments is Ownable {
 
   // ============ Custom Errors ============
   
+  /// @dev Thrown when USD price oracle is not set
   error PriceFeedNotSet();
+  /// @dev Thrown when price feed returns invalid data
   error InvalidPriceFeedAnswer(int256 answer);
-    /// @dev Thrown when insufficient funds are provided for registration
+  /// @dev Thrown when insufficient funds are provided for registration
   error InsufficientFunds(uint256 provided, uint256 required);
 
   // ============ Constructor ============
@@ -34,9 +36,7 @@ abstract contract NativePayments is Ownable {
 
   // ============ INTERNAL FUNCTIONS ============
 
-  /// @notice Transfer native funds to treasury and refund excess
-  /// @param value Amount to transfer to treasury
-  function _transferNativeFunds(uint256 value) internal {
+  function _collectFunds(uint256 value) internal {
 
     if (value == 0) {
       return;
@@ -46,8 +46,6 @@ abstract contract NativePayments is Ownable {
       revert InsufficientFunds(value, msg.value);
     }
 
-    uint256 remainder = msg.value - value;
-
     // Transfer required amount to treasury
     if (value > 0) {
       (bool success, ) = _treasury().call{value: value}('');
@@ -56,6 +54,7 @@ abstract contract NativePayments is Ownable {
       }
     }
 
+    uint256 remainder = msg.value - value;
     // Return remainder to sender
     if (remainder > 0) {
       (bool success, ) = msg.sender.call{value: remainder}('');
@@ -68,7 +67,7 @@ abstract contract NativePayments is Ownable {
   /// @notice Convert USD price to native token (ETH/CELO) equivalent
   /// @param usdPrice Price in USD (whole dollars)
   /// @return Price in native token wei
-  function _convertToStablePrice(
+  function _convertToNativePrice(
     uint256 usdPrice
   ) internal view returns (uint256) {
     if (address(usdOracle) == address(0)) {
@@ -100,7 +99,5 @@ abstract contract NativePayments is Ownable {
     return nativeWei;
   }
 
-  /// @notice Get treasury address for token transfers
-  /// @return Treasury address
   function _treasury() internal virtual returns (address);
 }

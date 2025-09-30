@@ -12,7 +12,8 @@ import {
   LABEL_LEN_3_PRICE_DOLLARS,
   LABEL_LEN_4_PRICE_DOLLARS,
   BASE_PRICE_DOLLARS,
-  DEFAULT_REGISTRAR_CONFIG
+  DEFAULT_REGISTRAR_CONFIG,
+  RegistrarConfig
 } from './vars';
 import { dollarsToEth } from './utils';
 import { expect } from 'chai';
@@ -68,7 +69,7 @@ describe('L2Registrar - Pricing', () => {
       LABEL_LEN_3_PRICE_DOLLARS,
       LABEL_LEN_4_PRICE_DOLLARS,
     ]; // USD prices
-    await registrar.write.setLabelPrices([lengths, prices], {
+    await registrar.write.setLabelPrices([lengths, prices, true], {
       account: owner.account,
     });
 
@@ -274,16 +275,16 @@ describe('L2Registrar - Pricing', () => {
 
       // Configure new pricing: 640->3 letter, 420->2 letter, 120->5 letter, base->5
       // Also set min label length to 2 to allow 2-letter labels
-      const config = {
-        base_price: CONFIGURE_BASE_PRICE_DOLLARS,
-        min_label_len: CONFIGURE_MIN_LABEL_LEN,
-        max_label_len: CONFIGURE_MAX_LABEL_LEN,
-        label_length: [2n, 3n, 5n],
-        label_price: [CONFIGURE_LABEL_LEN_2_PRICE_DOLLARS, 
+      const config:RegistrarConfig = {
+        basePrice: CONFIGURE_BASE_PRICE_DOLLARS,
+        minLabelLength: CONFIGURE_MIN_LABEL_LEN,
+        maxLabelLength: CONFIGURE_MAX_LABEL_LEN,
+        labelLength: [2n, 3n, 5n],
+        labelPrices: [CONFIGURE_LABEL_LEN_2_PRICE_DOLLARS, 
           CONFIGURE_LABEL_LEN_3_PRICE_DOLLARS, CONFIGURE_LABEL_LEN_5_PRICE_DOLLARS]
       };
 
-      await registrarContract.write.configure([config], {
+      await registrarContract.write.configureRules([config, true], {
         account: owner.account,
       });
 

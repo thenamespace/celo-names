@@ -84,7 +84,7 @@ describe("L2Registrar - AccessControl", () => {
       const prices = [1000n, 500n, 200n];
       
       await expect(
-        registrarContract.write.setLabelPrices([lengths, prices], {
+        registrarContract.write.setLabelPrices([lengths, prices, false], {
           account: owner.account,
         })
       ).to.not.be.reverted;
@@ -97,7 +97,7 @@ describe("L2Registrar - AccessControl", () => {
       const prices = [1000n, 500n, 200n];
       
       await expectContractCallToFail(
-        async () => await registrarContract.write.setLabelPrices([lengths, prices], {
+        async () => await registrarContract.write.setLabelPrices([lengths, prices, false], {
           account: nonOwner.account,
         }),
         ERRORS.OWNER_ONLY
@@ -111,7 +111,7 @@ describe("L2Registrar - AccessControl", () => {
       const prices = [1000n, 500n, 200n]; // Different length
       
       await expectContractCallToFail(
-        async () => await registrarContract.write.setLabelPrices([lengths, prices], {
+        async () => await registrarContract.write.setLabelPrices([lengths, prices, false], {
           account: owner.account,
         }),
         'ArraysLengthMismatch'

@@ -29,19 +29,19 @@ export const MAX_LABEL_LEN = 255;
 export const MIN_LABEL_LEN = 1;
 
 export interface RegistrarConfig {
-  base_price: bigint
-  label_price: bigint[]
-  label_length: bigint[]
-  max_label_len: bigint
-  min_label_len: bigint
+  basePrice: bigint
+  labelLength: bigint[]
+  labelPrices: bigint[]
+  maxLabelLength: bigint
+  minLabelLength: bigint
 }
 
 export const DEFAULT_REGISTRAR_CONFIG: RegistrarConfig = {
-  base_price: BASE_PRICE_DOLLARS,
-  max_label_len: 55n,
-  min_label_len: 1n,
-  label_length: [],
-  label_price: []
+  basePrice: BASE_PRICE_DOLLARS,
+  maxLabelLength: 55n,
+  minLabelLength: 1n,
+  labelLength: [],
+  labelPrices: []
 }
 
 export const NATIVE_TOKEN_ADDRESS = zeroAddress;

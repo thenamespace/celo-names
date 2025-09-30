@@ -42,13 +42,33 @@ abstract contract StableERC20Payments is Ownable {
   error InsufficientPermitAmount();
   error InsufficientApprovalAmount();
 
+  // ============ OWNER FUNCTIONS ============
+
+  /// @notice Modify approved ERC20 tokens list
+  /// @param tokens Array of token addresses to modify
+  /// @param enabled Whether to enable or disable tokens
+  /// @param clearPreviousEntries Whether to clear existing entries
+  function modifyApprovedTokens(
+    address[] calldata tokens,
+    bool enabled,
+    bool clearPreviousEntries
+  ) public onlyOwner {
+    if (clearPreviousEntries) {
+      allowedTokensVersion++;
+    }
+
+    for (uint256 i = 0; i < tokens.length; i++) {
+      allowedStablecoins[allowedTokensVersion][tokens[i]] = enabled;
+    }
+  }
+
   // ============ INTERNAL FUNCTIONS ============
 
-  /// @notice Process ERC20 payment using permit signature
+  /// @notice Process ERC20 payment using permit signature for gasless approval
   /// @param token ERC20 token address
   /// @param amount Amount to transfer
-  /// @param permit Permit signature data
-  function _sendStableERC20Permit(
+  /// @param permit Permit signature data for gasless approval
+  function _collectERC20Coins(
     address token,
     uint256 amount,
     ERC20Permit calldata permit
@@ -76,7 +96,7 @@ abstract contract StableERC20Payments is Ownable {
   /// @notice Process ERC20 payment using pre-approved allowance
   /// @param token ERC20 token address
   /// @param amount Amount to transfer
-  function _sendStableERC20Approval(
+  function _collectERC20Coins(
     address token,
     uint256 amount
   ) internal {
@@ -90,49 +110,17 @@ abstract contract StableERC20Payments is Ownable {
     tokenContract.safeTransferFrom(_msgSender(), _treasury(), amount);
   }
 
-  /// @notice Calculate token price based on USD amount and token decimals
-  /// @param token Token address to get decimals from
-  /// @param usdAmount USD amount to convert
-  /// @return Token amount with proper decimal scaling
   function _stablecoinPrice(address token, uint256 usdAmount) internal view returns(uint256) {
     return usdAmount * (10 ** _decimals(token));
   }
 
-  /// @notice Check if token is allowed for payments
-  /// @param token Token address to check
-  /// @return Whether token is allowed
   function _isTokenAllowed(address token) internal view returns (bool) {
     return allowedStablecoins[allowedTokensVersion][token];
   }
 
-  /// @notice Get token decimals for price calculation
-  /// @param token Token address
-  /// @return Number of decimals
   function _decimals(address token) internal view returns (uint8) {
     return IERC20Metadata(token).decimals();
   }
 
-  /// @notice Get treasury address for token transfers
-  /// @return Treasury address
   function _treasury() internal virtual returns (address);
-
-  // ============ OWNER FUNCTIONS ============
-
-  /// @notice Modify approved ERC20 tokens list
-  /// @param tokens Array of token addresses to modify
-  /// @param enabled Whether to enable or disable tokens
-  /// @param clearPreviousEntries Whether to clear existing entries
-  function modifyApprovedTokens(
-    address[] calldata tokens,
-    bool enabled,
-    bool clearPreviousEntries
-  ) public onlyOwner {
-    if (clearPreviousEntries) {
-      allowedTokensVersion++;
-    }
-
-    for (uint256 i = 0; i < tokens.length; i++) {
-      allowedStablecoins[allowedTokensVersion][tokens[i]] = enabled;
-    }
-  }
 }

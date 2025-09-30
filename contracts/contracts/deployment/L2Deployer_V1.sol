@@ -3,6 +3,7 @@ pragma solidity ^0.8.24;
 
 import {L2Registrar} from '../L2Registrar.sol';
 import {L2Registry} from '../L2Registry.sol';
+import {RegistrarRulesConfig} from "../registrar/RegistrarRules.sol";
 
 contract L2Deployer_V1 {
   address public registry;
@@ -17,7 +18,7 @@ contract L2Deployer_V1 {
     address usd_stable_oracle,
     address treasury,
     address owner,
-    L2Registrar.RegistrarConfig memory config
+    RegistrarRulesConfig memory config
   ) {
     L2Registry _registry = new L2Registry(
       token_name,
