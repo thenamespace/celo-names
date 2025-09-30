@@ -1,6 +1,6 @@
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { viem } from 'hardhat';
-import { namehash } from 'viem';
+import { namehash, keccak256, encodePacked, toBytes } from 'viem';
 import {
   PARENT_ENS,
   PARENT_NODE,
@@ -358,6 +358,50 @@ describe('L2Registrar - Registration', () => {
           {
             account: user01.account,
             value: requiredPrice,
+          }
+        )
+      ).to.not.be.reverted;
+    });
+
+    it.only('Should prevent registration of blacklisted names', async () => {
+      const { registrarContract, user01, owner } =
+        await loadFixture(deployRegistrationFixture);
+
+      const blacklistedLabel = 'admin';
+      const durationInYears = 1n;
+      const price = await registrarContract.read.rentPrice([blacklistedLabel, durationInYears]);
+
+      // Calculate label hash for blacklisting
+      const labelHash = keccak256(toBytes(blacklistedLabel));
+
+      // Set the label as blacklisted
+      await registrarContract.write.setBlacklist([[labelHash], true], {
+        account: owner.account,
+      });
+
+      // Attempt to register the blacklisted name should fail
+      await expectContractCallToFail(
+        async () =>
+          await registrarContract.write.register(
+            [blacklistedLabel, durationInYears, user01.account.address, []],
+            {
+              account: user01.account,
+              value: price,
+            }
+          ),
+        ERRORS.BLACKLISTED_NAME
+      );
+
+      // Verify that a non-blacklisted name can still be registered
+      const normalLabel = 'testname';
+      const normalPrice = await registrarContract.read.rentPrice([normalLabel, durationInYears]);
+      
+      await expect(
+        registrarContract.write.register(
+          [normalLabel, durationInYears, user01.account.address, []],
+          {
+            account: user01.account,
+            value: normalPrice,
           }
         )
       ).to.not.be.reverted;

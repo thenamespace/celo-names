@@ -13,7 +13,8 @@ export const ERRORS = {
   INVALID_LABEL_LENGTH: 'InvalidLabelLength',
   INVALID_DURATION: 'InvalidDuration',
   INSUFFICIENT_FUNDS: 'InsufficientFunds',
-  SUBNAME_DOES_NOT_EXIST: 'SubnameDoesNotExist'
+  SUBNAME_DOES_NOT_EXIST: 'SubnameDoesNotExist',
+  BLACKLISTED_NAME: 'BlacklistedName'
 } as const;
 
 export interface ContractError extends Error {

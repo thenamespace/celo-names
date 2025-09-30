@@ -180,6 +180,6 @@ abstract contract RegistrarRules is Ownable {
   }
 
   function _labelhash(string calldata label) internal pure returns (bytes32) {
-    return keccak256(abi.encode(label));
+    return keccak256(bytes(label));
   }
 }
