@@ -2,56 +2,58 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import Text from "./Text";
 import "./CurrencyDropdown.css";
+import {
+  CELO_TOKEN,
+  SUSD_TOKEN,
+  USDC_TOKEN,
+  USDT_TOKEN,
+  type PaymentToken,
+} from "@/constants";
 
-interface CurrencyDropdownProps {
-  selectedCurrency: 'CELO' | 'USDC' | 'USDT';
-  onCurrencyChange: (currency: 'CELO' | 'USDC' | 'USDT') => void;
-}
-
-const currencies = [
-  { 
-    code: 'CELO' as const, 
-    name: 'CELO', 
-    logo: '/celo-logo.svg',
-    available: true 
-  },
-  { 
-    code: 'USDC' as const, 
-    name: 'USDC', 
-    logo: '/usdc-logo.svg',
-    available: false 
-  },
-  { 
-    code: 'USDT' as const, 
-    name: 'USDT', 
-    logo: '/usdt-logo.svg',
-    available: false 
-  }
+const PAYMENT_TOKENS: PaymentToken[] = [
+  CELO_TOKEN,
+  USDC_TOKEN,
+  USDT_TOKEN,
+  SUSD_TOKEN,
 ];
 
-export default function CurrencyDropdown({ selectedCurrency, onCurrencyChange }: CurrencyDropdownProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  
-  const selectedCurrencyData = currencies.find(c => c.code === selectedCurrency);
+interface CurrencyDropdownProps {
+  selectedCurrency: PaymentToken;
+  onCurrencyChange: (currency: PaymentToken) => void;
+}
 
-  const handleCurrencySelect = (currency: 'CELO' | 'USDC' | 'USDT') => {
-    const currencyData = currencies.find(c => c.code === currency);
-    if (currencyData?.available) {
-      onCurrencyChange(currency);
+const logos: Record<string, string> = {
+  CELO: "/celo-logo.svg",
+  USDC: "/usdc-logo.svg",
+  USDT: "/usdt-logo.svg",
+  CUSD: "/usdt-logo.svg",
+};
+
+export default function CurrencyDropdown({
+  selectedCurrency,
+  onCurrencyChange,
+}: CurrencyDropdownProps) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const selectedCurrencyData = PAYMENT_TOKENS.find(
+    (c) => c.name === selectedCurrency.name
+  );
+
+  const handleCurrencySelect = (currency: PaymentToken) => {
+    const currencyData = PAYMENT_TOKENS.find((c) => c.name === currency.name);
+    if (currencyData) {
+      onCurrencyChange(currencyData);
       setIsOpen(false);
     }
   };
 
   return (
     <div className="currency-dropdown-container">
-      <div 
-        className="currency-dropdown"
-        onClick={() => setIsOpen(!isOpen)}
-      >
+      <div className="currency-dropdown" onClick={() => setIsOpen(!isOpen)}>
         <div className="currency-option">
-          <img 
-            src={selectedCurrencyData?.logo} 
-            alt={selectedCurrencyData?.name} 
+          <img
+            src={logos[selectedCurrencyData?.name || "CELO"]}
+            alt={selectedCurrencyData?.name}
             className="currency-icon"
           />
           <Text size="sm" weight="medium" color="black">
@@ -60,25 +62,21 @@ export default function CurrencyDropdown({ selectedCurrency, onCurrencyChange }:
         </div>
         <ChevronDown size={16} color="#6B7280" />
       </div>
-      
+
       {isOpen && (
         <div className="currency-dropdown-menu">
-          {currencies.map((currency) => (
+          {PAYMENT_TOKENS.map((currency) => (
             <div
-              key={currency.code}
-              className={`currency-option-item ${!currency.available ? 'disabled' : ''}`}
-              onClick={() => handleCurrencySelect(currency.code)}
+              key={currency.address}
+              className={`currency-option-item`}
+              onClick={() => handleCurrencySelect(currency)}
             >
-              <img 
-                src={currency.logo} 
-                alt={currency.name} 
+              <img
+                src={logos[currency.name]}
+                alt={currency.name}
                 className="currency-icon"
               />
-              <Text 
-                size="sm" 
-                weight="medium" 
-                color={currency.available ? "black" : "gray"}
-              >
+              <Text size="sm" weight="medium">
                 {currency.name}
               </Text>
             </div>

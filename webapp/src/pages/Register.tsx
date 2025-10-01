@@ -3,7 +3,10 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import {
   ContractFunctionExecutionError,
   formatEther,
+  formatUnits,
+  zeroAddress,
   zeroHash,
+  type Address,
   type Hash,
 } from "viem";
 import { debounce } from "lodash";
@@ -25,8 +28,14 @@ import {
 import { useRegistrar } from "@/hooks/useRegistrar";
 import { useAccount, usePublicClient, useSwitchChain } from "wagmi";
 import { normalize } from "viem/ens";
-import { L2_CHAIN_ID } from "@/constants";
+import {
+  CELO_TOKEN,
+  CONTRACT_ADDRESSES,
+  L2_CHAIN_ID,
+  type PaymentToken,
+} from "@/constants";
 import { useTransactionModal } from "@/hooks/useTransactionModal";
+import { useERC20Permit } from "@/hooks/useERC20Permit";
 
 const USER_DENIED_TX_ERROR = "User denied transaction";
 const celo_address = getSupportedAddressByName("celo") as SupportedEnsAddress;
@@ -36,17 +45,23 @@ function Register() {
   const { address, isConnected, chain } = useAccount();
   const { switchChain } = useSwitchChain();
   const { openConnectModal } = useConnectModal();
-  const { register, rentPrice, isNameAvailable } = useRegistrar();
+  const {
+    register,
+    rentPrice,
+    isNameAvailable,
+    registrarAddress,
+    registerERC20,
+  } = useRegistrar();
   const { showTransactionModal, updateTransactionStatus, TransactionModal } =
     useTransactionModal();
+  const { createSignedPermit } = useERC20Permit({ chainId: L2_CHAIN_ID });
   const publicClient = usePublicClient({ chainId: L2_CHAIN_ID });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [label, setLabel] = useState("");
   const [durationInYears, setDurationInYears] = useState(1);
-  const [selectedCurrency, setSelectedCurrency] = useState<
-    "CELO" | "USDC" | "USDT"
-  >("CELO");
+  const [selectedCurrency, setSelectedCurrency] =
+    useState<PaymentToken>(CELO_TOKEN);
   const [records, setRecords] = useState<EnsRecords>({
     addresses: [],
     texts: [],
@@ -86,7 +101,9 @@ function Register() {
       normalize(_value);
     } catch (err) {
       // Invalid character
-      toast.warning("Invalid character in name. Please use only letters, numbers, and hyphens");
+      toast.warning(
+        "Invalid character in name. Please use only letters, numbers, and hyphens"
+      );
       return;
     }
 
@@ -96,12 +113,17 @@ function Register() {
     }
 
     setNameStatus({ ...nameStatus, loading: true });
-    debouncedCheckName(_value);
+    debouncedCheckName(_value, selectedCurrency);
   };
+
+  const handleCurrencyChange = (currency: PaymentToken) => {
+    setSelectedCurrency(currency);
+    debouncedCheckName(label, currency);
+  }
 
   // Debounced function to check name availability and price
   const debouncedCheckName = useCallback(
-    debounce(async (label: string) => {
+    debounce(async (label: string, _currency: PaymentToken) => {
       if (label.length <= 2) {
         setNameStatus({ isAvailable: false, price: "0", loading: false });
         return;
@@ -110,12 +132,12 @@ function Register() {
       try {
         const [available, price] = await Promise.all([
           isNameAvailable(label),
-          rentPrice(label, 1),
+          rentPrice(label, 1, _currency.address),
         ]);
 
         setNameStatus({
           isAvailable: available,
-          price: formatEther(price),
+          price: formatUnits(price, _currency.decimals),
           loading: false,
         });
       } catch (error) {
@@ -147,7 +169,9 @@ function Register() {
         return;
       }
       if (nameStatus.isAvailable === false) {
-        toast.error("This name is not available. Please choose a different name.");
+        toast.error(
+          "This name is not available. Please choose a different name."
+        );
         return;
       }
       if (nameStatus.loading) {
@@ -171,7 +195,29 @@ function Register() {
   const registerName = async () => {
     let _tx: Hash = zeroHash;
     try {
-      _tx = await register(label, durationInYears, address!, records);
+      // We call register with native token
+      if (selectedCurrency.address === CELO_TOKEN.address) {
+        _tx = await register(label, durationInYears, address!, records);
+      } else {
+        // Spender should be the registrar contract
+        const permitValue = await rentPrice(label, durationInYears, selectedCurrency.address);
+        // Increase permit ammount abit just to be safe
+        const permit = await createSignedPermit(
+          selectedCurrency.address,
+          registrarAddress,
+          permitValue
+        );
+
+        _tx = await registerERC20(
+          label,
+          durationInYears,
+          address!,
+          records,
+          permit,
+          selectedCurrency.address
+        );
+        // create a paremit
+      }
     } catch (err) {
       const contractErr = err as ContractFunctionExecutionError;
       if (
@@ -355,7 +401,7 @@ function Register() {
                             {(
                               parseFloat(nameStatus.price) * durationInYears
                             ).toFixed(2)}{" "}
-                            {selectedCurrency}
+                            {selectedCurrency.name}
                           </Text>
                         </div>
                         <div className="currency-section">
@@ -369,7 +415,7 @@ function Register() {
                           </Text>
                           <CurrencyDropdown
                             selectedCurrency={selectedCurrency}
-                            onCurrencyChange={setSelectedCurrency}
+                            onCurrencyChange={handleCurrencyChange}
                           />
                         </div>
                       </div>
