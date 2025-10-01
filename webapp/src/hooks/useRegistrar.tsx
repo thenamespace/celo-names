@@ -29,7 +29,7 @@ export const PAYMENT_TOKENS: PaymentToken[] = [
     decimals: 6,
   },
   {
-    name: "SUSD",
+    name: "sUSD",
     address: SUSD_TOKEN_ADDRESS,
     decimals: 6,
   },

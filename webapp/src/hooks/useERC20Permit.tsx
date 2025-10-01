@@ -34,7 +34,6 @@ export const useERC20Permit = ({ chainId }: { chainId: number }) => {
         deadline: deadline,
       }
 
-    // Sign using proper EIP-712 typed data with domain
     const signature = await walletClient!.signTypedData({
       domain: {
         name: token.token_name,

@@ -2,11 +2,8 @@ import { useMemo, useState, useCallback, useEffect } from "react";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import {
   ContractFunctionExecutionError,
-  formatEther,
   formatUnits,
-  zeroAddress,
   zeroHash,
-  type Address,
   type Hash,
 } from "viem";
 import { debounce } from "lodash";
@@ -30,7 +27,6 @@ import { useAccount, usePublicClient, useSwitchChain } from "wagmi";
 import { normalize } from "viem/ens";
 import {
   CELO_TOKEN,
-  CONTRACT_ADDRESSES,
   L2_CHAIN_ID,
   type PaymentToken,
 } from "@/constants";
@@ -92,7 +88,6 @@ function Register() {
 
   const handleLabelChanged = (value: string) => {
     if (value.includes(".")) {
-      toast.warning("Please enter only the name without the .celoo.eth suffix");
       return;
     }
     const _value = value.toLocaleLowerCase();
@@ -100,10 +95,6 @@ function Register() {
     try {
       normalize(_value);
     } catch (err) {
-      // Invalid character
-      toast.warning(
-        "Invalid character in name. Please use only letters, numbers, and hyphens"
-      );
       return;
     }
 
@@ -118,12 +109,10 @@ function Register() {
 
   const handleCurrencyChange = (currency: PaymentToken) => {
     setSelectedCurrency(currency);
-    debouncedCheckName(label, currency);
+    checkName(label, currency);
   };
 
-  // Debounced function to check name availability and price
-  const debouncedCheckName = useCallback(
-    debounce(async (label: string, _currency: PaymentToken) => {
+  const checkName = async (label: string, _currency: PaymentToken) => {
       if (label.length <= 2) {
         setNameStatus({ isAvailable: false, price: "0", loading: false });
         return;
@@ -149,6 +138,12 @@ function Register() {
         });
         toast.error("Failed to check name availability. Please try again.");
       }
+  }
+
+  // Debounced function to check name availability and price
+  const debouncedCheckName = useCallback(
+    debounce(async (label: string, _currency: PaymentToken) => {
+      checkName(label, _currency)
     }, 500),
     []
   );

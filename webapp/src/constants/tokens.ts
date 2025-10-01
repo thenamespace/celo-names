@@ -1,20 +1,6 @@
-import { zeroAddress, type Address, type Hash } from "viem";
+import { zeroAddress, type Address } from "viem";
 
-export type CurrencyToken = "CELO" | "USDT" | "USDC" | "SUSD";
-
-export const EIP712_DOMAIN_SEPARATORS: Record<CurrencyToken, Hash> = {
-  CELO: zeroAddress,
-  USDC: "0xb2ce31d2838445fa765a491f550e7c78ac7280ab0f3bc9d6063a86df9c3fb578",
-  USDT: "0xbcb4d62e4834b598d0eacecd84c0b397a0254e077c41cf2143e394d5701d1088",
-  SUSD: "0xc3f163090e72ee987c14636c13818d3d97aabfdded2ea52508310d723815e485",
-};
-
-export const EIP719_PERMIT_TYPEHASH: Record<CurrencyToken, Hash> = {
-  CELO: zeroAddress,
-  USDC: "0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9",
-  USDT: zeroAddress,
-  SUSD: "0x0",
-};
+export type CurrencyToken = "CELO" | "USDT" | "USDC" | "sUSD";
 
 export interface PaymentToken {
   name: CurrencyToken;
@@ -49,9 +35,9 @@ export const USDT_TOKEN: PaymentToken = {
   token_version: "1",
 };
 export const SUSD_TOKEN: PaymentToken = {
-  name: "SUSD",
+  name: "sUSD",
   address: SUSD_TOKEN_ADDRESS,
   decimals: 18,
   token_name: "Celo Dollar",
-  token_version: "3",
+  token_version: "1",
 };

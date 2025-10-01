@@ -26,7 +26,7 @@ const logos: Record<string, string> = {
   CELO: "/celo-logo.svg",
   USDC: "/usdc-logo.svg",
   USDT: "/usdt-logo.svg",
-  CUSD: "/usdt-logo.svg",
+  sUSD: "/cusd-logo.png",
 };
 
 export default function CurrencyDropdown({
