@@ -119,7 +119,7 @@ function Register() {
   const handleCurrencyChange = (currency: PaymentToken) => {
     setSelectedCurrency(currency);
     debouncedCheckName(label, currency);
-  }
+  };
 
   // Debounced function to check name availability and price
   const debouncedCheckName = useCallback(
@@ -200,10 +200,14 @@ function Register() {
         _tx = await register(label, durationInYears, address!, records);
       } else {
         // Spender should be the registrar contract
-        const permitValue = await rentPrice(label, durationInYears, selectedCurrency.address);
-        // Increase permit ammount abit just to be safe
+        const permitValue = await rentPrice(
+          label,
+          durationInYears,
+          selectedCurrency.address
+        );
+        // Create erc20 permit for gasless transfer
         const permit = await createSignedPermit(
-          selectedCurrency.address,
+          selectedCurrency,
           registrarAddress,
           permitValue
         );
@@ -216,7 +220,6 @@ function Register() {
           permit,
           selectedCurrency.address
         );
-        // create a paremit
       }
     } catch (err) {
       const contractErr = err as ContractFunctionExecutionError;
