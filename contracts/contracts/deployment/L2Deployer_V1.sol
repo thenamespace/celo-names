@@ -18,8 +18,10 @@ contract L2Deployer_V1 {
     address usd_stable_oracle,
     address treasury,
     address owner,
-    RegistrarRulesConfig memory config
+    RegistrarRulesConfig memory config,
+    bytes32[] memory blacklist
   ) {
+    
     L2Registry _registry = new L2Registry(
       token_name,
       token_symbol,
@@ -27,13 +29,17 @@ contract L2Deployer_V1 {
       _root_ens_namehash,
       metadata_uri
     );
+    
     registry = address(_registry);
+    
     L2Registrar _registrar = new L2Registrar(
       registry,
       usd_stable_oracle,
       treasury,
       config
     );
+
+    _registrar.setBlacklist(blacklist, false);
     registrar = address(_registrar);
 
     _registry.setRegistrar(registrar, true);

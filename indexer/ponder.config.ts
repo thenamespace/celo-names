@@ -5,7 +5,10 @@ import { getEnvironment } from "./src/env";
 const env = getEnvironment();
 import L2_RESOLVER_ABI from "./src/abis/l2-resolver.abi";
 import L2_REGISTRY_ABI from "./src/abis/l2-registry.abi";
+// These are just multiple version of registrars for test celoo.eth
+// We will clean these up on official launch
 import L2_REGISTRAR_ABI from "./src/abis/l2-registrar.abi";
+import L2_REGISTRAR_V2_ABI from "./src/abis/l2-registrar-v2.abi";
 
 export default createConfig({
   database: {
@@ -37,5 +40,11 @@ export default createConfig({
       address: "0x650b162Ef4812097E2005845A7baAE9DeeB22723",
       startBlock: 46660369,
     },
+    RegistrarV2: {
+      chain: "celo",
+      abi: L2_REGISTRAR_V2_ABI,
+      address: "0x43D76cb9be60f677e58e15F71Dd760Aaa0a2fae0",
+      startBlock: 46660369
+    }
   },
 });

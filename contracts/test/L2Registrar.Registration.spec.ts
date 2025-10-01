@@ -363,7 +363,7 @@ describe('L2Registrar - Registration', () => {
       ).to.not.be.reverted;
     });
 
-    it.only('Should prevent registration of blacklisted names', async () => {
+    it('Should prevent registration of blacklisted names', async () => {
       const { registrarContract, user01, owner } =
         await loadFixture(deployRegistrationFixture);
 

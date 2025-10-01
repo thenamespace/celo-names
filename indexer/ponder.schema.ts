@@ -25,7 +25,8 @@ export const registration = onchainTable("registrations", (t) => ({
   block_number: t.bigint().notNull(),
   registrar_contract: t.text().notNull(),
   tx_sender: t.text().notNull(),
-  block_timestamp: t.bigint().notNull()
+  block_timestamp: t.bigint().notNull(),
+  payment_token: t.text().notNull()
 }))
 
 // Define relationships
