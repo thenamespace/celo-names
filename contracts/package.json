@@ -36,6 +36,8 @@
     "viem": "^2.21.0"
   },
   "dependencies": {
-    "@openzeppelin/contracts": "^5.4.0"
+    "@openzeppelin/contracts": "^5.4.0",
+    "@selfxyz/contracts": "^1.2.3",
+    "@selfxyz/core": "^1.0.8"
   }
 }
