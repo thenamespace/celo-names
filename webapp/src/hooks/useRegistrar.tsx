@@ -82,6 +82,20 @@ export const useRegistrar = () => {
     return price as bigint;
   };
 
+  const claimWithSelf = async (label: string, owner: Address, records: EnsRecords): Promise<Hash> => {
+
+    const full_name = `${label}.celoo.eth`;
+    const { request } = await publicClient!.simulateContract({
+      address: CONTRACT_ADDRESSES.L2_SELF_REGISTRAR,
+      abi: ABIS.L2_SELF_REGISTRAR_ABI,
+      args: [label, owner, convertToResolverData(full_name, records)],
+      account: address!,
+      functionName: "claim"
+    })
+
+    return await walletClient!.writeContract(request);
+  }
+
   const registerERC20 = async (
     label: string,
     durationInYears: number,
@@ -140,6 +154,7 @@ export const useRegistrar = () => {
     register,
     rentPrice,
     registerERC20,
-    registrarAddress: CONTRACT_ADDRESSES.L2_REGISTRAR_V2
+    registrarAddress: CONTRACT_ADDRESSES.L2_REGISTRAR_V2,
+    claimWithSelf
   };
 };

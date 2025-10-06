@@ -30,18 +30,6 @@ function Navigation() {
               Register
             </Text>
           </Link>
-           <Link 
-            to="/self" 
-            className={`nav-link ${location.pathname === '/self' ? 'active' : ''}`}
-          >
-            <Text 
-              size="lg" 
-              weight={location.pathname === '/self' ? 'medium' : 'normal'} 
-              color="black"
-            >
-              Self
-            </Text>
-          </Link>
           <Link 
             to="/my-names" 
             className={`nav-link ${location.pathname === '/my-names' ? 'active' : ''}`}

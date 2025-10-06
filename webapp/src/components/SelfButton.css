@@ -1,0 +1,55 @@
+.self-button {
+  background-color: white !important;
+  border: 2px solid #E5E7EB !important;
+  border-radius: 50px !important;
+  padding: 10px !important;
+  min-height: 30px !important;
+  width: 100% !important;
+  transition: all 0.2s ease !important;
+}
+
+.self-button:hover {
+  background-color: #F9FAFB !important;
+  border-color: #D1D5DB !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+.self-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+.self-button:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.self-button-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.self-logo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .self-button {
+    min-height: 56px !important;
+    padding: 0.875rem 1.25rem !important;
+  }
+  
+  .self-logo {
+    width: 20px;
+    height: 20px;
+  }
+}

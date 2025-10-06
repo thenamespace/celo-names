@@ -8,7 +8,6 @@ import './App.css'
 import 'react-toastify/dist/ReactToastify.css'
 import '@components/Toast.css'
 import "@thenamespace/ens-components/index.css";
-import { SelfRegistration } from './pages/SelfRegistration'
 
 function App() {
   return (
@@ -19,7 +18,6 @@ function App() {
           <Route path="/" element={<Register />} />
           <Route path="/my-names" element={<MyNames />} />
           <Route path="/all-names" element={<AllNames />} />
-          <Route path="/self" element={<SelfRegistration />} />
         </Routes>
         <ToastContainer
           position="top-right"

@@ -17,6 +17,7 @@ import CurrencyDropdown from "@components/CurrencyDropdown";
 import "./Page.css";
 import "./Register.css";
 import {
+  ChainIcon,
   getSupportedAddressByName,
   SelectRecordsForm,
   type EnsRecords,
@@ -25,13 +26,11 @@ import {
 import { useRegistrar } from "@/hooks/useRegistrar";
 import { useAccount, usePublicClient, useSwitchChain } from "wagmi";
 import { normalize } from "viem/ens";
-import {
-  CELO_TOKEN,
-  L2_CHAIN_ID,
-  type PaymentToken,
-} from "@/constants";
+import { CELO_TOKEN, L2_CHAIN_ID, type PaymentToken } from "@/constants";
 import { useTransactionModal } from "@/hooks/useTransactionModal";
 import { useERC20Permit } from "@/hooks/useERC20Permit";
+import SelfButton from "@/components/SelfButton";
+import { SelfQrCode } from "@/components/SelfQrCode";
 
 const USER_DENIED_TX_ERROR = "User denied transaction";
 const celo_address = getSupportedAddressByName("celo") as SupportedEnsAddress;
@@ -47,11 +46,13 @@ function Register() {
     isNameAvailable,
     registrarAddress,
     registerERC20,
+    claimWithSelf,
   } = useRegistrar();
   const { showTransactionModal, updateTransactionStatus, TransactionModal } =
     useTransactionModal();
   const { createSignedPermit } = useERC20Permit({ chainId: L2_CHAIN_ID });
   const publicClient = usePublicClient({ chainId: L2_CHAIN_ID });
+  const [useSelf, setUseSelf] = useState(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [label, setLabel] = useState("");
@@ -113,37 +114,37 @@ function Register() {
   };
 
   const checkName = async (label: string, _currency: PaymentToken) => {
-      if (label.length <= 2) {
-        setNameStatus({ isAvailable: false, price: "0", loading: false });
-        return;
-      }
+    if (label.length <= 2) {
+      setNameStatus({ isAvailable: false, price: "0", loading: false });
+      return;
+    }
 
-      try {
-        const [available, price] = await Promise.all([
-          isNameAvailable(label),
-          rentPrice(label, 1, _currency.address),
-        ]);
+    try {
+      const [available, price] = await Promise.all([
+        isNameAvailable(label),
+        rentPrice(label, 1, _currency.address),
+      ]);
 
-        setNameStatus({
-          isAvailable: available,
-          price: formatUnits(price, _currency.decimals),
-          loading: false,
-        });
-      } catch (error) {
-        console.error("Error checking name:", error);
-        setNameStatus({
-          isAvailable: null,
-          price: null,
-          loading: false,
-        });
-        toast.error("Failed to check name availability. Please try again.");
-      }
-  }
+      setNameStatus({
+        isAvailable: available,
+        price: formatUnits(price, _currency.decimals),
+        loading: false,
+      });
+    } catch (error) {
+      console.error("Error checking name:", error);
+      setNameStatus({
+        isAvailable: null,
+        price: null,
+        loading: false,
+      });
+      toast.error("Failed to check name availability. Please try again.");
+    }
+  };
 
   // Debounced function to check name availability and price
   const debouncedCheckName = useCallback(
     debounce(async (label: string, _currency: PaymentToken) => {
-      checkName(label, _currency)
+      checkName(label, _currency);
     }, 500),
     []
   );
@@ -280,6 +281,8 @@ function Register() {
     return initial;
   }, [records]);
 
+  const registerBtnLabel = getRegButtonLabel();
+
   return (
     <div className="page">
       <div className="page-content">
@@ -336,49 +339,61 @@ function Register() {
                     >
                       {nameStatus.isAvailable ? "available!" : "unavailable"}
                     </Text>
+                    {nameStatus.isAvailable && (
+                      <SelfButton
+                        onClick={() => setUseSelf(true)}
+                        className="mt-2"
+                      />
+                    )}
                   </div>
                 ) : null}
 
                 {/* Duration controls */}
                 {!nameStatus.loading && nameStatus.isAvailable && (
-                  <div className="duration-controls">
-                    <Text
-                      size="sm"
-                      weight="medium"
-                      color="black"
-                      className="mb-2"
-                    >
-                      Registration Duration:
-                    </Text>
-                    <div className="duration-buttons">
-                      <Button
-                        variant="secondary"
-                        onClick={() =>
-                          setDurationInYears(Math.max(1, durationInYears - 1))
-                        }
-                        className="duration-btn"
-                      >
-                        <Minus size={20} color="black" />
-                      </Button>
-                      <div className="duration-display">
-                        <Text size="lg" weight="semibold" color="black">
-                          {durationInYears}{" "}
-                          {durationInYears === 1 ? "Year" : "Years"}
+                  <>
+                    {!useSelf && (
+                      <div className="duration-controls">
+                        <Text
+                          size="sm"
+                          weight="medium"
+                          color="black"
+                          className="mb-2"
+                        >
+                          Registration Duration:
                         </Text>
+                        <div className="duration-buttons">
+                          <Button
+                            variant="secondary"
+                            onClick={() =>
+                              setDurationInYears(
+                                Math.max(1, durationInYears - 1)
+                              )
+                            }
+                            className="duration-btn"
+                          >
+                            <Minus size={20} color="black" />
+                          </Button>
+                          <div className="duration-display">
+                            <Text size="lg" weight="semibold" color="black">
+                              {durationInYears}{" "}
+                              {durationInYears === 1 ? "Year" : "Years"}
+                            </Text>
+                          </div>
+                          <Button
+                            variant="secondary"
+                            onClick={() =>
+                              setDurationInYears(
+                                Math.min(9999, durationInYears + 1)
+                              )
+                            }
+                            className="duration-btn"
+                          >
+                            <Plus size={20} color="black" />
+                          </Button>
+                        </div>
                       </div>
-                      <Button
-                        variant="secondary"
-                        onClick={() =>
-                          setDurationInYears(
-                            Math.min(9999, durationInYears + 1)
-                          )
-                        }
-                        className="duration-btn"
-                      >
-                        <Plus size={20} color="black" />
-                      </Button>
-                    </div>
-                  </div>
+                    )}
+                  </>
                 )}
 
                 {!nameStatus.loading &&
@@ -439,7 +454,7 @@ function Register() {
             <Button
               variant="primary"
               onClick={handleRegister}
-              className="register-button mt-2"
+              className="register-button"
               disabled={
                 getRegButtonLabel() === "Register" &&
                 (label.length <= 2 ||
@@ -454,6 +469,20 @@ function Register() {
           </div>
         </div>
       </div>
+      <Modal isOpen={useSelf} onClose={() => setUseSelf(false)}>
+        <SelfQrCode
+          label={label}
+          owner={address!}
+          onError={(err) => {
+            console.error("Verification failed", err);
+            toast.error("Error ocurred during verification");
+          }}
+          onVerified={() => {
+            toast.success("Verified successfully!");
+          }}
+        />
+        <Button className="w-100" size="large" variant="secondary" onClick={() => setUseSelf(false)}>Cancel</Button>
+      </Modal>
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <SelectRecordsForm
