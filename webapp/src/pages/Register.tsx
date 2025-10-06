@@ -17,7 +17,6 @@ import CurrencyDropdown from "@components/CurrencyDropdown";
 import "./Page.css";
 import "./Register.css";
 import {
-  ChainIcon,
   getSupportedAddressByName,
   SelectRecordsForm,
   type EnsRecords,
@@ -46,7 +45,7 @@ function Register() {
     isNameAvailable,
     registrarAddress,
     registerERC20,
-    claimWithSelf,
+    // claimWithSelf,
   } = useRegistrar();
   const { showTransactionModal, updateTransactionStatus, TransactionModal } =
     useTransactionModal();
@@ -280,8 +279,6 @@ function Register() {
 
     return initial;
   }, [records]);
-
-  const registerBtnLabel = getRegButtonLabel();
 
   return (
     <div className="page">
