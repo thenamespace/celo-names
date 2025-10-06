@@ -8,6 +8,7 @@ import {SelfUtils} from '@selfxyz/contracts/contracts/libraries/SelfUtils.sol';
 import {IIdentityVerificationHubV2} from '@selfxyz/contracts/contracts/interfaces/IIdentityVerificationHubV2.sol';
 import {IL2Registry} from './interfaces/IL2Registry.sol';
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
+import {StringUtils} from './common/StringUtils.sol';
 
 /**
  * @title L2SelfRegistrar
@@ -15,42 +16,35 @@ import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
  * @dev This contract provides a concrete implementation of the abstract SelfVerificationRoot
  */
 contract L2SelfRegistrar is SelfVerificationRoot, Ownable {
+  using StringUtils for string;
+
   struct Verification {
     string label;
     address owner;
     uint64 verificationExpiry;
-    string passwordNumber;
+    bytes32 passportHash;
   }
 
   uint64 constant VERIFICATION_EXPIRY = 30 minutes;
   uint64 constant ONE_YEAR_SECONDS = 31_536_000;
 
-  // Storage for testing purposes
-  bool public verificationSuccessful;
-  ISelfVerificationRoot.GenericDiscloseOutputV2 public lastOutput;
-  bytes public lastUserData;
-  SelfStructs.VerificationConfigV2 public verificationConfig;
-  bytes32 public verificationConfigId;
-  address public lastUserAddress;
-
   error NulifiedReused();
   error NotAllowed();
   error VerificationExpired();
+  error MaximumNamesClaimed();
+  error InvalidLabel();
 
   event NameClaimed(string label, bytes32 node, address owner);
   event PasspordId(string passportId);
 
   mapping(uint256 => bool) nullifiers;
-  mapping(string => Verification) verifications;
-  IL2Registry immutable registry;
+  mapping(bytes32 => Verification) verifications;
   mapping(bytes32 => uint64) claimedCount;
   uint64 private maxNamesToClaim;
+  uint256 private minLabelLen;
+  bytes32 verificationConfigId;
 
-  // Events for testing
-  event VerificationCompleted(
-    ISelfVerificationRoot.GenericDiscloseOutputV2 output,
-    bytes userData
-  );
+  IL2Registry immutable registry;
 
   /**
    * @notice Constructor for the test contract
@@ -60,8 +54,10 @@ contract L2SelfRegistrar is SelfVerificationRoot, Ownable {
     address identityVerificationHubV2Address,
     string memory scope,
     address _registry
-  ) SelfVerificationRoot(identityVerificationHubV2Address, scope) Ownable(_msgSender()) {
-
+  )
+    SelfVerificationRoot(identityVerificationHubV2Address, scope)
+    Ownable(_msgSender())
+  {
     SelfStructs.VerificationConfigV2 memory _verificationConfig = SelfStructs
       .VerificationConfigV2({
         olderThanEnabled: false,
@@ -70,7 +66,7 @@ contract L2SelfRegistrar is SelfVerificationRoot, Ownable {
         forbiddenCountriesListPacked: [uint256(0), 0, 0, 0],
         ofacEnabled: [false, false, false]
       });
-      
+
     verificationConfigId = IIdentityVerificationHubV2(
       identityVerificationHubV2Address
     ).setVerificationConfigV2(_verificationConfig);
@@ -80,25 +76,27 @@ contract L2SelfRegistrar is SelfVerificationRoot, Ownable {
   function claim(
     string calldata label,
     address owner,
-    bytes calldata resolverData
+    bytes[] calldata resolverData
   ) external {
-    Verification memory verification = verifications[label];
-    if (_msgSender() != verification.owner) {
-      revert NotAllowed();
-    }
 
+    Verification memory verification = verifications[_labelhash(label)];
     if (verification.verificationExpiry <= block.timestamp) {
       revert VerificationExpired();
     }
 
-    uint256 oneYearExpiry = block.timestamp + ONE_YEAR_SECONDS;
-    registry.createSubnode(label, registry.rootNode(), uint64(oneYearExpiry), owner, resolverData);
+    if (_msgSender() != verification.owner) {
+      revert NotAllowed();
+    }
+
+    if (claimedCount[verification.passportHash] >= maxNamesToClaim) {
+      revert MaximumNamesClaimed();
+    }
+    
+    claimedCount[verification.passportHash] += 1;
+    uint64 oneYearExpiry = uint64(block.timestamp) + ONE_YEAR_SECONDS;
+    registry.createSubnode(label, oneYearExpiry, owner, resolverData);
 
     emit NameClaimed(label, _namehash(label, registry.rootNode()), owner);
-  }
-
-  function _namehash(string calldata label, bytes32 parent) internal view returns(bytes32) {
-    return keccak256(abi.encodePacked(parent, keccak256(bytes(label))));
   }
 
   /**
@@ -111,32 +109,29 @@ contract L2SelfRegistrar is SelfVerificationRoot, Ownable {
     ISelfVerificationRoot.GenericDiscloseOutputV2 memory output,
     bytes memory userData
   ) internal override {
-    // verificationSuccessful = true;
-    // lastOutput = output;
-    // lastUserData = userData;
-
+    
     if (_isNullified(output.nullifier)) {
       revert NulifiedReused();
     }
     nullifiers[output.nullifier] = true;
-
     address userAddress = address(uint160(output.userIdentifier));
-
-    //TODO Require string length >= minLabelLen
     string memory label = string(userData);
 
-    //TODO Store passport id and only allow maxMintPerUser
+    if (label.strlen() >= minLabelLen) {
+      revert InvalidLabel();
+    }
 
-    uint64 verificationExpiry = block.timestamp + VERIFICATION_EXPIRY;
-    verifications[label] = Verification(
+    bytes32 passportHash = keccak256(bytes(output.idNumber));
+    bytes32 labelHash = keccak256(bytes(label));
+    uint64 verificationExpiry = uint64(block.timestamp) + VERIFICATION_EXPIRY;
+    verifications[labelHash] = Verification(
       label,
       userAddress,
       verificationExpiry,
-      output.idNumber
+      passportHash
     );
 
     emit PasspordId(output.idNumber);
-    emit VerificationCompleted(output, userData);
   }
 
   function setConfigId(bytes32 configId) external onlyOwner {
@@ -153,5 +148,16 @@ contract L2SelfRegistrar is SelfVerificationRoot, Ownable {
 
   function _isNullified(uint256 nullifier) internal returns (bool) {
     return nullifiers[nullifier];
+  }
+
+  function _namehash(
+    string calldata label,
+    bytes32 parent
+  ) internal view returns (bytes32) {
+    return keccak256(abi.encodePacked(parent, _labelhash(label)));
+  }
+
+  function _labelhash(string calldata label) internal pure returns(bytes32) {
+    return keccak256(bytes(label));
   }
 }

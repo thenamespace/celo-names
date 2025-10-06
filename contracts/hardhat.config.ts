@@ -3,7 +3,7 @@ import '@nomicfoundation/hardhat-viem';
 import '@nomicfoundation/hardhat-chai-matchers';
 import '@nomicfoundation/hardhat-verify';
 import 'solidity-coverage';
-import { celo, mainnet } from 'viem/chains';
+import { celo, celoSepolia, mainnet } from 'viem/chains';
 import * as dotenv from "dotenv";
 dotenv.config();
 
@@ -33,6 +33,11 @@ const config: HardhatUserConfig = {
     mainnet: {
       chainId: mainnet.id,
       url: process.env.MAINNET_RPC_URL,
+      accounts: [process.env.DEPLOYER_KEY || ""]
+    },
+      celotest: {
+      chainId: celoSepolia.id,
+      url: process.env.CELO_SEPOLIA_RPC,
       accounts: [process.env.DEPLOYER_KEY || ""]
     }
   },
