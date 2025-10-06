@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.28;
 
 interface IPubkeyResolver {
     event PubkeyChanged(bytes32 indexed node, bytes32 x, bytes32 y);

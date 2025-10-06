@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.28;
 
 import {L2Registrar} from '../L2Registrar.sol';
 import {L2Registry} from '../L2Registry.sol';

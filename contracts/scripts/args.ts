@@ -1,11 +1,7 @@
 const args = [
-  '0x16ECBA51e18a4a7e61fdC417f0d47AFEeDfbed74',
-  'celo-test-names',
-  {
-    olderThan: 1n,
-    forbiddenCountries: [],
-    ofacEnabled: false,
-  },
+  '0xe57F4773bd9c9d8b6Cd70431117d353298B9f5BF',
+ 'celo-test-names',
+ '0x968A5c0f00F5D6CE6B29Ee9fD8e4Ea5e748a03BE',
 ];
 
 export default args;
