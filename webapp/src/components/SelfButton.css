@@ -1,18 +1,56 @@
 .self-button {
-  background-color: white !important;
-  border: 2px solid #E5E7EB !important;
+  background: linear-gradient(45deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4, #feca57, #ff9ff3, #54a0ff);
+  background-size: 400% 400%;
+  animation: gradientShift 3s ease infinite;
+  border: 1px solid #E5E7EB !important;
   border-radius: 50px !important;
   padding: 10px !important;
   min-height: 30px !important;
   width: 100% !important;
   transition: all 0.2s ease !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.self-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: white;
+  opacity: 0.9;
+  z-index: 1;
+  transition: opacity 0.2s ease;
+}
+
+.self-button:hover::before {
+  opacity: 0.7;
+}
+
+.self-button-content {
+  position: relative;
+  z-index: 2;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
 
 .self-button:hover {
-  background-color: #F9FAFB !important;
   border-color: #D1D5DB !important;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  animation-duration: 1.5s;
 }
 
 .self-button:active {
@@ -25,6 +63,11 @@
   cursor: not-allowed !important;
   transform: none !important;
   box-shadow: none !important;
+  animation: none !important;
+}
+
+.self-button:disabled::before {
+  opacity: 0.95 !important;
 }
 
 .self-button-content {
@@ -33,6 +76,8 @@
   justify-content: center;
   gap: 0.75rem;
   width: 100%;
+  position: relative;
+  z-index: 2;
 }
 
 .self-logo {

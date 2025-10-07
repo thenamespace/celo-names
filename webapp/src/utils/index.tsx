@@ -18,6 +18,10 @@ export const ENS_RESOLVER_ABI = parseAbi([
   MULTICALL,
 ]);
 
+export const sleep = (ms: number): Promise<void> => {
+  return new Promise(resolve => setTimeout(resolve, ms));
+};
+
 export const convertToResolverData = (
   full_name: string,
   records: EnsRecords

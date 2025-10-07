@@ -54,18 +54,6 @@ function Navigation() {
               All Names
             </Text>
           </Link>
-          <Link 
-            to="/register-new" 
-            className={`nav-link ${location.pathname === '/register-new' ? 'active' : ''}`}
-          >
-            <Text 
-              size="lg" 
-              weight={location.pathname === '/register-new' ? 'medium' : 'normal'} 
-              color="black"
-            >
-              Register New
-            </Text>
-          </Link>
         </div>
         <div className="nav-right">
           {!isConnected ? <Button onClick={() => openConnectModal?.()}>Connect</Button> : <ConnectButton />}

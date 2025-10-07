@@ -1,29 +1,72 @@
 
-.input-label {
-  margin-bottom: 0.5rem;
-  display: block;
-}
-
-.registration-info {
-  margin-bottom: 1rem;
-  padding: 1rem;
-  background-color: #F9FAFB;
-  border: 1px solid #E5E7EB;
-  border-radius: 8px;
-}
-
-.button-row {
-  display: flex;
-  gap: 1rem;
+.register-form {
+  max-width: 450px;
   width: 100%;
+  margin: 2rem auto 0;
+  background-color: white;
+  border: 1px solid #D1D5DB;
+  border-radius: 12px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
-.cancel-button {
-  flex: 1;
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+
+.profile-button {
+  background-color: transparent !important;
+  border: 1px solid #D1D5DB !important;
+  color: #1A1A1A !important;
+}
+
+.profile-button:hover {
+  background-color: #F9FAFB !important;
+  border-color: #9CA3AF !important;
 }
 
 .register-button {
-  flex: 1;
+}
+
+.name-status {
+  margin-top: 0.5rem;
+  padding: 1rem;
+  border-radius: 8px;
+  background-color: #F9FAFB;
+  border: 1px solid #E5E7EB;
+}
+
+.duration-controls {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #E5E7EB;
+}
+
+.duration-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.duration-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.duration-btn:hover {
+  background-color: #F3F4F6 !important;
+  border-color: #D1D5DB !important;
 }
 
 .loading-status {
@@ -48,8 +91,259 @@
   100% { transform: rotate(360deg); }
 }
 
-.cancel-button:hover {
-  background-color: #F9FAFB !important;
-  border-color: #9CA3AF !important;
-  color: #6B7280 !important;
+.duration-display {
+  min-width: 120px;
+  text-align: center;
+  padding: 0.5rem 1rem;
+  background-color: white;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+}
+
+.price-display {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #E5E7EB;
+}
+
+.price-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 2rem;
+}
+
+.price-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+}
+
+.currency-section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+}
+
+.price-label {
+  margin-bottom: 0;
+}
+
+.currency-label {
+  margin-bottom: 0;
+}
+
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .register-form {
+    max-width: 100%;
+    margin: 1.5rem auto 0;
+    padding: 1.5rem;
+  }
+  
+  .username-input {
+    padding: 0.875rem 1rem;
+    font-size: 1rem;
+  }
+}
+
+
+.input-label {
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.registration-info {
+  padding: 1rem;
+  background-color: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+}
+
+.registration-details {
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.detail-icon {
+  color: #6B7280;
+  flex-shrink: 0;
+}
+
+.claim-info {
+  margin-bottom: 1rem;
+}
+
+.verification-success {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border: 1px solid #bbf7d0;
+  border-radius: 16px;
+}
+
+.success-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.success-icon {
+  color: #16a34a;
+}
+
+.verified-name {
+  margin-bottom: 0.5rem;
+  color: #1f2937;
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+.success-subtitle {
+  margin-top: 0.5rem;
+}
+
+.button-row {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+}
+
+.button-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.cancel-button {
+  flex: 1;
+}
+
+.back-button {
+  flex: 1;
+}
+
+.register-button {
+  flex: 1;
+}
+
+.claim-button {
+  flex: 1;
+}
+
+.button-column .claim-button {
+  width: 100%;
+}
+
+.add-profile-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.set-profile-button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.mt-1 {
+  margin-top: 0.25rem;
+}
+
+.qr-code-section {
+  margin: 2rem 0;
+}
+
+.qr-code-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background-color: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 16px;
+  min-height: 200px;
+}
+
+.loading-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #E5E7EB;
+  border-top: 2px solid #35D07F;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Secondary button hover states - now handled by Button.css */
+
+/* Success Modal Styles moved to SuccessModal.css */
+
+/* Registration info styles */
+.registering-label {
+  margin-bottom: 0.5rem;
+}
+
+.registering-name {
+  margin: 0;
+}
+
+/* Detail box styles for REGISTER_RECEIPT step */
+.detail-box {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 0px
+}
+
+.detail-box:last-child {
+  margin-bottom: 0;
+}
+
+.detail-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.detail-value {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }

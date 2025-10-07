@@ -52,8 +52,9 @@
 }
 
 .btn-secondary:hover:not(:disabled) {
-  background-color: #1A1A1A;
-  color: white;
+  background-color: #F9FAFB;
+  color: #6B7280;
+  border-color: #9CA3AF;
   transform: translateY(-1px);
 }
 

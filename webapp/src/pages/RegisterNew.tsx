@@ -1,62 +1,178 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { normalize } from "viem/ens";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount, useSwitchChain, usePublicClient } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useNavigate } from "react-router-dom";
+import { Plus, CheckCircle } from "lucide-react";
+import { toast } from "react-toastify";
+import { ContractFunctionExecutionError, zeroHash, type Hash } from "viem";
 import Text from "@components/Text";
 import Input from "@components/Input";
 import Button from "@components/Button";
+import Modal from "@components/Modal";
 import CeloSpinner from "@components/CeloSpinner";
 import DurationCurrencySelector from "@components/DurationCurrencySelector";
 import SelfButton from "@components/SelfButton";
+import TokenIcon from "@components/TokenIcon";
+import SuccessModal from "@components/SuccessModal";
 import "./Page.css";
-import "./Register.css";
 import "./RegisterNew.css";
 import { useRegistrar } from "@/hooks/useRegistrar";
+import { useTransactionModal } from "@/hooks/useTransactionModal";
+import { useERC20Permit } from "@/hooks/useERC20Permit";
 import { CELO_TOKEN, L2_CHAIN_ID, type PaymentToken } from "@/constants";
 import { formatUnits } from "viem";
 import { ENV } from "@/constants/environment";
 import { debounce } from "lodash";
+import { sleep } from "@/utils";
+import { SelfQrCode } from "../components/SelfQrCode";
+import {
+  getSupportedAddressByName,
+  SelectRecordsForm,
+  type EnsRecords,
+  type SupportedEnsAddress,
+} from "@thenamespace/ens-components";
 
 const MIN_NAME_LENGTH = 3;
+const USER_DENIED_TX_ERROR = "User denied transaction";
+
+const celo_address = getSupportedAddressByName("celo") as SupportedEnsAddress;
+const eth_address = getSupportedAddressByName("eth") as SupportedEnsAddress;
 
 const RegisterStep = {
-  AVAILABILITY: 'availability',
-  PRICING: 'pricing'
+  AVAILABILITY: "availability",
+  PRICING: "pricing",
+  REGISTER_RECEIPT: "register_receipt",
+  SELF_CLAIM: "self_claim",
+  SELF_VERIFIED: "self_verified",
+  SUCCESS: "success",
 } as const;
 
-type RegisterStep = typeof RegisterStep[keyof typeof RegisterStep];
+type RegisterStep = (typeof RegisterStep)[keyof typeof RegisterStep];
 
 function RegisterNew() {
   const { address, isConnected, chain } = useAccount();
   const { switchChain } = useSwitchChain();
   const { openConnectModal } = useConnectModal();
+  const publicClient = usePublicClient({ chainId: L2_CHAIN_ID });
+  const navigate = useNavigate();
   const [label, setLabel] = useState("");
 
   const [nameAvailable, setNameAvailable] = useState<{
-    isChecking: boolean
-    isAvailable: boolean
+    isChecking: boolean;
+    isAvailable: boolean;
   }>({
     isChecking: false,
     isAvailable: false,
   });
   const [namePrice, setNamePrice] = useState<{
-    isChecking: boolean
-    paymentToken: PaymentToken
-    price: number
+    isChecking: boolean;
+    paymentToken: PaymentToken;
+    price: number;
   }>({
     isChecking: false,
     paymentToken: CELO_TOKEN,
     price: 0,
   });
   const [durationInYears, setDurationInYears] = useState(1);
-  const [selectedCurrency, setSelectedCurrency] = useState<PaymentToken>(CELO_TOKEN);
-  const [currentStep, setCurrentStep] = useState<RegisterStep>(RegisterStep.AVAILABILITY);
+  const [selectedCurrency, setSelectedCurrency] =
+    useState<PaymentToken>(CELO_TOKEN);
+  const [currentStep, setCurrentStep] = useState<RegisterStep>(
+    RegisterStep.AVAILABILITY
+  );
+  const [isVerified, setIsVerified] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [records, setRecords] = useState<EnsRecords>({
+    addresses: [],
+    texts: [],
+  });
+  const [isWaitingWallet, setIsWaitingWallet] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const {
+    register,
     rentPrice,
     isNameAvailable,
+    registrarAddress,
+    registerERC20,
+    claimWithSelf,
   } = useRegistrar();
+  const { showTransactionModal, updateTransactionStatus, TransactionModal } =
+    useTransactionModal();
+  const { createSignedPermit } = useERC20Permit({ chainId: L2_CHAIN_ID });
 
+  // Initialize records with user's address when they connect
+  useEffect(() => {
+    if (address && records.addresses.length === 0) {
+      setRecords({
+        ...records,
+        addresses: [
+          { coinType: eth_address.coinType, value: address },
+          { coinType: celo_address.coinType, value: address },
+        ],
+      });
+    }
+  }, [address]);
+
+  // Check for existing verification when label changes or component loads
+  useEffect(() => {
+    if (label && currentStep === RegisterStep.SELF_CLAIM) {
+      const verifiedKey = `verified_${label}`;
+      const storedData = localStorage.getItem(verifiedKey);
+
+      let isAlreadyVerified = false;
+
+      if (storedData) {
+        try {
+          const parsedData = JSON.parse(storedData);
+          const now = Date.now();
+
+          // Check if verification exists and hasn't expired
+          if (
+            parsedData.verified &&
+            parsedData.expiry &&
+            now < parsedData.expiry
+          ) {
+            isAlreadyVerified = true;
+          } else {
+            // Verification expired, remove it from localStorage
+            localStorage.removeItem(verifiedKey);
+          }
+        } catch (error) {
+          // Handle old format (just 'true' string) or corrupted data
+          if (storedData === "true") {
+            isAlreadyVerified = true;
+            // Migrate to new format
+            const expiryTime = Date.now() + 35 * 60 * 1000;
+            localStorage.setItem(
+              verifiedKey,
+              JSON.stringify({
+                verified: true,
+                expiry: expiryTime,
+              })
+            );
+          } else {
+            // Corrupted data, remove it
+            localStorage.removeItem(verifiedKey);
+          }
+        }
+      }
+
+      setIsVerified(isAlreadyVerified);
+
+      // If already verified, skip to verified step
+      if (isAlreadyVerified) {
+        setCurrentStep(RegisterStep.SELF_VERIFIED);
+      }
+    } else if (
+      currentStep !== RegisterStep.SELF_CLAIM &&
+      currentStep !== RegisterStep.SELF_VERIFIED &&
+      currentStep !== RegisterStep.REGISTER_RECEIPT &&
+      currentStep !== RegisterStep.SUCCESS
+    ) {
+      setIsVerified(false);
+    }
+  }, [label, currentStep]);
 
   const handleLabelChanged = (value: string) => {
     if (value.includes(".")) {
@@ -90,17 +206,25 @@ function RegisterNew() {
     []
   );
 
-
   const checkNameAvailable = async (label: string) => {
     const available = await isNameAvailable(label);
-    setNameAvailable({ ...nameAvailable, isChecking: false, isAvailable: available });
+    setNameAvailable({
+      ...nameAvailable,
+      isChecking: false,
+      isAvailable: available,
+    });
   };
 
   const checkNamePrice = async (label: string, currency?: PaymentToken) => {
     const tokenToUse = currency || selectedCurrency;
     const _price = await rentPrice(label, 1, tokenToUse.address);
     const parsedPrice = Number(formatUnits(_price, tokenToUse.decimals));
-    setNamePrice({ ...namePrice, isChecking: false, price: parsedPrice, paymentToken: tokenToUse });
+    setNamePrice({
+      ...namePrice,
+      isChecking: false,
+      price: parsedPrice,
+      paymentToken: tokenToUse,
+    });
   };
 
   const handleCurrencyChange = (currency: PaymentToken) => {
@@ -140,10 +264,240 @@ function RegisterNew() {
   };
 
   const isNextButtonEnabled = () => {
+    // Button is enabled if user is connected or on the wrong network
+    if (!isConnected || chain?.id !== L2_CHAIN_ID) {
+      return true;
+    }
+
     // Button is enabled if name is available OR if user needs to connect/switch
-    return label.length >= MIN_NAME_LENGTH && 
-           !nameAvailable.isChecking && 
-           nameAvailable.isAvailable;
+    return (
+      label.length >= MIN_NAME_LENGTH &&
+      !nameAvailable.isChecking &&
+      nameAvailable.isAvailable
+    );
+  };
+
+  const handleClaimWithSelf = () => {
+    setCurrentStep(RegisterStep.SELF_CLAIM);
+    // Check if user is already verified for this label
+    const verifiedKey = `verified_${label}`;
+    const storedData = localStorage.getItem(verifiedKey);
+
+    let isAlreadyVerified = false;
+
+    if (storedData) {
+      try {
+        const parsedData = JSON.parse(storedData);
+        const now = Date.now();
+
+        // Check if verification exists and hasn't expired
+        if (
+          parsedData.verified &&
+          parsedData.expiry &&
+          now < parsedData.expiry
+        ) {
+          isAlreadyVerified = true;
+        } else {
+          // Verification expired, remove it from localStorage
+          localStorage.removeItem(verifiedKey);
+        }
+      } catch (error) {
+        // Handle old format (just 'true' string) or corrupted data
+        if (storedData === "true") {
+          isAlreadyVerified = true;
+          // Migrate to new format
+          const expiryTime = Date.now() + 35 * 60 * 1000;
+          localStorage.setItem(
+            verifiedKey,
+            JSON.stringify({
+              verified: true,
+              expiry: expiryTime,
+            })
+          );
+        } else {
+          // Corrupted data, remove it
+          localStorage.removeItem(verifiedKey);
+        }
+      }
+    }
+
+    setIsVerified(isAlreadyVerified);
+  };
+
+  const handleVerificationSuccess = () => {
+    setIsVerified(true);
+    // Store verification status in localStorage for this specific label with 35 minute expiry
+    const verifiedKey = `verified_${label}`;
+    const expiryTime = Date.now() + 35 * 60 * 1000; // 35 minutes in milliseconds
+    localStorage.setItem(
+      verifiedKey,
+      JSON.stringify({
+        verified: true,
+        expiry: expiryTime,
+      })
+    );
+    // Move to verified step
+    setCurrentStep(RegisterStep.SELF_VERIFIED);
+  };
+
+  const handleVerificationError = (error: any) => {
+    console.error("Verification error:", error);
+    setIsVerified(false);
+  };
+
+  const handleAddProfile = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleRegister = (isSelf: boolean = false) => {
+    if (!isConnected) {
+      // 1. If not connected -> prompt to connect
+      openConnectModal?.();
+      return;
+    } else if (L2_CHAIN_ID !== chain?.id) {
+      // 2. If not on the right network -> prompt to switch chain
+      switchChain({ chainId: L2_CHAIN_ID });
+      return;
+    } else {
+      // 3. Else register - add validation
+      if (label.length <= 2) {
+        toast.error("Please enter a name with at least 3 characters");
+        return;
+      }
+      if (!nameAvailable.isAvailable) {
+        toast.error(
+          "This name is not available. Please choose a different name."
+        );
+        return;
+      }
+      if (nameAvailable.isChecking) {
+        toast.warning("Please wait while we check name availability");
+        return;
+      }
+
+      if (isSelf) {
+        claimName();
+      } else {
+        registerName();
+      }
+    }
+  };
+
+  const claimName = async () => {
+    let _tx: Hash = zeroHash;
+    try {
+      _tx = await claimWithSelf(label, address!, records);
+    } catch (err) {
+      handleContractErr(err);
+      setIsWaitingWallet(false);
+      return;
+    }
+
+    await waitForTransaction(_tx);
+  };
+
+  const registerName = async () => {
+    let _tx: Hash = zeroHash;
+    try {
+      setIsWaitingWallet(true);
+      // We call register with native token
+      if (selectedCurrency.address === CELO_TOKEN.address) {
+        _tx = await register(label, durationInYears, address!, records);
+      } else {
+        // Spender should be the registrar contract
+        const permitValue = await rentPrice(
+          label,
+          durationInYears,
+          selectedCurrency.address
+        );
+        // Create erc20 permit for gasless transfer
+        const permit = await createSignedPermit(
+          selectedCurrency,
+          registrarAddress,
+          permitValue
+        );
+
+        _tx = await registerERC20(
+          label,
+          durationInYears,
+          address!,
+          records,
+          permit,
+          selectedCurrency.address
+        );
+      }
+    } catch (err) {
+      handleContractErr(err);
+      setIsWaitingWallet(false);
+      return;
+    }
+
+    await waitForTransaction(_tx);
+  };
+
+  const handleContractErr = (err: any) => {
+    const contractErr = err as ContractFunctionExecutionError;
+    if (
+      contractErr?.details &&
+      contractErr.details.includes(USER_DENIED_TX_ERROR)
+    ) {
+      // User denied transaction - no toast needed
+    } else if (contractErr?.details?.includes("insufficient funds")) {
+      toast.error("Insufficient funds. Please add CELO to your wallet.");
+    } else {
+      // Generic error message
+      toast.error("Registration failed. Please try again.");
+      console.error("Registration error:", err);
+    }
+  };
+
+  const waitForTransaction = async (_tx: Hash) => {
+    try {
+      // Show transaction modal after transaction is sent with hash
+      showTransactionModal(_tx);
+
+      // Simulate transaction processing with 5 second timeout
+      const start_time = new Date().getTime();
+      // We will add artifical 5 seconds delay to make the registration smoother
+      const artificial_wait_time_miliseconds = 5000;
+
+      const retry_count = 3;
+      for (let i = 0; i <= retry_count; i++) {
+        try {
+          await publicClient!.waitForTransactionReceipt({ hash: _tx });
+          break;
+        } catch (err) {
+          if (i === retry_count) {
+            throw err;
+          }
+          await sleep(1000); // Sleep for 1 second before retry
+        }
+      }
+      const end_time = new Date().getTime();
+
+      const real_wait_time = end_time - start_time;
+      const time_to_wait =
+        real_wait_time > artificial_wait_time_miliseconds
+          ? 0
+          : artificial_wait_time_miliseconds - real_wait_time;
+
+      setTimeout(() => {
+        updateTransactionStatus("success");
+        setShowSuccessModal(true);
+        setCurrentStep(RegisterStep.SUCCESS);
+      }, time_to_wait);
+    } catch (err: unknown) {
+      // Show modal with failed state if transaction fails
+      showTransactionModal();
+      updateTransactionStatus("failed");
+      toast.error("Transaction failed. Please try again.");
+      console.error("Transaction error:", err);
+      setIsWaitingWallet(false);
+    }
+  };
+
+  const handleContinueSuccess = () => {
+    navigate("/my-names");
   };
 
   return (
@@ -165,7 +519,12 @@ function RegisterNew() {
         <div className="register-form">
           {currentStep === RegisterStep.AVAILABILITY ? (
             <div className="form-group">
-              <Text size="sm" weight="normal" color="gray" className="input-label">
+              <Text
+                size="sm"
+                weight="normal"
+                color="gray"
+                className="input-label"
+              >
                 Choose your name
               </Text>
               <Input
@@ -204,19 +563,24 @@ function RegisterNew() {
                         weight="medium"
                         color={nameAvailable.isAvailable ? "green" : "red"}
                       >
-                        {nameAvailable.isAvailable ? "available!" : "unavailable"}
+                        {nameAvailable.isAvailable
+                          ? "available!"
+                          : "unavailable"}
                       </Text>
                     </div>
                   )}
                 </div>
               )}
             </div>
-          ) : (
+          ) : currentStep === RegisterStep.PRICING ? (
             <div className="form-group">
               {/* Registration info */}
-              <div className="registration-info">
-                <Text size="lg" weight="semibold" color="black">
-                  Registering {label}.{ENV.PARENT_NAME}
+              <div>
+                <Text weight="normal" color="gray" className="registering-label">
+                  Registering
+                </Text>
+                <Text size="2xl" weight="bold" color="black" className="registering-name">
+                  {label}.{ENV.PARENT_NAME}
                 </Text>
               </div>
 
@@ -230,7 +594,7 @@ function RegisterNew() {
                 isCheckingPrice={namePrice.isChecking}
               />
             </div>
-          )}
+          ) : null}
 
           {/* Next button - always visible but disabled when conditions not met */}
           {currentStep === RegisterStep.AVAILABILITY && (
@@ -251,9 +615,7 @@ function RegisterNew() {
           {currentStep === RegisterStep.PRICING && (
             <>
               <div className="form-group">
-                <SelfButton
-                  onClick={() => console.log("Claim with Self clicked")}
-                />
+                <SelfButton onClick={handleClaimWithSelf} />
               </div>
               <div className="form-group">
                 <div className="button-row">
@@ -267,20 +629,257 @@ function RegisterNew() {
                     </Text>
                   </Button>
                   <Button
-                    onClick={() => console.log("Register clicked")}
+                    onClick={() => {
+                      setCurrentStep(RegisterStep.REGISTER_RECEIPT);
+                    }}
                     variant="primary"
                     className="register-button"
                   >
                     <Text size="base" weight="medium" color="black">
-                      Register
+                      Next
                     </Text>
                   </Button>
                 </div>
               </div>
             </>
           )}
+
+          {/* Register step */}
+          {currentStep === RegisterStep.REGISTER_RECEIPT && (
+            <div className="form-group">
+              {/* Registration info */}
+              <div>
+                <Text weight="normal" color="gray" className="registering-label">
+                  Register
+                </Text>
+                <Text size="2xl" weight="bold" color="black" className="registering-name">
+                  {label}.{ENV.PARENT_NAME}
+                </Text>
+                <div className="registration-details">
+                  <div className="detail-box">
+                    <div className="detail-label">
+                      <Text weight="medium" color="gray">
+                        Duration
+                      </Text>
+                    </div>
+                    <Text size="base" weight="semibold" color="black">
+                      {durationInYears} year{durationInYears > 1 ? "s" : ""}
+                    </Text>
+                  </div>
+                  <div className="detail-box">
+                    <div className="detail-label">
+                      <Text weight="medium" color="gray">
+                        Price
+                      </Text>
+                    </div>
+                    <div className="detail-value">
+                      <Text size="base" weight="semibold" color="black">
+                        {(namePrice.price * durationInYears).toFixed(2)} {namePrice.paymentToken.name}
+                      </Text>
+                      <TokenIcon
+                        tokenName={namePrice.paymentToken.name}
+                        size={20}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Set Profile and Back/Register buttons */}
+              <div className="button-column mt-3">
+                <Button
+                  onClick={handleAddProfile}
+                  variant="secondary"
+                  className="set-profile-button"
+                >
+                  <Plus size={16} />
+                  <Text size="base" weight="medium" color="black">
+                    Set Profile
+                  </Text>
+                </Button>
+                <div className="button-row">
+                  <Button
+                    onClick={() => setCurrentStep(RegisterStep.PRICING)}
+                    variant="secondary"
+                    className="back-button"
+                  >
+                    <Text size="base" weight="medium" color="black">
+                      Back
+                    </Text>
+                  </Button>
+                  <Button
+                    onClick={() => handleRegister(false)}
+                    variant="primary"
+                    className="register-button"
+                    disabled={isWaitingWallet}
+                  >
+                    <Text size="base" weight="medium" color="black">
+                      {isWaitingWallet ? "Waiting for wallet..." : "Register"}
+                    </Text>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Self Claim step */}
+          {currentStep === RegisterStep.SELF_CLAIM && (
+            <div className="form-group">
+              {/* Registration info */}
+              <div className="claim-info">
+                <Text size="lg" weight="semibold" color="black">
+                  Claim {label}.{ENV.PARENT_NAME}
+                </Text>
+                <Text size="sm" weight="normal" color="gray" className="mt-1">
+                  Scan QR code, verify your identity, and claim your name for
+                  free
+                </Text>
+              </div>
+
+              {/* QR Code */}
+              <div className="qr-code-section">
+                <div className="qr-code-placeholder">
+                  <SelfQrCode
+                    label={label}
+                    owner={address!}
+                    onError={handleVerificationError}
+                    onVerified={handleVerificationSuccess}
+                    width={220}
+                  />
+                </div>
+              </div>
+
+              {/* Claim and Cancel buttons */}
+              <div className="button-row">
+                <Button
+                  onClick={() => setCurrentStep(RegisterStep.PRICING)}
+                  variant="secondary"
+                  className="cancel-button"
+                >
+                  <Text size="base" weight="medium" color="black">
+                    Cancel
+                  </Text>
+                </Button>
+                <Button
+                  variant="primary"
+                  className="claim-button"
+                  disabled={!isVerified}
+                >
+                  <Text size="base" weight="medium" color="black">
+                    {isVerified ? "Claim" : "Verify First"}
+                  </Text>
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {/* Self Verified step */}
+          {currentStep === RegisterStep.SELF_VERIFIED && (
+            <div className="form-group">
+              {/* Success message */}
+              <div className="verification-success">
+                <div className="success-header">
+                  <CheckCircle size={32} className="success-icon" />
+                  <Text size="lg" weight="semibold" color="green">
+                    Successfully verified!
+                  </Text>
+                </div>
+                <Text
+                  size="xl"
+                  weight="bold"
+                  color="black"
+                  className="verified-name"
+                >
+                  {label}.{ENV.PARENT_NAME}
+                </Text>
+                <Text
+                  size="sm"
+                  weight="normal"
+                  color="gray"
+                  className="success-subtitle"
+                >
+                  You can now claim this name for free
+                </Text>
+              </div>
+
+              {/* Add Profile and Claim buttons */}
+              <div className="button-column">
+                <Button
+                  onClick={handleAddProfile}
+                  variant="secondary"
+                  className="add-profile-button"
+                >
+                  <Plus size={16} />
+                  <Text size="base" weight="medium" color="black">
+                    Set Profile
+                  </Text>
+                </Button>
+                <div className="button-row">
+                  <Button
+                  onClick={() => setCurrentStep(RegisterStep.PRICING)}
+                  variant="secondary"
+                  className="claim-button"
+                >
+                  <Text size="base" weight="medium" color="black">
+                    Cancel
+                  </Text>
+                </Button>
+                  <Button
+                  onClick={() => handleRegister(true)}
+                  variant="primary"
+                  className="claim-button"
+                  disabled={isWaitingWallet}
+                >
+                  <Text size="base" weight="medium" color="black">
+                    {isWaitingWallet ? "Waiting wallet..." : "Claim"}
+                  </Text>
+                </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+
+      {/* Select Records Modal */}
+      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
+        <SelectRecordsForm
+          records={records}
+          onRecordsUpdated={(updatedRecords: EnsRecords) => {
+            setRecords(updatedRecords);
+          }}
+        />
+        <div
+          className="p-2 pt-0"
+          style={{ background: "#f4f4f4", gap: "7px", display: "flex" }}
+        >
+          <Button
+            onClick={() => setIsModalOpen(false)}
+            variant="secondary"
+            className="w-50"
+            size="large"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={() => setIsModalOpen(false)}
+            size="large"
+            className="w-50"
+          >
+            Add ({records.addresses.length + records.texts.length})
+          </Button>
+        </div>
+      </Modal>
+
+      {/* Transaction Modal */}
+      <TransactionModal />
+
+      {/* Success Modal */}
+      <SuccessModal
+        isOpen={showSuccessModal}
+        onContinue={handleContinueSuccess}
+        mintedName={`${label}.${ENV.PARENT_NAME}`}
+      />
     </div>
   );
 }
