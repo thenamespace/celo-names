@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback, useEffect } from "react";
+import { useMemo, useState, useCallback, useEffect, type PropsWithChildren } from "react";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import {
   ContractFunctionExecutionError,
@@ -45,13 +45,20 @@ function Register() {
     isNameAvailable,
     registrarAddress,
     registerERC20,
-    // claimWithSelf,
+    claimWithSelf,
   } = useRegistrar();
   const { showTransactionModal, updateTransactionStatus, TransactionModal } =
     useTransactionModal();
   const { createSignedPermit } = useERC20Permit({ chainId: L2_CHAIN_ID });
   const publicClient = usePublicClient({ chainId: L2_CHAIN_ID });
-  const [useSelf, setUseSelf] = useState(false);
+  const [showSelfModal, setShowSelfModal] = useState(false);
+  const [selfData, setSelfData] = useState<{
+    isUsed: boolean;
+    isVerified: boolean;
+  }>({
+    isUsed: false,
+    isVerified: false,
+  });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [label, setLabel] = useState("");
@@ -148,6 +155,14 @@ function Register() {
     []
   );
 
+  const handleClaimWithSelf = () => {
+    if (!address) {
+      openConnectModal?.();
+    } else {
+      setShowSelfModal(true);
+    }
+  };
+
   const handleRegister = () => {
     if (!isConnected) {
       // 1. If not connected -> prompt to connect
@@ -187,6 +202,20 @@ function Register() {
     }
   };
 
+  const claimNameWithSelf = async () => {
+    let _tx: Hash = zeroHash
+    try {
+      _tx = await claimWithSelf(label, address!, records);
+    } catch(err) {
+       handleContractErr(err);
+      return;
+    }
+
+    if (_tx !== zeroHash) {
+      waitForTransaction(_tx);
+    }
+  }
+
   const registerName = async () => {
     let _tx: Hash = zeroHash;
     try {
@@ -217,25 +246,31 @@ function Register() {
         );
       }
     } catch (err) {
-      const contractErr = err as ContractFunctionExecutionError;
+      handleContractErr(err);
+      return;
+    }
+
+    await waitForTransaction(_tx);
+  };
+
+  const handleContractErr = (err: any) => {
+     const contractErr = err as ContractFunctionExecutionError;
       if (
         contractErr?.details &&
         contractErr.details.includes(USER_DENIED_TX_ERROR)
       ) {
         // User denied transaction - no toast needed
-        return;
       } else if (contractErr?.details?.includes("insufficient funds")) {
         toast.error("Insufficient funds. Please add CELO to your wallet.");
-        return;
       } else {
         // Generic error message
         toast.error("Registration failed. Please try again.");
         console.error("Registration error:", err);
       }
-      return;
-    }
+  }
 
-    try {
+  const waitForTransaction = async (_tx: Hash) => {
+     try {
       // Show transaction modal after transaction is sent with hash
       showTransactionModal(_tx);
 
@@ -265,7 +300,7 @@ function Register() {
       toast.error("Transaction failed. Please try again.");
       console.error("Transaction error:", err);
     }
-  };
+  }
 
   const handleSetProfile = () => {
     setIsModalOpen(true);
@@ -338,7 +373,7 @@ function Register() {
                     </Text>
                     {nameStatus.isAvailable && (
                       <SelfButton
-                        onClick={() => setUseSelf(true)}
+                        onClick={() => handleClaimWithSelf()}
                         className="mt-2"
                       />
                     )}
@@ -348,7 +383,7 @@ function Register() {
                 {/* Duration controls */}
                 {!nameStatus.loading && nameStatus.isAvailable && (
                   <>
-                    {!useSelf && (
+                    {!selfData.isVerified && (
                       <div className="duration-controls">
                         <Text
                           size="sm"
@@ -446,8 +481,11 @@ function Register() {
               </Text>
             </Button>
           </div>
-
-          <div className="form-group">
+          {selfData.isVerified && <div>
+            <Button onClick={() => setSelfData({isUsed: false, isVerified: false})}>Cancel</Button>
+            <Button onClick={() => claimNameWithSelf()}>Claim</Button>
+            </div>}
+          {!selfData.isVerified && <div className="form-group">
             <Button
               variant="primary"
               onClick={handleRegister}
@@ -463,10 +501,10 @@ function Register() {
                 {getRegButtonLabel()}
               </Text>
             </Button>
-          </div>
+          </div>}
         </div>
       </div>
-      <Modal isOpen={useSelf} onClose={() => setUseSelf(false)}>
+      <Modal isOpen={showSelfModal} onClose={() => setShowSelfModal(false)}>
         <SelfQrCode
           label={label}
           owner={address!}
@@ -476,9 +514,18 @@ function Register() {
           }}
           onVerified={() => {
             toast.success("Verified successfully!");
+            setShowSelfModal(false);
+            setSelfData({isUsed: true, isVerified: true});
           }}
         />
-        <Button className="w-100" size="large" variant="secondary" onClick={() => setUseSelf(false)}>Cancel</Button>
+        <Button
+          className="w-100"
+          size="large"
+          variant="secondary"
+          onClick={() => setShowSelfModal(false)}
+        >
+          Cancel
+        </Button>
       </Modal>
 
       <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
@@ -514,4 +561,18 @@ function Register() {
   );
 }
 
+export const RegisterFormContainer = ({children}: PropsWithChildren) => {
+
+}
+
 export default Register;
+
+interface PricingInfoProps {
+  duration: number
+  onDurationChange: (value: number) => {}
+
+}
+
+const PringInfo = (props: PricingInfoProps) => {
+  return <div></div>
+}

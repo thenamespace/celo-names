@@ -1,0 +1,24 @@
+.celo-spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.celo-spinner-logo {
+  animation: celo-spin 1.5s linear infinite;
+  object-fit: contain;
+}
+
+@keyframes celo-spin {
+  0% { 
+    transform: rotate(0deg); 
+  }
+  100% { 
+    transform: rotate(360deg); 
+  }
+}
+
+/* Optional: Pause animation on hover */
+.celo-spinner:hover .celo-spinner-logo {
+  animation-play-state: paused;
+}

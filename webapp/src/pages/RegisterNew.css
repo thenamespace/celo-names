@@ -1,0 +1,55 @@
+
+.input-label {
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.registration-info {
+  margin-bottom: 1rem;
+  padding: 1rem;
+  background-color: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+}
+
+.button-row {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+}
+
+.cancel-button {
+  flex: 1;
+}
+
+.register-button {
+  flex: 1;
+}
+
+.loading-status {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #E5E7EB;
+  border-top: 2px solid #35D07F;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.cancel-button:hover {
+  background-color: #F9FAFB !important;
+  border-color: #9CA3AF !important;
+  color: #6B7280 !important;
+}

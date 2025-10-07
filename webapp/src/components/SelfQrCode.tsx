@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { type Address } from "viem";
 import { useAccount } from "wagmi";
 import "./SelfQrCode.css";
+import Button from "./Button";
 
 interface SelfQrCodeProps {
   onVerified: () => void
@@ -82,6 +83,7 @@ export const SelfQrCode = ({label, owner, onVerified, onError}: SelfQrCodeProps)
             ></SelfQRcodeWrapper>
           </div>
         )}
+        <Button onClick={() => onVerified()}>Verify</Button>
       </div>
     </div>
   );

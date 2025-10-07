@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
 import Navigation from '@components/Navigation'
 import Register from '@pages/Register'
+import RegisterNew from '@pages/RegisterNew'
 import MyNames from '@pages/MyNames'
 import AllNames from '@pages/AllNames'
 import './App.css'
@@ -16,6 +17,7 @@ function App() {
         <Navigation />
         <Routes>
           <Route path="/" element={<Register />} />
+          <Route path="/register-new" element={<RegisterNew />} />
           <Route path="/my-names" element={<MyNames />} />
           <Route path="/all-names" element={<AllNames />} />
         </Routes>
