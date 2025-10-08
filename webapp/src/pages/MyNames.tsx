@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { Link } from "react-router-dom";
-import { Clock, ExternalLink, Sparkles } from "lucide-react";
+import { Clock, ExternalLink } from "lucide-react";
 import Text from "@components/Text";
 import Button from "@components/Button";
 import CeloSpinner from "@components/CeloSpinner";
