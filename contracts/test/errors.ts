@@ -14,7 +14,15 @@ export const ERRORS = {
   INVALID_DURATION: 'InvalidDuration',
   INSUFFICIENT_FUNDS: 'InsufficientFunds',
   SUBNAME_DOES_NOT_EXIST: 'SubnameDoesNotExist',
-  BLACKLISTED_NAME: 'BlacklistedName'
+  BLACKLISTED_NAME: 'BlacklistedName',
+  // L2SelfRegistrar errors
+  NOT_SELF_VERIFIED: 'NotSelfVerified',
+  MAXIMUM_NAMES_CLAIMED: 'MaximumNamesClaimed',
+  INVALID_LABEL: 'InvalidLabel',
+  VERIFICATION_CLAIMED: 'VerificationClaimed',
+  // SelfStorage errors
+  NOT_REGISTRAR: 'NotRegistrar',
+  VERIFICATION_ID_CLAIMED: 'VerificationIdClaimed'
 } as const;
 
 export interface ContractError extends Error {

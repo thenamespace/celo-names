@@ -113,7 +113,7 @@ Audited Contracts: SelfStorage.sol, L2SelfRegistrar.sol
 - ⚠️ Consider: Add verification expiration mechanism
 
 ### Design Decisions
-- ℹ️ **Zero Address Claims**: Users can claim names to address(0) - this is intentional. If a user chooses to claim their verification to address(0), that's their decision and uses their own verification quota. No validation added.
+- ℹ️ **Zero Address Claims**: No explicit validation added in L2SelfRegistrar for zero address. However, the underlying L2Registry uses ERC721's `_safeMint()` which inherently prevents minting to address(0), throwing `ERC721InvalidReceiver` error. This provides protection at the NFT layer.
 
 ### Gas Optimization
 - Most operations are gas-efficient

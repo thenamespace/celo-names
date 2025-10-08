@@ -124,7 +124,7 @@ describe('SelfStorage - Access Control', () => {
             [user02.account.address, 789012n],
             { account: user01.account }
           ),
-        'NotRegistrar'
+        ERRORS.NOT_REGISTRAR
       );
     });
 
@@ -156,7 +156,7 @@ describe('SelfStorage - Access Control', () => {
           selfStorage.write.claim([user02.account.address, namehash], {
             account: user01.account,
           }),
-        'NotRegistrar'
+        ERRORS.NOT_REGISTRAR
       );
     });
   });
@@ -184,7 +184,7 @@ describe('SelfStorage - Access Control', () => {
             [user02.account.address, verificationId],
             { account: registrar.account }
           ),
-        'VerificationIdClaimed'
+        ERRORS.VERIFICATION_ID_CLAIMED
       );
     });
 
