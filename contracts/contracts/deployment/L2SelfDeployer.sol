@@ -24,6 +24,8 @@ contract L2SelfRegistrarDeployer_V1 {
       registry,
       selfStorage
     );
+    registrar = address(_registrar);
+
     _storage.setRegistrar(registrar, true);
     _storage.transferOwnership(owner);
 

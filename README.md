@@ -36,6 +36,10 @@ L2RegistrarV2 (Stablecoin payments) -> [0x43D76cb9be60f677e58e15F71Dd760Aaa0a2fa
 
 L2Registry/Resolver -> Deployed and Verified at https://celoscan.io/address/0x968A5c0f00F5D6CE6B29Ee9fD8e4Ea5e748a03BE
 
+SelfRegistrar -> 2 contracts responsible for minting names for veirifed users:
+1. L2SelfRegistrar -> https://celoscan.io/address/0x9C1eb5bA21889621cA4d6FD43Be628aFf528F78C#code
+2. SelfStorage -> Stores verification data -> https://celoscan.io/address/0x6342ee37B4CfBAF0F2dCd4692FFD6Eb1053A0F06#code
+
 
 ## Indexer/Metadata
 
