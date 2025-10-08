@@ -5,6 +5,7 @@ import L2RegistrarV2ABI from "./L2RegistrarV2.json";
 import ERC20 from "./ERC20.json"
 import ERC20_PERMIT from "./ERC20Permit.json";
 import L2_SELF_REGISTRAR_ABI from "./L2SelfRegistrar.json";
+import SELF_STORAGE_ABI from "./SelfStorage.json";
 
 export const ABIS = {
   L2_REGISTRAR: L2RegistrarABI,
@@ -13,7 +14,6 @@ export const ABIS = {
   L2_REGISTRAR_V2: L2RegistrarV2ABI,
   ERC20,
   ERC20_PERMIT,
-  L2_SELF_REGISTRAR_ABI
-} as const
-
-export type ContractABI = typeof L2RegistrarABI | typeof L2RegistryABI | typeof L1ResolverABI | typeof L2RegistrarV2ABI | typeof L2_SELF_REGISTRAR_ABI
+  L2_SELF_REGISTRAR_ABI,
+  SELF_STORAGE_ABI
+};

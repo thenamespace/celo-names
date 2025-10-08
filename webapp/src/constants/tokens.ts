@@ -1,6 +1,6 @@
 import { zeroAddress, type Address } from "viem";
 
-export type CurrencyToken = "CELO" | "USDT" | "USDC" | "sUSD";
+export type CurrencyToken = "CELO" | "USDT" | "USDC" | "cUSD";
 
 export interface PaymentToken {
   name: CurrencyToken;
@@ -13,7 +13,7 @@ export interface PaymentToken {
 
 export const USDC_TOKEN_ADDRESS = "0xcebA9300f2b948710d2653dD7B07f33A8B32118C";
 export const USDT_TOKEN_ADDRESS = "0x48065fbbe25f71c9282ddf5e1cd6d6a887483d5e";
-export const SUSD_TOKEN_ADDRESS = "0x765DE816845861e75A25fCA122bb6898B8B1282a";
+export const CUSD_TOKEN_ADDRESS = "0x765DE816845861e75A25fCA122bb6898B8B1282a";
 
 export const CELO_TOKEN: PaymentToken = {
   name: "CELO",
@@ -35,9 +35,9 @@ export const USDT_TOKEN: PaymentToken = {
   token_version: "1",
 };
 export const SUSD_TOKEN: PaymentToken = {
-  name: "sUSD",
-  address: SUSD_TOKEN_ADDRESS,
+  name: "cUSD",
+  address: CUSD_TOKEN_ADDRESS,
   decimals: 18,
   token_name: "Celo Dollar",
-  token_version: "6",
+  token_version: "1",
 };

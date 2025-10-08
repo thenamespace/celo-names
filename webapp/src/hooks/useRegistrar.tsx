@@ -1,39 +1,13 @@
 import {
   CONTRACT_ADDRESSES,
   L2_CHAIN_ID,
-  SUSD_TOKEN_ADDRESS,
-  USDC_TOKEN_ADDRESS,
-  USDT_TOKEN_ADDRESS,
-  type PaymentToken,
 } from "@/constants";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 import { ABIS } from "@/constants";
 import type { EnsRecords } from "@thenamespace/ens-components";
 import { convertToResolverData } from "@/utils";
 import { zeroAddress, type Address, type Hash } from "viem";
-
-export const PAYMENT_TOKENS: PaymentToken[] = [
-  {
-    name: "CELO",
-    address: zeroAddress,
-    decimals: 18,
-  },
-  {
-    name: "USDC",
-    address: USDC_TOKEN_ADDRESS,
-    decimals: 6,
-  },
-  {
-    name: "USDT",
-    address: USDT_TOKEN_ADDRESS,
-    decimals: 6,
-  },
-  {
-    name: "sUSD",
-    address: SUSD_TOKEN_ADDRESS,
-    decimals: 6,
-  },
-];
+import { ENV } from "@/constants/environment";
 
 export interface ERC20Permit {
   value: bigint;
@@ -84,7 +58,7 @@ export const useRegistrar = () => {
 
   const claimWithSelf = async (label: string, owner: Address, records: EnsRecords): Promise<Hash> => {
 
-    const full_name = `${label}.celoo.eth`;
+    const full_name = `${label}.${ENV.PARENT_NAME}`;
     const { request } = await publicClient!.simulateContract({
       address: CONTRACT_ADDRESSES.L2_SELF_REGISTRAR,
       abi: ABIS.L2_SELF_REGISTRAR_ABI,
@@ -108,7 +82,7 @@ export const useRegistrar = () => {
       throw Error("Permit not required for native transfers");
     }
 
-    const resolverData = convertToResolverData(`${label}.celoo.eth`, records);
+    const resolverData = convertToResolverData(`${label}.${ENV.PARENT_NAME}`, records);
 
     const { request } = await publicClient!.simulateContract({
       address: CONTRACT_ADDRESSES.L2_REGISTRAR_V2,
@@ -128,6 +102,15 @@ export const useRegistrar = () => {
     return await walletClient!.writeContract(request);
   };
 
+  const isSelfVerified = async (user:Address): Promise<boolean> => {
+    return publicClient!.readContract({
+      functionName: "isVerified",
+      abi: ABIS.SELF_STORAGE_ABI,
+      args: [user],
+      address: CONTRACT_ADDRESSES.SELF_STORAGE
+    }) as Promise<boolean>
+  }
+
   const register = async (
     label: string,
     durationInYears: number,
@@ -135,7 +118,7 @@ export const useRegistrar = () => {
     records: EnsRecords = { texts: [], addresses: [] }
   ) => {
     const price = await rentPrice(label, durationInYears);
-    const resolverData = convertToResolverData(`${label}.celoo.eth`, records);
+    const resolverData = convertToResolverData(`${label}.${ENV.PARENT_NAME}`, records);
 
     const { request } = await publicClient!.simulateContract({
       address: CONTRACT_ADDRESSES.L2_REGISTRAR_V2,
@@ -155,6 +138,7 @@ export const useRegistrar = () => {
     rentPrice,
     registerERC20,
     registrarAddress: CONTRACT_ADDRESSES.L2_REGISTRAR_V2,
-    claimWithSelf
+    claimWithSelf,
+    isSelfVerified
   };
 };

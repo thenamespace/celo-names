@@ -34,14 +34,12 @@ export const SelfQrCode = ({
       userId: owner,
       endpointType: "celo",
       userIdType: "hex", // use 'hex' for ethereum address or 'uuid' for uuidv4
-      userDefinedData: label,
       disclosures: {
         minimumAge: 18,
-        passport_number: true,
       },
     }).build();
     setSelfApp(_selfApp);
-  }, [owner, label]);
+  }, [owner]);
 
   return (
     <>

@@ -80,7 +80,6 @@ function RegisterNew() {
   const [currentStep, setCurrentStep] = useState<RegisterStep>(
     RegisterStep.AVAILABILITY
   );
-  const [isVerified, setIsVerified] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [records, setRecords] = useState<EnsRecords>({
     addresses: [],
@@ -96,6 +95,7 @@ function RegisterNew() {
     registrarAddress,
     registerERC20,
     claimWithSelf,
+    isSelfVerified,
   } = useRegistrar();
   const { showTransactionModal, updateTransactionStatus, TransactionModal } =
     useTransactionModal();
@@ -113,66 +113,6 @@ function RegisterNew() {
       });
     }
   }, [address]);
-
-  // Check for existing verification when label changes or component loads
-  useEffect(() => {
-    if (label && currentStep === RegisterStep.SELF_CLAIM) {
-      const verifiedKey = `verified_${label}`;
-      const storedData = localStorage.getItem(verifiedKey);
-
-      let isAlreadyVerified = false;
-
-      if (storedData) {
-        try {
-          const parsedData = JSON.parse(storedData);
-          const now = Date.now();
-
-          // Check if verification exists and hasn't expired
-          if (
-            parsedData.verified &&
-            parsedData.expiry &&
-            now < parsedData.expiry
-          ) {
-            isAlreadyVerified = true;
-          } else {
-            // Verification expired, remove it from localStorage
-            localStorage.removeItem(verifiedKey);
-          }
-        } catch (error) {
-          // Handle old format (just 'true' string) or corrupted data
-          if (storedData === "true") {
-            isAlreadyVerified = true;
-            // Migrate to new format
-            const expiryTime = Date.now() + 35 * 60 * 1000;
-            localStorage.setItem(
-              verifiedKey,
-              JSON.stringify({
-                verified: true,
-                expiry: expiryTime,
-              })
-            );
-          } else {
-            // Corrupted data, remove it
-            localStorage.removeItem(verifiedKey);
-          }
-        }
-      }
-
-      setIsVerified(isAlreadyVerified);
-
-      // If already verified, skip to verified step
-      if (isAlreadyVerified) {
-        setCurrentStep(RegisterStep.SELF_VERIFIED);
-      }
-    } else if (
-      currentStep !== RegisterStep.SELF_CLAIM &&
-      currentStep !== RegisterStep.SELF_VERIFIED &&
-      currentStep !== RegisterStep.REGISTER_RECEIPT &&
-      currentStep !== RegisterStep.SUCCESS
-    ) {
-      setIsVerified(false);
-    }
-  }, [label, currentStep]);
 
   const handleLabelChanged = (value: string) => {
     if (value.includes(".")) {
@@ -277,72 +217,22 @@ function RegisterNew() {
     );
   };
 
-  const handleClaimWithSelf = () => {
-    setCurrentStep(RegisterStep.SELF_CLAIM);
-    // Check if user is already verified for this label
-    const verifiedKey = `verified_${label}`;
-    const storedData = localStorage.getItem(verifiedKey);
-
-    let isAlreadyVerified = false;
-
-    if (storedData) {
-      try {
-        const parsedData = JSON.parse(storedData);
-        const now = Date.now();
-
-        // Check if verification exists and hasn't expired
-        if (
-          parsedData.verified &&
-          parsedData.expiry &&
-          now < parsedData.expiry
-        ) {
-          isAlreadyVerified = true;
-        } else {
-          // Verification expired, remove it from localStorage
-          localStorage.removeItem(verifiedKey);
-        }
-      } catch (error) {
-        // Handle old format (just 'true' string) or corrupted data
-        if (storedData === "true") {
-          isAlreadyVerified = true;
-          // Migrate to new format
-          const expiryTime = Date.now() + 35 * 60 * 1000;
-          localStorage.setItem(
-            verifiedKey,
-            JSON.stringify({
-              verified: true,
-              expiry: expiryTime,
-            })
-          );
-        } else {
-          // Corrupted data, remove it
-          localStorage.removeItem(verifiedKey);
-        }
-      }
+  const handleClaimWithSelf = async () => {
+    const _verified = await isSelfVerified(address!);
+    if (_verified) {
+      setCurrentStep(RegisterStep.SELF_VERIFIED);
+    } else {
+      setCurrentStep(RegisterStep.SELF_CLAIM);
     }
-
-    setIsVerified(isAlreadyVerified);
   };
 
   const handleVerificationSuccess = () => {
-    setIsVerified(true);
-    // Store verification status in localStorage for this specific label with 35 minute expiry
-    const verifiedKey = `verified_${label}`;
-    const expiryTime = Date.now() + 35 * 60 * 1000; // 35 minutes in milliseconds
-    localStorage.setItem(
-      verifiedKey,
-      JSON.stringify({
-        verified: true,
-        expiry: expiryTime,
-      })
-    );
-    // Move to verified step
     setCurrentStep(RegisterStep.SELF_VERIFIED);
   };
 
   const handleVerificationError = (error: any) => {
     console.error("Verification error:", error);
-    setIsVerified(false);
+    toast.error("Verification failed! " + JSON.stringify(error, null, 2));
   };
 
   const handleAddProfile = () => {
@@ -576,10 +466,19 @@ function RegisterNew() {
             <div className="form-group">
               {/* Registration info */}
               <div>
-                <Text weight="normal" color="gray" className="registering-label">
+                <Text
+                  weight="normal"
+                  color="gray"
+                  className="registering-label"
+                >
                   Registering
                 </Text>
-                <Text size="2xl" weight="bold" color="black" className="registering-name">
+                <Text
+                  size="2xl"
+                  weight="bold"
+                  color="black"
+                  className="registering-name"
+                >
                   {label}.{ENV.PARENT_NAME}
                 </Text>
               </div>
@@ -649,10 +548,19 @@ function RegisterNew() {
             <div className="form-group">
               {/* Registration info */}
               <div>
-                <Text weight="normal" color="gray" className="registering-label">
+                <Text
+                  weight="normal"
+                  color="gray"
+                  className="registering-label"
+                >
                   Register
                 </Text>
-                <Text size="2xl" weight="bold" color="black" className="registering-name">
+                <Text
+                  size="2xl"
+                  weight="bold"
+                  color="black"
+                  className="registering-name"
+                >
                   {label}.{ENV.PARENT_NAME}
                 </Text>
                 <div className="registration-details">
@@ -674,7 +582,8 @@ function RegisterNew() {
                     </div>
                     <div className="detail-value">
                       <Text size="base" weight="semibold" color="black">
-                        {(namePrice.price * durationInYears).toFixed(2)} {namePrice.paymentToken.name}
+                        {(namePrice.price * durationInYears).toFixed(2)}{" "}
+                        {namePrice.paymentToken.name}
                       </Text>
                       <TokenIcon
                         tokenName={namePrice.paymentToken.name}
@@ -763,10 +672,10 @@ function RegisterNew() {
                 <Button
                   variant="primary"
                   className="claim-button"
-                  disabled={!isVerified}
+                  disabled={true}
                 >
                   <Text size="base" weight="medium" color="black">
-                    {isVerified ? "Claim" : "Verify First"}
+                    {"Verify First"}
                   </Text>
                 </Button>
               </div>
@@ -816,24 +725,24 @@ function RegisterNew() {
                 </Button>
                 <div className="button-row">
                   <Button
-                  onClick={() => setCurrentStep(RegisterStep.PRICING)}
-                  variant="secondary"
-                  className="claim-button"
-                >
-                  <Text size="base" weight="medium" color="black">
-                    Cancel
-                  </Text>
-                </Button>
+                    onClick={() => setCurrentStep(RegisterStep.PRICING)}
+                    variant="secondary"
+                    className="claim-button"
+                  >
+                    <Text size="base" weight="medium" color="black">
+                      Cancel
+                    </Text>
+                  </Button>
                   <Button
-                  onClick={() => handleRegister(true)}
-                  variant="primary"
-                  className="claim-button"
-                  disabled={isWaitingWallet}
-                >
-                  <Text size="base" weight="medium" color="black">
-                    {isWaitingWallet ? "Waiting wallet..." : "Claim"}
-                  </Text>
-                </Button>
+                    onClick={() => handleRegister(true)}
+                    variant="primary"
+                    className="claim-button"
+                    disabled={isWaitingWallet}
+                  >
+                    <Text size="base" weight="medium" color="black">
+                      {isWaitingWallet ? "Waiting wallet..." : "Claim"}
+                    </Text>
+                  </Button>
                 </div>
               </div>
             </div>

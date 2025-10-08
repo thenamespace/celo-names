@@ -15,6 +15,11 @@
           "internalType": "address",
           "name": "_registry",
           "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "_selfStorage",
+          "type": "address"
         }
       ],
       "stateMutability": "nonpayable",
@@ -37,12 +42,18 @@
     },
     {
       "inputs": [],
-      "name": "NotVerifiedClaimer",
+      "name": "NameAlreadyClaimed",
       "type": "error"
     },
     {
-      "inputs": [],
-      "name": "NulifiedReused",
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "user",
+          "type": "address"
+        }
+      ],
+      "name": "NotSelfVerified",
       "type": "error"
     },
     {
@@ -69,17 +80,12 @@
     },
     {
       "inputs": [],
-      "name": "SubnameVerificationExists",
-      "type": "error"
-    },
-    {
-      "inputs": [],
       "name": "UnauthorizedCaller",
       "type": "error"
     },
     {
       "inputs": [],
-      "name": "VerificationExpired",
+      "name": "VerificationClaimed",
       "type": "error"
     },
     {
@@ -131,12 +137,24 @@
       "inputs": [
         {
           "indexed": false,
-          "internalType": "string",
-          "name": "passportId",
-          "type": "string"
+          "internalType": "address",
+          "name": "user",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "verificationId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "timestamp",
+          "type": "uint256"
         }
       ],
-      "name": "PasspordId",
+      "name": "VerificationCompleted",
       "type": "event"
     },
     {
@@ -259,11 +277,11 @@
       "inputs": [
         {
           "internalType": "uint64",
-          "name": "_maxNamesToClaim",
+          "name": "_maximumClaim",
           "type": "uint64"
         }
       ],
-      "name": "setMaxNamesToClaim",
+      "name": "setMaximumClaim",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"

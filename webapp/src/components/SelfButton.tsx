@@ -23,7 +23,7 @@ export default function SelfButton({ onClick, disabled, className }: SelfButtonP
           className="self-logo"
         />
         <Text size="base" weight="medium" color="black">
-          Claim with Self
+          Claim with Self for free
         </Text>
       </div>
     </Button>
