@@ -4,9 +4,8 @@ import '@nomicfoundation/hardhat-chai-matchers';
 import '@nomicfoundation/hardhat-verify';
 import 'solidity-coverage';
 import { celo, celoSepolia, mainnet } from 'viem/chains';
-import * as dotenv from "dotenv";
+import * as dotenv from 'dotenv';
 dotenv.config();
-
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -28,18 +27,18 @@ const config: HardhatUserConfig = {
     celo: {
       chainId: celo.id,
       url: process.env.CELO_RPC_URL,
-      accounts: [process.env.DEPLOYER_KEY || ""],
+      accounts: [process.env.DEPLOYER_KEY || ''],
     },
     mainnet: {
       chainId: mainnet.id,
       url: process.env.MAINNET_RPC_URL,
-      accounts: [process.env.DEPLOYER_KEY || ""]
+      accounts: [process.env.DEPLOYER_KEY || ''],
     },
-      celotest: {
+    celotest: {
       chainId: celoSepolia.id,
       url: process.env.CELO_SEPOLIA_RPC,
-      accounts: [process.env.DEPLOYER_KEY || ""]
-    }
+      accounts: [process.env.DEPLOYER_KEY || ''],
+    },
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_KEY,
@@ -50,6 +49,14 @@ const config: HardhatUserConfig = {
         urls: {
           apiURL: 'https://api.celoscan.io/api',
           browserURL: 'https://celoscan.io',
+        },
+      },
+      {
+        network: 'Celo Sepolia',
+        chainId: celoSepolia.id,
+        urls: {
+          apiURL: 'https://api.sepolia.celoscan.io/api',
+          browserURL: 'https://sepolia.celoscan.io',
         },
       },
     ],

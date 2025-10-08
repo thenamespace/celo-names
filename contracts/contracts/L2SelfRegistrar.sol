@@ -7,6 +7,7 @@ import {SelfStructs} from '@selfxyz/contracts/contracts/libraries/SelfStructs.so
 import {SelfUtils} from '@selfxyz/contracts/contracts/libraries/SelfUtils.sol';
 import {IIdentityVerificationHubV2} from '@selfxyz/contracts/contracts/interfaces/IIdentityVerificationHubV2.sol';
 import {IL2Registry} from './interfaces/IL2Registry.sol';
+import {ISelfStorage} from './interfaces/ISelfStorage.sol';
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {StringUtils} from './common/StringUtils.sol';
 
@@ -20,27 +21,8 @@ import {StringUtils} from './common/StringUtils.sol';
 contract L2SelfRegistrar is SelfVerificationRoot, Ownable {
   using StringUtils for string;
 
-  // ============ Structs ============
-
-  /**
-   * @dev Stores verification data for a user's subdomain claim
-   * @param label The subdomain label to be claimed
-   * @param owner The address that will own the subdomain
-   * @param verificationExpiry Timestamp when verification expires
-   * @param passportHash Hash of the passport ID for tracking claims per user
-   */
-  struct Verification {
-    string label;
-    address owner;
-    uint64 verificationExpiry;
-    bytes32 passportHash;
-  }
-
   // ============ Constants ============
 
-  /// @dev Duration for which verification remains valid
-  uint64 constant VERIFICATION_EXPIRY = 30 minutes;
-  
   /// @dev Seconds in one year for subdomain expiry calculation
   uint64 constant ONE_YEAR_SECONDS = 31_536_000;
 
@@ -52,55 +34,42 @@ contract L2SelfRegistrar is SelfVerificationRoot, Ownable {
 
   // ============ Custom Errors ============
 
-  /// @dev Thrown when attempting to reuse a nullifier
-  error NulifiedReused();
-  
-  /// @dev Thrown when caller is not authorized to claim name
-  error NotVerifiedClaimer();
-  
-  /// @dev Thrown when verification has expired
-  error VerificationExpired();
-  
   /// @dev Thrown when user has reached maximum allowed claims
   error MaximumNamesClaimed();
-  
+
   /// @dev Thrown when label does not meet minimum length requirements
   error InvalidLabel();
 
-  /// @dev Unexpired verification is alredy present
-  /// someone already booked a subname with label
-  error SubnameVerificationExists();
+  /// @dev Thrown when a non verified user tries to claim subnames
+  error NotSelfVerified(address user);
+
+  /// @dev Thrown when already verified user attempt verification again
+  error VerificationClaimed();
+
+  /// @dev Thrown when attempting to claim a name that's already been claimed
+  error NameAlreadyClaimed();
 
   // ============ Events ============
 
   /// @dev Emitted when a subdomain is successfully claimed
   event NameClaimed(string label, bytes32 node, address owner);
-  
-  /// @dev Emitted when passport ID is processed during verification
-  event PasspordId(string passportId);
+
+  /// @dev Emitted when user completed a verification
+  event VerificationCompleted(address user, uint256 verificationId, uint256 timestamp);
 
   // ============ State Variables ============
 
-  /// @dev Maps nullifiers to prevent reuse of verification proofs
-  mapping(uint256 => bool) nullifiers;
-  
-  /// @dev Maps label hash to verification data
-  mapping(bytes32 => Verification) verifications;
-  
-  /// @dev Maps passport hash to number of claims made by that user
-  mapping(bytes32 => uint64) claimedCount;
-  
-  /// @dev Maximum number of names a single user can claim
-  uint64 private maxNamesToClaim;
-  
-  /// @dev Minimum length required for subdomain labels
-  uint256 private minLabelLen;
-  
+  /// @dev Maximum number of names a single user can claim (default: 1 free name per user)
+  uint64 private maximumClaim = 1;
+
   /// @dev Self protocol verification configuration ID
   bytes32 verificationConfigId;
 
   /// @dev Registry contract for subdomain management
   IL2Registry immutable registry;
+
+  /// @dev Storage contrat for verification information
+  ISelfStorage immutable selfStorage;
 
   // ============ Constructor ============
 
@@ -113,13 +82,15 @@ contract L2SelfRegistrar is SelfVerificationRoot, Ownable {
   constructor(
     address identityVerificationHubV2Address,
     string memory scopeSeed,
-    address _registry
+    address _registry,
+    address _selfStorage
   )
     SelfVerificationRoot(identityVerificationHubV2Address, scopeSeed)
     Ownable(_msgSender())
   {
     _initSelfProtocol(identityVerificationHubV2Address);
     registry = IL2Registry(_registry);
+    selfStorage = ISelfStorage(_selfStorage);
   }
 
   // ============ Public Functions ============
@@ -129,38 +100,43 @@ contract L2SelfRegistrar is SelfVerificationRoot, Ownable {
    * @param label The subdomain label to claim
    * @param owner The address that will own the subdomain
    * @param resolverData Optional array of resolver function calls to execute
-   * 
+   *
    * Requirements:
-   * - Caller must have completed identity verification
-   * - Verification must not have expired
-   * - Caller must be the verified owner
+   * - Label must be valid length (3-64 characters)
+   * - User must be verified via Self protocol
    * - User must not have exceeded maximum claims limit
+   * - Name must not have been claimed already
    */
   function claim(
     string calldata label,
     address owner,
     bytes[] calldata resolverData
   ) external {
-    bytes32 labelHash = keccak256(bytes(label));
-    Verification memory verification = verifications[labelHash];
-    
-    if (verification.verificationExpiry <= block.timestamp) {
-      revert VerificationExpired();
+    // Validate label length
+    uint len = label.strlen();
+    if (len < MIN_SUBNAME_LENGTH || len > MAX_SUBNAME_LENGTH) {
+      revert InvalidLabel();
     }
 
-    if (_msgSender() != verification.owner) {
-      revert NotVerifiedClaimer();
+    // Check if user is verified via self protocol
+    if (!selfStorage.isVerified(_msgSender())) {
+      revert NotSelfVerified(_msgSender());
     }
 
-    if (claimedCount[verification.passportHash] >= maxNamesToClaim) {
+    // Check if user claimed max amount of free names
+    if (selfStorage.claimed(_msgSender()) >= maximumClaim) {
       revert MaximumNamesClaimed();
     }
 
-    claimedCount[verification.passportHash] += 1;
+    bytes32 node = _namehash(label, registry.rootNode());
+    // Update storage (checks-effects-interactions pattern)
+    selfStorage.claim(_msgSender(), node);
+
+    // Create the subnode in registry
     uint64 oneYearExpiry = uint64(block.timestamp) + ONE_YEAR_SECONDS;
     registry.createSubnode(label, oneYearExpiry, owner, resolverData);
 
-    emit NameClaimed(label, _namehash(label, registry.rootNode()), owner);
+    emit NameClaimed(label, node, owner);
   }
 
   /**
@@ -180,7 +156,7 @@ contract L2SelfRegistrar is SelfVerificationRoot, Ownable {
   /**
    * @notice Updates the Self protocol verification configuration ID
    * @param configId The new verification configuration ID
-   * 
+   *
    * Requirements:
    * - Caller must be the contract owner
    */
@@ -190,15 +166,13 @@ contract L2SelfRegistrar is SelfVerificationRoot, Ownable {
 
   /**
    * @notice Increases the maximum number of names a single user can claim
-   * @param _maxNamesToClaim The new maximum number of names per user
-   * 
+   * @param _maximumClaim The new maximum number of names per user
+   *
    * Requirements:
    * - Caller must be the contract owner
-   * - New value must be greater than current value
    */
-  function setMaxNamesToClaim(uint64 _maxNamesToClaim) external onlyOwner {
-    require(_maxNamesToClaim > maxNamesToClaim, "New value must be greater than current");
-    maxNamesToClaim = _maxNamesToClaim;
+  function setMaximumClaim(uint64 _maximumClaim) external onlyOwner {
+    maximumClaim = _maximumClaim;
   }
 
   // ============ Internal Functions ============
@@ -207,50 +181,25 @@ contract L2SelfRegistrar is SelfVerificationRoot, Ownable {
    * @notice Implementation of customVerificationHook for Self protocol integration
    * @dev This function is called by onVerificationSuccess after hub address validation
    * @param output The verification output from the Self hub
-   * @param userData The user data passed through verification (contains the label)
+   * @param userData The user data passed through verification (unused in current implementation)
    */
   function customVerificationHook(
     ISelfVerificationRoot.GenericDiscloseOutputV2 memory output,
     bytes memory userData
   ) internal override {
-    if (_isNullified(output.nullifier)) {
-      revert NulifiedReused();
+    uint256 verificationId = output.nullifier;
+    address user = address(uint160(output.userIdentifier));
+
+    // Prevent double verification
+    if (
+      selfStorage.isVerified(user) ||
+      selfStorage.claimedVerifications(verificationId)
+    ) {
+      revert VerificationClaimed();
     }
 
-    nullifiers[output.nullifier] = true;
-    address userAddress = address(uint160(output.userIdentifier));
-    string memory label = string(userData);
-    bytes32 labelHash = keccak256(bytes(label));
-
-    Verification memory existingVerification = verifications[labelHash];
-    if (existingVerification.verificationExpiry > block.timestamp) {
-      revert SubnameVerificationExists();
-    }
-
-    uint256 labelen = label.strlen();
-    if (labelen < MIN_SUBNAME_LENGTH || labelen > MAX_SUBNAME_LENGTH) {
-      revert InvalidLabel();
-    }
-
-    bytes32 passportHash = keccak256(bytes(output.idNumber));
-    uint64 verificationExpiry = uint64(block.timestamp) + VERIFICATION_EXPIRY;
-    verifications[labelHash] = Verification(
-      label,
-      userAddress,
-      verificationExpiry,
-      passportHash
-    );
-
-    emit PasspordId(output.idNumber);
-  }
-
-  /**
-   * @notice Checks if a nullifier has been used before
-   * @param nullifier The nullifier to check
-   * @return True if the nullifier has been used
-   */
-  function _isNullified(uint256 nullifier) internal returns (bool) {
-    return nullifiers[nullifier];
+    selfStorage.setVerificationId(user, verificationId);
+    emit VerificationCompleted(user, verificationId, block.timestamp);
   }
 
   /**
@@ -262,7 +211,7 @@ contract L2SelfRegistrar is SelfVerificationRoot, Ownable {
   function _namehash(
     string calldata label,
     bytes32 parent
-  ) internal view returns (bytes32) {
+  ) internal pure returns (bytes32) {
     return keccak256(abi.encodePacked(parent, keccak256(bytes(label))));
   }
 
@@ -270,7 +219,9 @@ contract L2SelfRegistrar is SelfVerificationRoot, Ownable {
    * @notice Initializes the Self protocol with verification configuration
    * @param _identityVerificationHubV2Address The address of the Self Identity Verification Hub V2
    */
-  function _initSelfProtocol(address _identityVerificationHubV2Address) internal {
+  function _initSelfProtocol(
+    address _identityVerificationHubV2Address
+  ) internal {
     SelfUtils.UnformattedVerificationConfigV2 memory _config = SelfUtils
       .UnformattedVerificationConfigV2(18, new string[](0), false);
     SelfStructs.VerificationConfigV2 memory _verificationConfig = SelfUtils

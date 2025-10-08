@@ -28,12 +28,14 @@ contract MockedSelfRegistrar is L2SelfRegistrar {
    * @param identityVerificationHubV2Address The address of the Self Identity Verification Hub V2
    * @param scopeSeed The scope seed for Self protocol verification
    * @param _registry The address of the L2Registry contract
+   * @param _selfStorage The address of the SelfStorage contract
    */
   constructor(
     address identityVerificationHubV2Address,
     string memory scopeSeed,
-    address _registry
-  ) L2SelfRegistrar(identityVerificationHubV2Address, scopeSeed, _registry) {}
+    address _registry,
+    address _selfStorage
+  ) L2SelfRegistrar(identityVerificationHubV2Address, scopeSeed, _registry, _selfStorage) {}
 
   /**
    * @notice Public function to mock the customVerificationHook for testing
