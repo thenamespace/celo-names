@@ -1,3 +1,13 @@
+/* Connect Prompt */
+.connect-prompt {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 500px;
+  padding: 3rem;
+}
 
 .register-form {
   max-width: 450px;
@@ -138,6 +148,11 @@
 
 /* Responsive design */
 @media (max-width: 768px) {
+  .connect-prompt {
+    min-height: 400px;
+    padding: 2rem 1rem;
+  }
+
   .register-form {
     max-width: 100%;
     margin: 1.5rem auto 0;

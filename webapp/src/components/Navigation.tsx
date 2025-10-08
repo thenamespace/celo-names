@@ -1,9 +1,11 @@
 import { Link, useLocation } from 'react-router-dom'
-import { ConnectButton, useConnectModal } from '@rainbow-me/rainbowkit'
+import { useConnectModal } from '@rainbow-me/rainbowkit'
 import './Navigation.css'
 import Text from '@components/Text'
 import Button from './Button'
+import ConnectedWallet from './ConnectedWallet'
 import { useAccount } from 'wagmi'
+
 function Navigation() {
   const location = useLocation()
   const {isConnected} = useAccount();
@@ -42,21 +44,13 @@ function Navigation() {
               My Names
             </Text>
           </Link>
-          <Link 
-            to="/all-names" 
-            className={`nav-link ${location.pathname === '/all-names' ? 'active' : ''}`}
-          >
-            <Text 
-              size="lg" 
-              weight={location.pathname === '/all-names' ? 'medium' : 'normal'} 
-              color="black"
-            >
-              All Names
-            </Text>
-          </Link>
         </div>
         <div className="nav-right">
-          {!isConnected ? <Button onClick={() => openConnectModal?.()}>Connect</Button> : <ConnectButton />}
+          {!isConnected ? (
+            <Button onClick={() => openConnectModal?.()}>Connect</Button>
+          ) : (
+            <ConnectedWallet />
+          )}
         </div>
       </div>
     </nav>

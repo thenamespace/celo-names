@@ -114,6 +114,13 @@ function RegisterNew() {
     }
   }, [address]);
 
+  // Reset to availability step if user disconnects
+  useEffect(() => {
+    if (!isConnected && currentStep !== RegisterStep.AVAILABILITY) {
+      setCurrentStep(RegisterStep.AVAILABILITY);
+    }
+  }, [isConnected]);
+
   const handleLabelChanged = (value: string) => {
     if (value.includes(".")) {
       return;
@@ -389,6 +396,29 @@ function RegisterNew() {
   const handleContinueSuccess = () => {
     navigate("/my-names");
   };
+
+  // If user disconnects after progressing past availability step, show connect prompt
+  if (!isConnected && currentStep !== RegisterStep.AVAILABILITY) {
+    return (
+      <div className="page">
+        <div className="page-content">
+          <div className="connect-prompt">
+            <Text as="h1" size="4xl" weight="semibold" color="black" className="mb-2">
+              Register
+            </Text>
+            <Text size="lg" weight="normal" color="gray" className="mb-6">
+              Connect your wallet to continue registering your CELO name
+            </Text>
+            <Button onClick={() => openConnectModal?.()} variant="primary" className="mt-3">
+              <Text size="base" weight="medium" color="black">
+                Connect Wallet
+              </Text>
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="page">

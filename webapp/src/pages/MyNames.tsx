@@ -1,18 +1,21 @@
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { Link } from "react-router-dom";
-import { Clock, User } from "lucide-react";
+import { Clock, ExternalLink, Sparkles } from "lucide-react";
 import Text from "@components/Text";
 import Button from "@components/Button";
+import CeloSpinner from "@components/CeloSpinner";
 import { useCeloIndexer } from "@/hooks/useCeloIndexer";
 import type { Name } from "@/types/indexer";
 import "./Page.css";
 import "./MyNames.css";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 function MyNames() {
   const { address, isConnected } = useAccount();
   const { getOwnerNames, loading, error } = useCeloIndexer();
   const [names, setNames] = useState<Name[]>([]);
+  const { openConnectModal  } = useConnectModal();
 
   useEffect(() => {
     if (address && isConnected) {
@@ -29,33 +32,39 @@ function MyNames() {
 
   const formatExpiry = (expiry: string) => {
     const expiryDate = new Date(parseInt(expiry) * 1000);
-    return expiryDate.toLocaleDateString();
+    const now = new Date();
+    const daysUntilExpiry = Math.floor((expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    
+    if (daysUntilExpiry < 0) {
+      return { date: expiryDate.toLocaleDateString(), status: 'expired' };
+    } else if (daysUntilExpiry < 30) {
+      return { date: expiryDate.toLocaleDateString(), status: 'expiring-soon' };
+    }
+    return { date: expiryDate.toLocaleDateString(), status: 'active' };
   };
 
- 
-  const getShortenedAddress = (name: Name) => {
-    const ethAddress = name.records?.addresses?.find(addr => addr.coin === 60)?.value;
-    if (ethAddress) {
-      return `${ethAddress.slice(0, 6)}.${ethAddress.slice(-6)}`;
-    }
-    return null;
+  const getAvatar = (name: Name) => {
+    return name.records?.texts?.find(text => text.key === 'avatar')?.value;
   };
 
   if (!isConnected) {
     return (
       <div className="page">
         <div className="page-content">
-          <Text as="h1" size="4xl" weight="semibold" color="black" className="mb-2">
-            My Names
-          </Text>
-          <Text size="lg" weight="normal" color="gray" className="mb-4">
-            Connect your wallet to view your registered CELO names
-          </Text>
-          <Button variant="primary" onClick={() => window.location.href = '/register'}>
-            <Text size="base" weight="medium" color="black">
-              Connect Wallet
+          <div className="connect-prompt">
+
+            <Text as="h1" size="4xl" weight="semibold" color="black" className="mb-2">
+              My Names
             </Text>
-          </Button>
+            <Text size="lg" weight="normal" color="gray" className="mb-6">
+              Connect your wallet to view and manage your CELO names
+            </Text>
+            <Button onClick={() => openConnectModal?.()} variant="primary" className="mt-3">
+                <Text size="base" weight="medium" color="black">
+                  Connect Wallet
+                </Text>
+              </Button>
+          </div>
         </div>
       </div>
     );
@@ -65,12 +74,9 @@ function MyNames() {
     return (
       <div className="page">
         <div className="page-content">
-          <Text as="h1" size="4xl" weight="semibold" color="black" className="mb-2">
-            My Names
-          </Text>
-          <div className="loading-state">
-            <div className="spinner"></div>
-            <Text size="lg" weight="medium" color="gray" className="mt-2">
+          <div className="loading-container">
+            <CeloSpinner size={48} />
+            <Text size="xl" weight="medium" color="gray" className="mt-4">
               Loading your names...
             </Text>
           </div>
@@ -83,12 +89,12 @@ function MyNames() {
     return (
       <div className="page">
         <div className="page-content">
-          <Text as="h1" size="4xl" weight="semibold" color="black" className="mb-2">
-            My Names
-          </Text>
-          <div className="error-state">
-            <Text size="lg" weight="medium" color="red" className="mb-4">
-              Error loading names: {error}
+          <div className="error-container">
+            <Text size="xl" weight="semibold" color="black" className="mb-2">
+              Something went wrong
+            </Text>
+            <Text size="base" weight="normal" color="gray" className="mb-6">
+              {error}
             </Text>
             <Button variant="secondary" onClick={fetchNames}>
               <Text size="base" weight="medium" color="black">
@@ -103,96 +109,89 @@ function MyNames() {
 
   return (
     <div className="page">
-      <div className="page-content">
-        <div className="names-header">
-          <div className="header-content">
-            <Text as="h1" size="4xl" weight="semibold" color="black" className="mb-2">
-              My Names
-            </Text>
-            <Text size="lg" weight="normal" color="gray">
-              Your registered CELO names ({names.length})
-            </Text>
-          </div>
+      <div className="page-content my-names-page">
+        <div className="page-header">
+          <Text as="h1" size="4xl" weight="semibold" color="black" className="mb-2">
+            My Names
+          </Text>
+          <Text size="lg" weight="normal" color="gray">
+            {names.length === 0 
+              ? "No registered names yet" 
+              : `${names.length} registered ${names.length === 1 ? 'name' : 'names'}`
+            }
+          </Text>
         </div>
 
         {names.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-state-content">
-              <Text size="xl" weight="semibold" color="black" className="mt-4 mb-2">
-                No registered names
-              </Text>
-              <Text size="base" weight="normal" color="gray" className="mb-6">
-                You haven't registered any CELO names yet. Get started by registering your first name.
-              </Text>
-              <Link to="/">
-                <Button variant="primary" className="mt-3">
-                  <Text size="base" weight="medium" color="black">
-                    Register
-                  </Text>
-                </Button>
-              </Link>
-            </div>
+            <Text size="2xl" weight="semibold" color="black" className="mb-2">
+              No names yet
+            </Text>
+            <Text size="base" weight="normal" color="gray" className="mb-6">
+              Start your CELO identity journey by registering your first name
+            </Text>
+            <Link to="/register">
+              <Button variant="primary" className="cta-button">
+                <Text size="base" weight="medium" color="black">
+                  Register Your First Name
+                </Text>
+              </Button>
+            </Link>
           </div>
         ) : (
-          <div className="names-grid">
-            {names.map((name) => (
-              <div key={name.id} className="name-card">
-                <div className="name-card-header">
-                  <div className="name-info">
-                    <div className="name-with-avatar">
-                      <div className="avatar-circle">
-                        {name.records?.texts?.find(text => text.key === 'avatar')?.value ? (
-                          <img 
-                            src={name.records.texts.find(text => text.key === 'avatar')?.value} 
-                            alt="Avatar" 
-                            className="avatar-image"
-                          />
+          <div className="names-list">
+            {names.map((name, index) => {
+              const expiry = formatExpiry(name.expiry);
+              const avatar = getAvatar(name);
+
+              return (
+                <div 
+                  key={name.id} 
+                  className="name-card"
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  <div className="name-card-content">
+                    <div className="name-main">
+                      <div className="name-avatar">
+                        {avatar ? (
+                          <img src={avatar} alt={name.full_name} className="avatar-img" />
                         ) : (
-                          <div className="default-avatar"></div>
+                          <div className="avatar-placeholder">
+                            {name.full_name.charAt(0).toUpperCase()}
+                          </div>
                         )}
                       </div>
-                      <div className="name-details">
-                        <a 
-                          href={`https://app.ens.domains/${name.full_name}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="name-link"
-                        >
+                      
+                      <div className="name-info">
+                        <div className="name-title-row">
                           <Text size="xl" weight="semibold" color="black">
                             {name.full_name}
                           </Text>
-                        </a>
-                        <div className="expiry-with-icon">
-                          <Clock size={16} color="#6B7280" />
-                          <Text size="base" weight="normal" color="gray">
-                            {formatExpiry(name.expiry)}
-                          </Text>
+                          <a
+                            href={`https://app.ens.domains/${name.full_name}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="external-link"
+                            title="View on ENS"
+                          >
+                            <ExternalLink size={18} />
+                          </a>
                         </div>
-                        {name.registration?.price_wei && (
-                          <div className="price-with-icon">
-                            <img src="/celo-logo.svg" alt="CELO" className="celo-icon" />
-                            <Text size="sm" weight="medium" color="black">
-                              {(parseInt(name.registration.price_wei) / 1e18).toFixed(3)} CELO
+
+                        <div className="name-meta">
+                          <div className={`meta-item expiry-${expiry.status}`}>
+                            <Clock size={14} />
+                            <Text weight="normal" color="gray">
+                              Expires {expiry.date}
                             </Text>
                           </div>
-                        )}
+                        </div>
                       </div>
                     </div>
                   </div>
                 </div>
-
-                <div className="name-card-details">
-                  {getShortenedAddress(name) && (
-                    <div className="detail-item">
-                      <User size={16} color="#6B7280" />
-                      <Text size="sm" weight="normal" color="gray">
-                        {getShortenedAddress(name)}
-                      </Text>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -201,3 +200,4 @@ function MyNames() {
 }
 
 export default MyNames;
+

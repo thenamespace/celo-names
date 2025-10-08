@@ -3,7 +3,6 @@ import { ToastContainer } from 'react-toastify'
 import Navigation from '@components/Navigation'
 import RegisterNew from '@pages/RegisterNew'
 import MyNames from '@pages/MyNames'
-import AllNames from '@pages/AllNames'
 import './App.css'
 import 'react-toastify/dist/ReactToastify.css'
 import '@components/Toast.css'
@@ -17,7 +16,6 @@ function App() {
         <Routes>
           <Route path="/" element={<RegisterNew />} />
           <Route path="/my-names" element={<MyNames />} />
-          <Route path="/all-names" element={<AllNames />} />
         </Routes>
         <ToastContainer
           position="top-right"

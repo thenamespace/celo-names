@@ -34,7 +34,7 @@ export const USDT_TOKEN: PaymentToken = {
   token_name: "Tether USD",
   token_version: "1",
 };
-export const SUSD_TOKEN: PaymentToken = {
+export const CUSD_TOKEN: PaymentToken = {
   name: "cUSD",
   address: CUSD_TOKEN_ADDRESS,
   decimals: 18,

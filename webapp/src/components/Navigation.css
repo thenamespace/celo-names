@@ -16,6 +16,8 @@
 .nav-left {
   display: flex;
   align-items: center;
+  flex: 1;
+  min-width: 0;
 }
 
 .celo-logo {
@@ -30,6 +32,7 @@
   display: flex;
   align-items: center;
   gap: 2.5rem;
+  flex-shrink: 0;
 }
 
 .nav-link {
@@ -63,6 +66,9 @@
 .nav-right {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
+  flex: 1;
+  min-width: 0;
 }
 
 .user-profile {

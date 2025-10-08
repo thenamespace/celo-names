@@ -4,7 +4,7 @@ import Text from "./Text";
 import "./CurrencyDropdown.css";
 import {
   CELO_TOKEN,
-  SUSD_TOKEN,
+  CUSD_TOKEN,
   USDC_TOKEN,
   USDT_TOKEN,
   type PaymentToken,
@@ -14,7 +14,7 @@ const PAYMENT_TOKENS: PaymentToken[] = [
   CELO_TOKEN,
   USDC_TOKEN,
   USDT_TOKEN,
-  SUSD_TOKEN,
+  CUSD_TOKEN,
 ];
 
 interface CurrencyDropdownProps {
@@ -26,7 +26,7 @@ const logos: Record<string, string> = {
   CELO: "/celo-logo.svg",
   USDC: "/usdc-logo.svg",
   USDT: "/usdt-logo.svg",
-  sUSD: "/cusd-logo.png",
+  cUSD: "/cusd-logo.png",
 };
 
 export default function CurrencyDropdown({
