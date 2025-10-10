@@ -145,51 +145,57 @@ function MyNames() {
               const avatar = getAvatar(name);
 
               return (
-                <div 
+                <Link 
                   key={name.id} 
-                  className="name-card"
-                  style={{ animationDelay: `${index * 0.05}s` }}
+                  to={`/name/${name.label}`}
+                  className="name-card-link"
                 >
-                  <div className="name-card-content">
-                    <div className="name-main">
-                      <div className="name-avatar">
-                        {avatar ? (
-                          <img src={avatar} alt={name.full_name} className="avatar-img" />
-                        ) : (
-                          <div className="avatar-placeholder">
-                            {name.full_name.charAt(0).toUpperCase()}
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="name-info">
-                        <div className="name-title-row">
-                          <Text size="xl" weight="semibold" color="black">
-                            {name.full_name}
-                          </Text>
-                          <a
-                            href={`https://app.ens.domains/${name.full_name}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="external-link"
-                            title="View on ENS"
-                          >
-                            <ExternalLink size={18} />
-                          </a>
+                  <div 
+                    className="name-card"
+                    style={{ animationDelay: `${index * 0.05}s` }}
+                  >
+                    <div className="name-card-content">
+                      <div className="name-main">
+                        <div className="name-avatar">
+                          {avatar ? (
+                            <img src={avatar} alt={name.full_name} className="avatar-img" />
+                          ) : (
+                            <div className="avatar-placeholder">
+                              {name.full_name.charAt(0).toUpperCase()}
+                            </div>
+                          )}
                         </div>
-
-                        <div className="name-meta">
-                          <div className={`meta-item expiry-${expiry.status}`}>
-                            <Clock size={14} />
-                            <Text weight="normal" color="gray">
-                              Expires {expiry.date}
+                        
+                        <div className="name-info">
+                          <div className="name-title-row">
+                            <Text size="xl" weight="semibold" color="black">
+                              {name.full_name}
                             </Text>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                window.open(`https://app.ens.domains/${name.full_name}`, '_blank');
+                              }}
+                              className="external-link"
+                              title="View on ENS"
+                            >
+                              <ExternalLink size={18} />
+                            </button>
+                          </div>
+
+                          <div className="name-meta">
+                            <div className={`meta-item expiry-${expiry.status}`}>
+                              <Clock size={14} />
+                              <Text weight="normal" color="gray">
+                                Expires {expiry.date}
+                              </Text>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
+                </Link>
               );
             })}
           </div>

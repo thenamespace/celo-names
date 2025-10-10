@@ -86,6 +86,13 @@
   margin: 0 auto;
 }
 
+/* Name Card Link */
+.name-card-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+}
+
 /* Name Card */
 .name-card {
   background: white;
@@ -100,13 +107,13 @@
   overflow: hidden;
 }
 
-.name-card:first-child {
+.name-card-link:first-child .name-card {
   border-top: 1px solid #E5E7EB;
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
 }
 
-.name-card:last-child {
+.name-card-link:last-child .name-card {
   border-bottom-left-radius: 12px;
   border-bottom-right-radius: 12px;
 }
@@ -197,11 +204,15 @@
 }
 
 .external-link {
+  background: none;
+  border: none;
+  padding: 0;
   color: #6B7280;
   transition: all 0.2s ease;
   display: flex;
   align-items: center;
   opacity: 0.6;
+  cursor: pointer;
 }
 
 .external-link:hover {

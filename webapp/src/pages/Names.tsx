@@ -148,57 +148,60 @@ function MyNames() {
         ) : (
           <div className="names-grid">
             {names.map((name) => (
-              <div key={name.id} className="name-card">
-                <div className="name-card-header">
-                  <div className="name-info">
-                    <Text size="lg" weight="semibold" color="black">
-                      {name.label}
-                    </Text>
-                    <Text size="sm" weight="normal" color="gray">
-                      {name.full_name}
-                    </Text>
-                  </div>
-                  <div className={`status-badge ${isExpired(name.expiry) ? 'expired' : 'active'}`}>
-                    <Text size="xs" weight="medium" color="white">
-                      {isExpired(name.expiry) ? 'Expired' : 'Active'}
-                    </Text>
-                  </div>
-                </div>
-
-                <div className="name-card-details">
-                  <div className="detail-item">
-                    <Calendar size={16} color="#6B7280" />
-                    <Text size="sm" weight="normal" color="gray">
-                      Expires: {formatExpiry(name.expiry)}
-                    </Text>
-                  </div>
-                  
-                  {getRecordCount(name) > 0 && (
-                    <div className="detail-item">
-                      <User size={16} color="#6B7280" />
-                      <Text size="sm" weight="normal" color="gray">
-                        {getRecordCount(name)} record{getRecordCount(name) !== 1 ? 's' : ''}
+              <Link key={name.id} to={`/name/${name.label}`} className="name-card-link">
+                <div className="name-card">
+                  <div className="name-card-header">
+                    <div className="name-info">
+                      <Text size="lg" weight="semibold" color="black">
+                        {name.label}
                       </Text>
+                      <Text size="sm" weight="normal" color="gray">
+                        {name.full_name}
+                      </Text>
+                    </div>
+                    <div className={`status-badge ${isExpired(name.expiry) ? 'expired' : 'active'}`}>
+                      <Text size="xs" weight="medium" color="white">
+                        {isExpired(name.expiry) ? 'Expired' : 'Active'}
+                      </Text>
+                    </div>
+                  </div>
+
+                  <div className="name-card-details">
+                    <div className="detail-item">
+                      <Calendar size={16} color="#6B7280" />
+                      <Text size="sm" weight="normal" color="gray">
+                        Expires: {formatExpiry(name.expiry)}
+                      </Text>
+                    </div>
+                    
+                    {getRecordCount(name) > 0 && (
+                      <div className="detail-item">
+                        <User size={16} color="#6B7280" />
+                        <Text size="sm" weight="normal" color="gray">
+                          {getRecordCount(name)} record{getRecordCount(name) !== 1 ? 's' : ''}
+                        </Text>
+                      </div>
+                    )}
+                  </div>
+
+                  {name.registration?.tx_hash && (
+                    <div className="name-card-footer">
+                      <div
+                        onClick={(e) => {
+                          e.preventDefault();
+                          window.open(`https://celoscan.io/tx/${name?.registration?.tx_hash}`, '_blank');
+                        }}
+                        className="tx-link"
+                      >
+                        <ExternalLink size={16} color="#3B82F6" />
+                        <Text size="sm" weight="medium">
+                          View Transaction
+                        </Text>
+                      </div>
                     </div>
                   )}
                 </div>
-
-                {name.registration?.tx_hash && (
-                  <div className="name-card-footer">
-                    <a
-                      href={`https://celoscan.io/tx/${name.registration.tx_hash}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="tx-link"
-                    >
-                      <ExternalLink size={16} color="#3B82F6" />
-                      <Text size="sm" weight="medium">
-                        View Transaction
-                      </Text>
-                    </a>
-                  </div>
-                )}
-              </div>
+              </Link>
             ))}
           </div>
         )}

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useAccount, useDisconnect, usePublicClient } from "wagmi";
 import { ChevronDown } from "lucide-react";
 import Text from "@components/Text";
+import { truncateAddress } from "@/utils";
 import "./ConnectedWallet.css";
 import { mainnet } from "viem/chains";
 
@@ -41,10 +42,6 @@ export default function ConnectedWallet() {
 
     fetchEnsData();
   }, [address, publicClient]);
-
-  const truncateAddress = (addr: string) => {
-    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
-  };
 
   const displayName = ensName || (address ? truncateAddress(address) : "");
 

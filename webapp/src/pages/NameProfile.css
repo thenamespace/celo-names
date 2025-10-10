@@ -1,0 +1,674 @@
+.name-profile-page {
+  width: 100%;
+  min-height: 100vh;
+  background-color: rgb(252 246 241);
+  padding: 2rem 0 4rem 0;
+}
+
+/* Profile Content */
+.profile-content {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* Header/Cover Section */
+.profile-header {
+  width: 100%;
+  height: 200px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  position: relative;
+  border-radius: 16px 16px 0 0;
+  border: 1px solid #D1D5DB;
+  border-bottom: none;
+}
+
+.profile-main {
+  background: white;
+  border-radius: 0 0 16px 16px;
+  border: 1px solid #D1D5DB;
+  border-top: none;
+  position: relative;
+  padding: 2rem;
+}
+
+/* Header Section with Avatar and Name */
+.profile-header-section {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding-bottom: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.profile-avatar {
+  width: 120px;
+  height: 120px;
+  border-radius: 16px;
+  background-size: cover;
+  background-position: center;
+  flex-shrink: 0;
+}
+
+.profile-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.profile-name-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.profile-name {
+  margin: 0;
+  line-height: 1.2;
+}
+
+.profile-fullname {
+  margin: 0;
+  font-family: monospace;
+}
+
+.profile-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.profile-meta-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.profile-action-buttons {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.profile-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  width: 120px;
+}
+
+.meta-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.875rem;
+  background: #F3F4F6;
+  border-radius: 8px;
+}
+
+.owner-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: #6B7280;
+  transition: color 0.2s ease;
+}
+
+.owner-link:hover {
+  color: #3B82F6;
+}
+
+/* Action Buttons */
+.profile-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.action-button {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+/* Tabs Container */
+.tabs-container {
+  margin-bottom: 2rem;
+}
+
+.tabs-nav {
+  display: flex;
+  gap: 0.5rem;
+  border-bottom: 2px solid #E5E7EB;
+  margin-bottom: 1.5rem;
+}
+
+.tab-button {
+  background: none;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+}
+
+.tab-button:hover {
+  background: #F9FAFB;
+}
+
+.tab-button.active {
+  border-bottom-color: #35D07F;
+}
+
+.tab-button.active p {
+  color: #1F2937;
+  font-weight: 600;
+}
+
+.tab-content {
+  min-height: 200px;
+}
+
+.tab-panel {
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.empty-tab-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+}
+
+.registration-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Profile Sections */
+.profile-section {
+  margin-bottom: 2rem;
+}
+
+.profile-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-title {
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #FBCF68;
+  display: inline-block;
+}
+
+/* Records Groups */
+.records-group {
+  margin-bottom: 1.5rem;
+}
+
+.records-group:last-child {
+  margin-bottom: 0;
+}
+
+.records-group-label {
+  display: block;
+  margin-bottom: 0.75rem;
+}
+
+/* Text Records List */
+.text-records-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.text-record-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  color: inherit;
+}
+
+.text-record-badge:hover {
+  background: #F3F4F6;
+  border-color: #D1D5DB;
+}
+
+.text-record-badge.clickable {
+  cursor: pointer;
+}
+
+.text-record-badge.clickable:hover {
+  border-color: #35D07F;
+  background: #F0FDF4;
+}
+
+.text-record-badge svg {
+  flex-shrink: 0;
+}
+
+.badge-external-icon {
+  margin-left: auto;
+  opacity: 0.5;
+}
+
+.text-record-badge:hover .badge-external-icon {
+  opacity: 1;
+}
+
+.description-text {
+  line-height: 1.6;
+}
+
+/* Copy Button */
+.copy-icon-button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin-left: auto;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.copy-icon-button:hover {
+  transform: scale(1.1);
+}
+
+/* Ownership Tab */
+.ownership-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+}
+
+.ownership-info-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+}
+
+.ownership-info-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.ownership-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: inherit;
+  transition: color 0.2s ease;
+}
+
+.ownership-link:hover {
+  color: #35D07F;
+}
+
+.ownership-actions {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+/* Social Icons Grid */
+.social-icons-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.social-icon-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  color: #1F2937;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.social-icon-circle:hover {
+  background: #F3F4F6;
+  border-color: #FBCF68;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.social-icon-circle.disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  background: #FAFAFA;
+}
+
+.social-icon-circle.disabled:hover {
+  background: #FAFAFA;
+  border-color: #E5E7EB;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Description */
+.description-box {
+  padding: 1.5rem;
+  background: #F9FAFB;
+  border-radius: 8px;
+  border-left: 4px solid #FBCF68;
+}
+
+/* Records List */
+.records-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.record-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  gap: 1rem;
+}
+
+.record-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 120px;
+}
+
+.record-value {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  justify-content: flex-end;
+  overflow: hidden;
+}
+
+.record-value .mono {
+  font-family: monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.copy-button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6B7280;
+  transition: color 0.2s ease;
+}
+
+.copy-button:hover {
+  color: #3B82F6;
+}
+
+/* Contenthash */
+.contenthash-box {
+  padding: 1rem;
+  background: #F9FAFB;
+  border-radius: 8px;
+  border: 1px solid #E5E7EB;
+}
+
+/* Details Grid */
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.detail-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+}
+
+.detail-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.detail-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: #3B82F6;
+  transition: color 0.2s ease;
+}
+
+.detail-link:hover {
+  color: #2563EB;
+}
+
+.mono {
+  font-family: 'Courier New', Courier, monospace;
+}
+
+/* Transaction Link Button */
+.tx-link-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  background: #3B82F6;
+  color: white;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.tx-link-button:hover {
+  background: #2563EB;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+/* Loading and Error States */
+.loading-state,
+.error-state,
+.not-found-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid #E5E7EB;
+  border-top-color: #FBCF68;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .name-profile-page {
+    padding: 1rem 0 2rem 0;
+  }
+
+  .profile-header {
+    height: 160px;
+  }
+
+  .profile-content {
+    padding: 0 1rem;
+  }
+
+  .profile-main {
+    padding: 1.5rem;
+  }
+
+  .profile-header-section {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .profile-avatar {
+    width: 100px;
+    height: 100px;
+  }
+
+  .profile-info {
+    align-items: center;
+  }
+
+  .profile-name-section {
+    align-items: center;
+  }
+
+  .profile-meta-row {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .profile-meta-badges {
+    justify-content: center;
+  }
+
+  .profile-action-buttons {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .social-icons-grid {
+    justify-content: center;
+  }
+
+  .details-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .record-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .record-value {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .profile-header-section {
+    gap: 1rem;
+  }
+
+  .profile-avatar {
+    width: 80px;
+    height: 80px;
+  }
+
+  .profile-name {
+    font-size: 1.75rem;
+  }
+
+  .profile-fullname {
+    font-size: 0.875rem;
+  }
+
+  .meta-badge {
+    padding: 0.375rem 0.75rem;
+  }
+
+  .profile-actions {
+    flex-direction: column;
+  }
+
+  .action-button {
+    width: 100%;
+  }
+
+  .social-icon-circle {
+    width: 44px;
+    height: 44px;
+  }
+
+  .tabs-nav {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tab-button {
+    padding: 0.75rem 1rem;
+    white-space: nowrap;
+  }
+}
+

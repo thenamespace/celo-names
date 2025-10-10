@@ -453,7 +453,7 @@ function RegisterNew() {
                 placeholder="Pick your name"
                 suffix={
                   <Text size="base" weight="medium">
-                    .celoo.eth
+                    .{ENV.PARENT_NAME}
                   </Text>
                 }
               />
