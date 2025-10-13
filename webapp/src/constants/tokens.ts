@@ -38,6 +38,6 @@ export const CUSD_TOKEN: PaymentToken = {
   name: "cUSD",
   address: CUSD_TOKEN_ADDRESS,
   decimals: 18,
-  token_name: "Celo Dollar",
+  token_name: "cUSD",
   token_version: "1",
 };

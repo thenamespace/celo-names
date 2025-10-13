@@ -16,7 +16,7 @@ const TokenIcon: React.FC<TokenIconProps> = ({ tokenName, size = 16, className =
         return '/usdc-logo.svg';
       case 'USDT':
         return '/usdt-logo.svg';
-      case 'sUSD':
+      case 'cUSD':
         return '/cusd-logo.png';
       default:
         return '/celo-logo.svg';
