@@ -29,7 +29,7 @@ export const SelfQrCode = ({
       version: 2,
       appName: "Demo Celo Names",
       scope: SELF_SCOPE_SEED,
-      endpoint: CONTRACT_ADDRESSES.L2_SELF_REGISTRAR,
+      endpoint: CONTRACT_ADDRESSES.L2_SELF_REGISTRAR.toLocaleLowerCase(),
       logoBase64: "https://i.postimg.cc/mrmVf9hm/self.png", // url of a png image, base64 is accepted but not recommended
       userId: owner,
       endpointType: "celo",
