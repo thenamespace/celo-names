@@ -132,6 +132,41 @@ export const useRegistrar = () => {
     return await walletClient!.writeContract(request);
   };
 
+  const renew = async (
+    label: string,
+    durationInYears: number
+  ) => {
+    const price = await rentPrice(label, durationInYears);
+    
+    const { request } = await publicClient!.simulateContract({
+      address: CONTRACT_ADDRESSES.L2_REGISTRAR_V2,
+      abi: ABIS.L2_REGISTRAR_V2,
+      functionName: "renew",
+      args: [label, durationInYears],
+      value: price,
+      account: address,
+    });
+
+    return await walletClient!.writeContract(request);
+  };
+
+  const renewERC20 = async (
+    label: string,
+    durationInYears: number,
+    paymentToken: Address,
+    permit: ERC20Permit
+  ) => {
+    const { request } = await publicClient!.simulateContract({
+      address: CONTRACT_ADDRESSES.L2_REGISTRAR_V2,
+      abi: ABIS.L2_REGISTRAR_V2,
+      functionName: "renewERC20",
+      args: [label, durationInYears, paymentToken, permit],
+      account: address,
+    });
+
+    return await walletClient!.writeContract(request);
+  };
+
   return {
     isNameAvailable,
     register,
@@ -139,6 +174,8 @@ export const useRegistrar = () => {
     registerERC20,
     registrarAddress: CONTRACT_ADDRESSES.L2_REGISTRAR_V2,
     claimWithSelf,
-    isSelfVerified
+    isSelfVerified,
+    renew,
+    renewERC20
   };
 };

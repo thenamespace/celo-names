@@ -11,6 +11,7 @@ import { truncateAddress } from "@/utils";
 import { RecordsTab } from "@/components/name-profile/RecordsTab";
 import { AddressesTab } from "@/components/name-profile/AddressesTab";
 import { OwnershipTab } from "@/components/name-profile/OwnershipTab";
+import ExtendModal from "@/components/ExtendModal";
 import "./Page.css";
 import "./NameProfile.css";
 
@@ -22,6 +23,7 @@ function NameProfile() {
   const [nameData, setNameData] = useState<Name | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('records');
   const [showInProgressModal, setShowInProgressModal] = useState(false);
+  const [showExtendModal, setShowExtendModal] = useState(false);
 
   useEffect(() => {
     if (name) {
@@ -176,7 +178,7 @@ function NameProfile() {
                   <Button 
                     variant="secondary" 
                     className="profile-action-btn"
-                    onClick={() => setShowInProgressModal(true)}
+                    onClick={() => setShowExtendModal(true)}
                   >
                     <Text size="sm" weight="medium" color="black">
                       Extend
@@ -251,6 +253,23 @@ function NameProfile() {
 
         </div>
       </div>
+
+      {/* Extend Modal */}
+      <ExtendModal
+        isOpen={showExtendModal}
+        onClose={() => setShowExtendModal(false)}
+        nameLabel={nameData?.label || ''}
+        currentExpiry={nameData?.expiry || '0'}
+        onSuccess={(newExpiry) => {
+          // Update the name data with new expiry without refetching
+          if (nameData) {
+            setNameData({
+              ...nameData,
+              expiry: newExpiry
+            });
+          }
+        }}
+      />
 
       {/* In Progress Modal */}
       <Modal isOpen={showInProgressModal} onClose={() => setShowInProgressModal(false)}>

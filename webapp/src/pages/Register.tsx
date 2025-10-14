@@ -16,7 +16,7 @@ import SelfButton from "@components/SelfButton";
 import TokenIcon from "@components/TokenIcon";
 import SuccessModal from "@components/SuccessModal";
 import "./Page.css";
-import "./RegisterNew.css";
+import "./Register.css";
 import { useRegistrar } from "@/hooks/useRegistrar";
 import { useTransactionModal } from "@/hooks/useTransactionModal";
 import { useERC20Permit } from "@/hooks/useERC20Permit";

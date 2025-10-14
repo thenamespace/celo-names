@@ -66,6 +66,61 @@
   color: #374151;
 }
 
+/* Extend Modal - Allow dropdown to overflow */
+.extend-modal.modal-content {
+  overflow: visible !important;
+}
+
+.extend-modal .modal-body {
+  overflow: visible !important;
+}
+
+.extend-modal .modal-backdrop {
+  padding: 2rem !important;
+}
+
+/* Extend Modal responsive design */
+@media (max-width: 768px) {
+  .extend-modal .modal-backdrop {
+    padding: 1rem !important;
+  }
+  
+  .extend-modal .modal-content {
+    max-width: 100%;
+    margin: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .extend-modal .modal-backdrop {
+    padding: 0.5rem !important;
+  }
+}
+
+/* Extend Modal button layout */
+.extend-modal .button-row {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.extend-modal .button-row .flex-1 {
+  flex: 1;
+  width: 50%;
+}
+
+@media (max-width: 480px) {
+  .extend-modal .button-row {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .extend-modal .button-row .flex-1 {
+    flex: none;
+    width: 100%;
+  }
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .modal-backdrop {
