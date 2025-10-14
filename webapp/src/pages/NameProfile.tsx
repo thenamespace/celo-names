@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Calendar, User } from "lucide-react";
 import Text from "@components/Text";
@@ -14,16 +14,59 @@ import { OwnershipTab } from "@/components/name-profile/OwnershipTab";
 import ExtendModal from "@/components/ExtendModal";
 import "./Page.css";
 import "./NameProfile.css";
+import {
+  equalsIgnoreCase,
+  SelectRecordsForm,
+  type EnsAddressRecord,
+  type EnsContenthashRecord,
+  type EnsRecords,
+  type EnsTextRecord,
+} from "@thenamespace/ens-components";
+import { useAccount } from "wagmi";
+import { zeroAddress } from "viem";
 
-type TabType = 'records' | 'addresses' | 'ownership';
+type TabType = "records" | "addresses" | "ownership";
+
+const toEnsRecords = (data: Name) => {
+  const texts: EnsTextRecord[] = [];
+  const addrs: EnsAddressRecord[] = [];
+  let contenthash: EnsContenthashRecord | null = null;
+
+  if (data.records) {
+    data.records.texts?.forEach((txt) => {
+      texts.push(txt);
+    });
+    data.records.addresses?.forEach((addr) => {
+      addrs.push({ coinType: addr.coin, value: addr.value });
+    });
+
+    if (data.records.contenthash) {
+      contenthash = {
+        protocol: data.records.contenthash.codec as any,
+        value: data.records.contenthash.decoded,
+      };
+    }
+  }
+  return {
+    texts,
+    addresses: addrs,
+    contenthash: contenthash || undefined,
+  };
+};
 
 function NameProfile() {
+  const { address } = useAccount();
   const { name } = useParams<{ name: string }>();
   const { getNameById, loading, error } = useCeloIndexer();
   const [nameData, setNameData] = useState<Name | null>(null);
-  const [activeTab, setActiveTab] = useState<TabType>('records');
-  const [showInProgressModal, setShowInProgressModal] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabType>("records");
   const [showExtendModal, setShowExtendModal] = useState(false);
+  const [showRecordModal, setShowRecordModal] = useState(false);
+
+  const [ensRecords, setEnsRecords] = useState<EnsRecords>({
+    texts: [],
+    addresses: [],
+  });
 
   useEffect(() => {
     if (name) {
@@ -35,23 +78,31 @@ function NameProfile() {
     if (!name) return;
     const data = await getNameById(name);
     setNameData(data);
+
+    if (data?.full_name) {
+      setEnsRecords(toEnsRecords(data));
+    }
   };
 
   const getTextRecord = (key: string): string | undefined => {
-    return nameData?.records?.texts?.find(t => t.key === key)?.value;
+    return nameData?.records?.texts?.find((t) => t.key === key)?.value;
   };
 
   const formatExpiry = (expiry: string) => {
     const expiryDate = new Date(parseInt(expiry) * 1000);
-    return expiryDate.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    return expiryDate.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
-  const headerImage = getTextRecord('header');
-  const avatarImage = getTextRecord('avatar');
+  const headerImage = getTextRecord("header");
+  const avatarImage = getTextRecord("avatar");
+
+  const isNameOwner = useMemo(() => {
+    return equalsIgnoreCase(address || "", nameData?.owner || zeroAddress);
+  }, [nameData, address]);
 
   if (loading) {
     return (
@@ -96,11 +147,20 @@ function NameProfile() {
         <div className="page-content">
           <div className="not-found-state">
             <User size={64} color="#9CA3AF" />
-            <Text size="2xl" weight="semibold" color="black" className="mt-4 mb-2">
+            <Text
+              size="2xl"
+              weight="semibold"
+              color="black"
+              className="mt-4 mb-2"
+            >
               Name not registered
             </Text>
             <Text size="lg" weight="normal" color="gray" className="mb-2">
-              The name <strong>{name}.{ENV.PARENT_NAME}</strong> is not registered yet.
+              The name{" "}
+              <strong>
+                {name}.{ENV.PARENT_NAME}
+              </strong>{" "}
+              is not registered yet.
             </Text>
             <Text size="base" weight="normal" color="gray" className="mb-6">
               Would you like to register it?
@@ -122,31 +182,48 @@ function NameProfile() {
     <div className="name-profile-page">
       <div className="profile-content">
         {/* Header/Cover Image */}
-        <div className="profile-header" style={{
-          backgroundImage: headerImage ? `url(${headerImage})` : undefined,
-          backgroundColor: headerImage ? undefined : '#E5E7EB'
-        }}>
-        </div>
+        <div
+          className="profile-header"
+          style={{
+            backgroundImage: headerImage ? `url(${headerImage})` : undefined,
+            backgroundColor: headerImage ? undefined : "#E5E7EB",
+          }}
+        ></div>
 
         <div className="profile-main">
           {/* Avatar and Name Section */}
           <div className="profile-header-section">
-            <div className="profile-avatar" style={{
-              backgroundImage: avatarImage ? `url(${avatarImage})` : undefined,
-              backgroundColor: avatarImage ? undefined : '#D1D5DB'
-            }}>
-            </div>
-            
+            <div
+              className="profile-avatar"
+              style={{
+                backgroundImage: avatarImage
+                  ? `url(${avatarImage})`
+                  : undefined,
+                backgroundColor: avatarImage ? undefined : "#D1D5DB",
+              }}
+            ></div>
+
             <div className="profile-info">
               <div className="profile-name-section">
-                <Text as="h1" size="4xl" weight="bold" color="black" className="profile-name">
+                <Text
+                  as="h1"
+                  size="4xl"
+                  weight="bold"
+                  color="black"
+                  className="profile-name"
+                >
                   {nameData.label}
                 </Text>
-                <Text size="lg" weight="normal" color="gray" className="profile-fullname">
+                <Text
+                  size="lg"
+                  weight="normal"
+                  color="gray"
+                  className="profile-fullname"
+                >
                   {nameData.full_name}
                 </Text>
               </div>
-              
+
               <div className="profile-meta-row">
                 <div className="profile-meta-badges">
                   <div className="meta-badge">
@@ -155,7 +232,7 @@ function NameProfile() {
                       Expires {formatExpiry(nameData.expiry)}
                     </Text>
                   </div>
-                  
+
                   <div className="meta-badge">
                     <User size={16} color="#6B7280" />
                     <Text size="sm" weight="medium" color="gray">
@@ -167,7 +244,12 @@ function NameProfile() {
                       rel="noopener noreferrer"
                       className="owner-link"
                     >
-                      <Text size="sm" weight="medium" color="gray" className="mono">
+                      <Text
+                        size="sm"
+                        weight="medium"
+                        color="gray"
+                        className="mono"
+                      >
                         {truncateAddress(nameData.owner)}
                       </Text>
                     </a>
@@ -175,8 +257,8 @@ function NameProfile() {
                 </div>
 
                 <div className="profile-action-buttons">
-                  <Button 
-                    variant="secondary" 
+                  <Button
+                    variant="secondary"
                     className="profile-action-btn"
                     onClick={() => setShowExtendModal(true)}
                   >
@@ -184,15 +266,17 @@ function NameProfile() {
                       Extend
                     </Text>
                   </Button>
-                  <Button 
-                    variant="primary" 
-                    className="profile-action-btn"
-                    onClick={() => setShowInProgressModal(true)}
-                  >
-                    <Text size="sm" weight="medium" color="black">
-                      Edit
-                    </Text>
-                  </Button>
+                  {!isNameOwner && (
+                    <Button
+                      variant="primary"
+                      className="profile-action-btn"
+                      onClick={() => setShowRecordModal(true)}
+                    >
+                      <Text size="sm" weight="medium" color="black">
+                        + Edit Profile
+                      </Text>
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
@@ -202,24 +286,30 @@ function NameProfile() {
           <div className="tabs-container">
             <div className="tabs-nav">
               <button
-                className={`tab-button ${activeTab === 'records' ? 'active' : ''}`}
-                onClick={() => setActiveTab('records')}
+                className={`tab-button ${
+                  activeTab === "records" ? "active" : ""
+                }`}
+                onClick={() => setActiveTab("records")}
               >
                 <Text size="base" weight="medium">
                   Records
                 </Text>
               </button>
               <button
-                className={`tab-button ${activeTab === 'addresses' ? 'active' : ''}`}
-                onClick={() => setActiveTab('addresses')}
+                className={`tab-button ${
+                  activeTab === "addresses" ? "active" : ""
+                }`}
+                onClick={() => setActiveTab("addresses")}
               >
                 <Text size="base" weight="medium">
                   Addresses
                 </Text>
               </button>
               <button
-                className={`tab-button ${activeTab === 'ownership' ? 'active' : ''}`}
-                onClick={() => setActiveTab('ownership')}
+                className={`tab-button ${
+                  activeTab === "ownership" ? "active" : ""
+                }`}
+                onClick={() => setActiveTab("ownership")}
               >
                 <Text size="base" weight="medium">
                   Ownership
@@ -229,28 +319,27 @@ function NameProfile() {
 
             <div className="tab-content">
               {/* Records Tab */}
-              {activeTab === 'records' && (
+              {activeTab === "records" && (
                 <div className="tab-panel">
                   <RecordsTab nameData={nameData} />
                 </div>
               )}
 
               {/* Addresses Tab */}
-              {activeTab === 'addresses' && (
+              {activeTab === "addresses" && (
                 <div className="tab-panel">
                   <AddressesTab nameData={nameData} />
                 </div>
               )}
 
               {/* Ownership Tab */}
-              {activeTab === 'ownership' && (
+              {activeTab === "ownership" && (
                 <div className="tab-panel">
                   <OwnershipTab nameData={nameData} />
                 </div>
               )}
             </div>
           </div>
-
         </div>
       </div>
 
@@ -258,33 +347,27 @@ function NameProfile() {
       <ExtendModal
         isOpen={showExtendModal}
         onClose={() => setShowExtendModal(false)}
-        nameLabel={nameData?.label || ''}
-        currentExpiry={nameData?.expiry || '0'}
+        nameLabel={nameData?.label || ""}
+        currentExpiry={nameData?.expiry || "0"}
         onSuccess={(newExpiry) => {
           // Update the name data with new expiry without refetching
           if (nameData) {
             setNameData({
               ...nameData,
-              expiry: newExpiry
+              expiry: newExpiry,
             });
           }
         }}
       />
-
-      {/* In Progress Modal */}
-      <Modal isOpen={showInProgressModal} onClose={() => setShowInProgressModal(false)}>
-        <div style={{ padding: '2rem', textAlign: 'center' }}>
-          <Text size="2xl" weight="semibold" color="black" className="mb-4">
-            In Progress
-          </Text>
-          <Text size="base" weight="normal" color="gray">
-            This feature is coming soon!
-          </Text>
-        </div>
+      {/* Update records modal */}
+      <Modal isOpen={showRecordModal} onClose={() => setShowRecordModal(false)}>
+        <SelectRecordsForm
+          records={ensRecords}
+          onRecordsUpdated={(e) => setEnsRecords(e)}
+        />
       </Modal>
     </div>
   );
 }
 
 export default NameProfile;
-

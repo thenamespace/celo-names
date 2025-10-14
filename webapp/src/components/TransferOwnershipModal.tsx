@@ -10,7 +10,6 @@ import Input from "@components/Input";
 import { useRegistry } from "@/hooks/useRegistry";
 import { useTransactionModal } from "@/hooks/useTransactionModal";
 import { ENV } from "@/constants/environment";
-import { sleep } from "@/utils";
 
 interface TransferOwnershipModalProps {
   isOpen: boolean;
@@ -32,7 +31,7 @@ export default function TransferOwnershipModal({
   const { address } = useAccount();
   const publicClient = usePublicClient();
   const { transferName } = useRegistry();
-  const { showTransactionModal, updateTransactionStatus, TransactionModal } = useTransactionModal();
+  const { showTransactionModal, updateTransactionStatus, waitForTransaction, TransactionModal } = useTransactionModal();
   
   const [newOwnerInput, setNewOwnerInput] = useState("");
   const [validationState, setValidationState] = useState<ValidationState>('idle');
@@ -128,19 +127,8 @@ export default function TransferOwnershipModal({
       // Show transaction modal
       showTransactionModal(txHash);
       
-      // Wait for transaction confirmation
-      const retry_count = 3;
-      for (let i = 0; i <= retry_count; i++) {
-        try {
-          await publicClient!.waitForTransactionReceipt({ hash: txHash });
-          break;
-        } catch (err) {
-          if (i === retry_count) {
-            throw err;
-          }
-          await sleep(1000); // Sleep for 1 second before retry
-        }
-      }
+      // Wait for transaction confirmation using centralized function
+      await waitForTransaction(publicClient!, txHash);
 
       updateTransactionStatus("success");
       toast.success("Ownership transferred successfully!");

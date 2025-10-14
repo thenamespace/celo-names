@@ -12,7 +12,6 @@ import { useRegistrar } from "@/hooks/useRegistrar";
 import { useTransactionModal } from "@/hooks/useTransactionModal";
 import { useERC20Permit } from "@/hooks/useERC20Permit";
 import { CELO_TOKEN, L2_CHAIN_ID, type PaymentToken } from "@/constants";
-import { sleep } from "@/utils";
 
 interface ExtendModalProps {
   isOpen: boolean;
@@ -55,7 +54,7 @@ export default function ExtendModal({
     renew,
     renewERC20,
   } = useRegistrar();
-  const { showTransactionModal, updateTransactionStatus, TransactionModal } =
+  const { showTransactionModal, updateTransactionStatus, waitForTransaction, TransactionModal } =
     useTransactionModal();
   const { createSignedPermit } = useERC20Permit({ chainId: L2_CHAIN_ID });
 
@@ -145,7 +144,7 @@ export default function ExtendModal({
       return;
     }
 
-    await waitForTransaction(_tx);
+    await waitForTransactionWithSuccess(_tx);
   };
 
 
@@ -165,24 +164,13 @@ export default function ExtendModal({
     }
   };
 
-  const waitForTransaction = async (_tx: Hash) => {
+  const waitForTransactionWithSuccess = async (_tx: Hash) => {
     try {
       // Show transaction modal after transaction is sent with hash
       showTransactionModal(_tx);
 
-      // Wait for transaction confirmation
-      const retry_count = 3;
-      for (let i = 0; i <= retry_count; i++) {
-        try {
-          await publicClient!.waitForTransactionReceipt({ hash: _tx });
-          break;
-        } catch (err) {
-          if (i === retry_count) {
-            throw err;
-          }
-          await sleep(1000); // Sleep for 1 second before retry
-        }
-      }
+      // Use the centralized waitForTransaction function
+      await waitForTransaction(publicClient!, _tx);
 
       updateTransactionStatus("success");
       toast.success("Name extended successfully!");

@@ -24,7 +24,6 @@ import { CELO_TOKEN, L2_CHAIN_ID, type PaymentToken } from "@/constants";
 import { formatUnits } from "viem";
 import { ENV } from "@/constants/environment";
 import { debounce } from "lodash";
-import { sleep } from "@/utils";
 import { SelfQrCode } from "../components/SelfQrCode";
 import {
   getSupportedAddressByName,
@@ -97,7 +96,7 @@ function RegisterNew() {
     claimWithSelf,
     isSelfVerified,
   } = useRegistrar();
-  const { showTransactionModal, updateTransactionStatus, TransactionModal } =
+  const { showTransactionModal, updateTransactionStatus, waitForTransaction, TransactionModal } =
     useTransactionModal();
   const { createSignedPermit } = useERC20Permit({ chainId: L2_CHAIN_ID });
 
@@ -290,7 +289,7 @@ function RegisterNew() {
       return;
     }
 
-    await waitForTransaction(_tx);
+    await waitForTransactionWithDelay(_tx);
   };
 
   const registerName = async () => {
@@ -329,7 +328,7 @@ function RegisterNew() {
       return;
     }
 
-    await waitForTransaction(_tx);
+    await waitForTransactionWithDelay(_tx);
   };
 
   const handleContractErr = (err: any) => {
@@ -348,7 +347,7 @@ function RegisterNew() {
     }
   };
 
-  const waitForTransaction = async (_tx: Hash) => {
+  const waitForTransactionWithDelay = async (_tx: Hash) => {
     try {
       // Show transaction modal after transaction is sent with hash
       showTransactionModal(_tx);
@@ -358,18 +357,9 @@ function RegisterNew() {
       // We will add artifical 5 seconds delay to make the registration smoother
       const artificial_wait_time_miliseconds = 5000;
 
-      const retry_count = 3;
-      for (let i = 0; i <= retry_count; i++) {
-        try {
-          await publicClient!.waitForTransactionReceipt({ hash: _tx });
-          break;
-        } catch (err) {
-          if (i === retry_count) {
-            throw err;
-          }
-          await sleep(1000); // Sleep for 1 second before retry
-        }
-      }
+      // Use the centralized waitForTransaction function
+      await waitForTransaction(publicClient!, _tx);
+      
       const end_time = new Date().getTime();
 
       const real_wait_time = end_time - start_time;
