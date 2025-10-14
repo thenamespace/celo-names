@@ -84,8 +84,9 @@ export class RegistryListener {
 
       const node: string = toHex(toBytes(tokenId));
 
-
-      await db.update(name, { id: node }).set({ owner: to });
+      try {
+          await db.update(name, { id: node }).set({ owner: to });
+      } catch(err) {} 
     });
   }
 }

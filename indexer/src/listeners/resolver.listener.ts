@@ -2,7 +2,7 @@ import { getCoderByCoinType } from "@ensdomains/address-encoder";
 import { ponder } from "ponder:registry";
 import { record } from "ponder:schema";
 import { Hash, toBytes } from "viem";
-import { encode, getCodec } from "@ensdomains/content-hash";
+import { decode, encode, getCodec } from "@ensdomains/content-hash";
 import { EnsAddressRecord, EnsTextRecord, EnsContenthash } from "./types";
 
 const ETH_COIN = 60;
@@ -144,14 +144,15 @@ export class ResolverListener {
   }
 
   private parseContenthash(value: Hash): EnsContenthash {
+    let codec = "" as any;
     try {
-      const codec = getCodec(value);
+      codec = getCodec(value);
       if (codec) {
-        const encodedValue = encode(codec, value);
-        return { codec: codec, decoded: value, encoded: encodedValue };
+        const decodedValue = decode(value);
+        return { codec: codec, decoded: decodedValue, encoded: value };
       }
     } catch (err) {
-      console.error(`Failed to encode contenthash value: ${value}`);
+      console.error(`Failed to encode contenthash value: ${value}, codec: ${codec}`);
     }
 
     return { codec: UNKNOWN, decoded: value, encoded: ""}
