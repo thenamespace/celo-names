@@ -1,14 +1,20 @@
+import { useState } from "react";
 import { User, ExternalLink, FileText, Calendar } from "lucide-react";
 import Text from "@components/Text";
 import Button from "@components/Button";
+import TransferOwnershipModal from "@components/TransferOwnershipModal";
 import type { Name } from "@/types/indexer";
 import { truncateAddress } from "@/utils";
+import type { Address } from "viem";
 
 interface OwnershipTabProps {
   nameData: Name;
+  onOwnershipChanged?: (newOwner: Address) => void
 }
 
 export function OwnershipTab({ nameData }: OwnershipTabProps) {
+  const [showTransferModal, setShowTransferModal] = useState(false);
+
   const formatExpiry = (expiry: string) => {
     const expiryDate = new Date(parseInt(expiry) * 1000);
     return expiryDate.toLocaleDateString('en-US', { 
@@ -104,12 +110,28 @@ export function OwnershipTab({ nameData }: OwnershipTabProps) {
 
       {/* Transfer Button */}
       <div className="ownership-actions">
-        <Button variant="primary" className="action-button">
+        <Button 
+          variant="primary" 
+          className="action-button"
+          onClick={() => setShowTransferModal(true)}
+        >
           <Text size="base" weight="medium" color="black">
             Transfer Ownership
           </Text>
         </Button>
       </div>
+
+      {/* Transfer Ownership Modal */}
+      <TransferOwnershipModal
+        isOpen={showTransferModal}
+        onClose={() => setShowTransferModal(false)}
+        nameLabel={nameData.label}
+        currentOwner={nameData.owner}
+        onSuccess={() => {
+          // TODO: Handle successful transfer
+          console.log("Ownership transferred successfully");
+        }}
+      />
     </>
   );
 }

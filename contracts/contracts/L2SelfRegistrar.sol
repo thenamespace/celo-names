@@ -10,6 +10,7 @@ import {IL2Registry} from './interfaces/IL2Registry.sol';
 import {ISelfStorage} from './interfaces/ISelfStorage.sol';
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {StringUtils} from './common/StringUtils.sol';
+import {ERC721Holder} from '@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol';
 
 /**
  * @title L2SelfRegistrar
@@ -18,7 +19,7 @@ import {StringUtils} from './common/StringUtils.sol';
  *      registration through the L2Registry. Users must complete identity verification before
  *      claiming subdomains, with configurable limits and validation rules.
  */
-contract L2SelfRegistrar is SelfVerificationRoot, Ownable {
+contract L2SelfRegistrar is SelfVerificationRoot, Ownable, ERC721Holder {
   using StringUtils for string;
 
   // ============ Constants ============

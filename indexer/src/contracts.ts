@@ -1,0 +1,9 @@
+import { Address } from "viem";
+
+type ContractName = "L2_REGISTRY" | "L2_REGISTRAR" | "L2_SELF_REGISTRAR"
+
+export const CONTRACTS: Record<ContractName,Address> = {
+    L2_REGISTRY: "0x968A5c0f00F5D6CE6B29Ee9fD8e4Ea5e748a03BE",
+    L2_REGISTRAR: "0x43D76cb9be60f677e58e15F71Dd760Aaa0a2fae0",
+    L2_SELF_REGISTRAR: "0x7Ea39a854098308b0E732222AA221cEFF4a726E6",
+}

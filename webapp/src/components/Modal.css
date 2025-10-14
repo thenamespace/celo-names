@@ -97,6 +97,89 @@
   }
 }
 
+/* Transfer Ownership Modal */
+.transfer-ownership-modal .transfer-warning {
+  display: flex;
+  gap: 1rem;
+  padding: 1rem;
+  background-color: #FEF3C7;
+  border: 1px solid #F59E0B;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+}
+
+.transfer-ownership-modal .warning-icon {
+  flex-shrink: 0;
+}
+
+.transfer-ownership-modal .warning-content {
+  flex: 1;
+}
+
+.transfer-ownership-modal .current-owner-info {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: #F9FAFB;
+  border-radius: 6px;
+}
+
+.transfer-ownership-modal .new-owner-input {
+  margin-bottom: 1rem;
+}
+
+.transfer-ownership-modal .input-with-validation {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.transfer-ownership-modal .validation-icon {
+  position: absolute;
+  right: 12px;
+  display: flex;
+  align-items: center;
+}
+
+.transfer-ownership-modal .validation-message {
+  margin-top: 0.5rem;
+}
+
+.transfer-ownership-modal .spinner {
+  border: 2px solid #E5E7EB;
+  border-top: 2px solid #6B7280;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Transfer Ownership Modal button layout */
+.transfer-ownership-modal .button-row {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.transfer-ownership-modal .button-row .flex-1 {
+  flex: 1;
+  width: 50%;
+}
+
+@media (max-width: 480px) {
+  .transfer-ownership-modal .button-row {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .transfer-ownership-modal .button-row .flex-1 {
+    flex: none;
+    width: 100%;
+  }
+}
+
 /* Extend Modal button layout */
 .extend-modal .button-row {
   display: flex;
