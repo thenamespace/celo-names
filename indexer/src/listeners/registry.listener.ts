@@ -1,6 +1,8 @@
 import { ponder } from "ponder:registry";
-import { name, record } from "ponder:schema";
+import { name } from "ponder:schema";
 import { getEnvironment } from "../env";
+import { toBytes, toHex, zeroAddress } from "viem";
+import {CONTRACTS} from "../contracts";;
 
 const env = getEnvironment();
 
@@ -9,6 +11,7 @@ export class RegistryListener {
     this.handleNewName();
     this.handleExpiryExtended();
     this.handleNameRevoked();
+    this.handleNameTransfered();
   }
 
   private async handleNewName() {
@@ -22,7 +25,6 @@ export class RegistryListener {
       });
 
       const full_name = `${label}.${env.root_name}`;
-      console.log(`New subname received: ${full_name}`);
       if (!existingName?.id) {
         await context.db.insert(name).values({
           id: node,
@@ -64,6 +66,26 @@ export class RegistryListener {
       const { db } = context;
 
       await db.delete(name, { id: node })
+    });
+  }
+
+  private async handleNameTransfered() {
+    ponder.on("Registry:Transfer", async ({ context, event }) => {
+      const { to, tokenId } = event.args;
+      const { db } = context;
+
+      const internalOwners = [zeroAddress, CONTRACTS.L2_REGISTRAR, CONTRACTS.L2_SELF_REGISTRAR];
+      const isInternalOwner = internalOwners
+          .find(o => o.toLocaleLowerCase() === to.toLocaleLowerCase());
+
+      if (isInternalOwner) {
+        return;
+      }
+
+      const node: string = toHex(toBytes(tokenId));
+
+
+      await db.update(name, { id: node }).set({ owner: to });
     });
   }
 }

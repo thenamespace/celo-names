@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
 import Navigation from '@components/Navigation'
-import RegisterNew from '@pages/RegisterNew'
+import RegisterNew from '@/pages/Register'
 import MyNames from '@pages/MyNames'
 import NameProfile from '@pages/NameProfile'
 import './App.css'
