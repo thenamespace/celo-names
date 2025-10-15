@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { normalize } from "viem/ens";
 import { useAccount, useSwitchChain, usePublicClient } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
@@ -26,6 +26,7 @@ import { ENV } from "@/constants/environment";
 import { debounce } from "lodash";
 import { SelfQrCode } from "../components/SelfQrCode";
 import {
+  getSupportedAddressByCoin,
   getSupportedAddressByName,
   SelectRecordsForm,
   type EnsRecords,
@@ -99,6 +100,25 @@ function RegisterNew() {
   const { showTransactionModal, updateTransactionStatus, waitForTransaction, TransactionModal } =
     useTransactionModal();
   const { createSignedPermit } = useERC20Permit({ chainId: L2_CHAIN_ID });
+
+
+  const recordsToAdd = useMemo(() => {
+    let count = 0;
+    records.texts.forEach(text => {
+      if (text.value.length > 0) {
+        count++;
+      }
+    })
+    records.addresses.forEach(addr => {
+      const supportedAddr = getSupportedAddressByCoin(addr.coinType);
+      if (supportedAddr) {
+        if (addr.value.length > 0 && supportedAddr.validateFunc?.(addr.value)) {
+          count++;
+        }
+      }
+    })
+    return count;
+  },[records])
 
   // Initialize records with user's address when they connect
   useEffect(() => {
@@ -795,7 +815,7 @@ function RegisterNew() {
             size="large"
             className="w-50"
           >
-            Add ({records.addresses.length + records.texts.length})
+            Add ({recordsToAdd})
           </Button>
         </div>
       </Modal>

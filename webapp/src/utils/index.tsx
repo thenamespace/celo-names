@@ -1,6 +1,13 @@
 import { getCoderByCoinType } from "@ensdomains/address-encoder";
 import { encode } from "@ensdomains/content-hash";
-import type { EnsRecords } from "@thenamespace/ens-components";
+import {
+  getSupportedAddressByCoin,
+  type EnsAddressRecord,
+  type EnsContenthashRecord,
+  type EnsRecords,
+  type EnsRecordsDiff,
+  type EnsTextRecord,
+} from "@thenamespace/ens-components";
 import { encodeFunctionData, namehash, parseAbi, toHex, type Hash } from "viem";
 
 export const SET_TEXT_FUNC =
@@ -19,7 +26,7 @@ export const ENS_RESOLVER_ABI = parseAbi([
 ]);
 
 export const sleep = (ms: number): Promise<void> => {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
 export const truncateAddress = (address: string): string => {
@@ -45,6 +52,21 @@ export const convertToResolverData = (
     });
 
   records.addresses.forEach((addr) => {
+    const supportedAddress = getSupportedAddressByCoin(addr.coinType);
+
+    if (!supportedAddress) {
+      console.warn(`Unknown address provided: ${addr}`);
+      return;
+    }
+
+    const isValid =
+      addr.value.length > 0 && supportedAddress.validateFunc?.(addr.value);
+
+    if (!isValid) {
+      console.warn(`Invalid format provided for address: ${addr}`);
+      return;
+    }
+
     const coinEncoder = getCoderByCoinType(addr.coinType);
     if (!coinEncoder) {
       throw Error(
@@ -62,7 +84,134 @@ export const convertToResolverData = (
   });
 
   if (records.contenthash !== undefined) {
-    const { protocol, value } = records.contenthash;
+    try {
+      const { protocol, value } = records.contenthash;
+      const encodedValue = `0x${encode(protocol, value)}`;
+
+      const data = encodeFunctionData({
+        functionName: "setContenthash",
+        abi: parseAbi([SET_CONTENTHASH_FUNC]),
+        args: [node, encodedValue as `0x${string}`],
+      });
+      resolverMulticallData.push(data);
+    } catch (err) {
+      console.warn("Error while adding contenthash", err);
+    }
+  }
+
+  return resolverMulticallData;
+};
+
+export const deepCopy = (a: any) => {
+  return JSON.parse(JSON.stringify(a));
+};
+
+export const convertRecordsDiffToResolverData = (
+  name: string,
+  recordsDiff: EnsRecordsDiff
+) => {
+  const node = namehash(name);
+  const resolverMulticallData: Hash[] = [];
+
+  convertTextData(node, resolverMulticallData, recordsDiff);
+  convertAddressData(node, resolverMulticallData, recordsDiff);
+  convertContenthashData(node, resolverMulticallData, recordsDiff);
+  return resolverMulticallData;
+};
+
+const convertTextData = (
+  node: Hash,
+  resolverData: Hash[],
+  diff: EnsRecordsDiff
+) => {
+  const modifiedTexts: EnsTextRecord[] = [
+    ...diff.textsAdded,
+    ...diff.textsModified,
+  ];
+  modifiedTexts.forEach(text => {
+    const data = encodeFunctionData({
+      functionName: "setText",
+      abi: parseAbi([SET_TEXT_FUNC]),
+      args: [node, text.key, text.value],
+    });
+    resolverData.push(data);
+  });
+
+  diff.textsModified.forEach(text => {
+    const data = encodeFunctionData({
+      functionName: "setText",
+      abi: parseAbi([SET_TEXT_FUNC]),
+      args: [node, text.key, ""],
+    });
+    resolverData.push(data);
+  });
+};
+
+const convertAddressData = (
+  node: Hash,
+  resolverData: Hash[],
+  diff: EnsRecordsDiff
+) => {
+  const modifiedAddressMap: Record<string, EnsAddressRecord> = {};
+  diff.addressesAdded.forEach(addr => {
+    modifiedAddressMap[addr.coinType] = addr;
+  });
+  diff.addressesModified.forEach(addr => {
+    modifiedAddressMap[addr.coinType] = addr;
+  });
+  const modifiedAddresses: EnsAddressRecord[] =
+    Object.values(modifiedAddressMap);
+
+  modifiedAddresses.forEach(addr => {
+    const coinEncoder = getCoderByCoinType(addr.coinType);
+    if (!coinEncoder) {
+      console.warn(`Coin type is not supported: ${addr.coinType}. Cannot get an encoder`);
+      return;
+    }
+    const decode = coinEncoder.decode(addr.value);
+    const hexValue = toHex(decode);
+    const data = encodeFunctionData({
+      functionName: "setAddr",
+      abi: parseAbi([SET_ADDRESS_FUNC]),
+      args: [node, BigInt(addr.coinType), hexValue],
+    });
+    resolverData.push(data);
+  });
+
+  diff.addressesRemoved.forEach(addr => {
+    const data = encodeFunctionData({
+      functionName: "setAddr",
+      abi: parseAbi([SET_ADDRESS_FUNC]),
+      args: [node, BigInt(addr.coinType), "0x"],
+    });
+    resolverData.push(data);
+  });
+};
+
+const convertContenthashData = (
+  node: Hash,
+  resolverData: Hash[],
+  diff: EnsRecordsDiff
+) => {
+  if (diff.contenthashRemoved) {
+    const data = encodeFunctionData({
+      functionName: "setContenthash",
+      abi: parseAbi([SET_CONTENTHASH_FUNC]),
+      args: [node, "0x"],
+    });
+    resolverData.push(data);
+    return;
+  }
+
+  let contenthash: EnsContenthashRecord | undefined = undefined;
+  if (diff.contenthashModified !== undefined) {
+    contenthash = diff.contenthashModified;
+  } else if (diff.contenthashAdded !== undefined) {
+    contenthash = diff.contenthashAdded;
+  }
+
+  if (contenthash !== undefined) {
+    const { protocol, value } = contenthash;
     const encodedValue = `0x${encode(protocol, value)}`;
 
     const data = encodeFunctionData({
@@ -70,8 +219,6 @@ export const convertToResolverData = (
       abi: parseAbi([SET_CONTENTHASH_FUNC]),
       args: [node, encodedValue as `0x${string}`],
     });
-    resolverMulticallData.push(data);
+    resolverData.push(data);
   }
-
-  return resolverMulticallData;
 };

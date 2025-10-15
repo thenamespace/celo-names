@@ -1,13 +1,15 @@
 import { getCoderByCoinType } from "@ensdomains/address-encoder";
 import { ponder } from "ponder:registry";
 import { record } from "ponder:schema";
-import { Hash, toBytes } from "viem";
+import { Hash, toBytes, zeroAddress, zeroHash } from "viem";
 import { decode, encode, getCodec } from "@ensdomains/content-hash";
 import { EnsAddressRecord, EnsTextRecord, EnsContenthash } from "./types";
 
 const ETH_COIN = 60;
 const ETH_NAME = "eth";
 const UNKNOWN = "unkown";
+
+const ADDR_REMOVED = "0x";
 
 export class ResolverListener {
   public async listenOnResolverEvents() {
@@ -23,6 +25,18 @@ export class ResolverListener {
       const { db } = context;
 
       const existingRecord = await db.find(record, { id: node });
+
+      // Handle record deletion
+      if (!value || value.length === 0) {
+        if (existingRecord?.id) {
+          const texts = (existingRecord.texts || []) as EnsTextRecord[];
+          const updatedTexts = texts.filter(
+            (t: EnsTextRecord) => t.key !== key
+          );
+          await db.update(record, { id: node }).set({ texts: updatedTexts });
+        }
+        return;
+      }
 
       if (!existingRecord?.id) {
         await context.db.insert(record).values({
@@ -45,6 +59,21 @@ export class ResolverListener {
       const { db } = context;
 
       const existingRecord = await db.find(record, { id: node });
+
+      // Handle removal of an address
+      if (this.isZeroAddress(a)) {
+        if (existingRecord?.id) {
+          const addresses = (existingRecord.addresses ||
+            []) as EnsAddressRecord[];
+          const updatedAddresses = addresses.filter(
+            (addr: EnsAddressRecord) => addr.coin !== ETH_COIN
+          );
+          await db
+            .update(record, { id: node })
+            .set({ addresses: updatedAddresses });
+        }
+        return;
+      }
 
       if (!existingRecord?.id) {
         await context.db.insert(record).values({
@@ -73,6 +102,21 @@ export class ResolverListener {
 
       const existingRecord = await db.find(record, { id: node });
 
+      // Handle removal of an address
+      if (this.isZeroAddress(newAddress)) {
+        if (existingRecord?.id) {
+          const addresses = (existingRecord.addresses ||
+            []) as EnsAddressRecord[];
+          const updatedAddresses = addresses.filter(
+            (addr: EnsAddressRecord) => addr.coin !== coin_type
+          );
+          await db
+            .update(record, { id: node })
+            .set({ addresses: updatedAddresses });
+        }
+        return;
+      }
+
       const coin_type = Number(coinType);
       const parsed_addr = this.parseAddress(newAddress, coin_type);
 
@@ -88,7 +132,8 @@ export class ResolverListener {
           ],
         });
       } else {
-        const addresses = (existingRecord.addresses || []) as EnsAddressRecord[];
+        const addresses = (existingRecord.addresses ||
+          []) as EnsAddressRecord[];
         const updatedAddresses = addresses.filter(
           (addr: EnsAddressRecord) => addr.coin !== coin_type
         );
@@ -119,7 +164,9 @@ export class ResolverListener {
           contenthash: parsed_contenthash,
         });
       } else {
-        await db.update(record, { id: node }).set({ contenthash: parsed_contenthash });
+        await db
+          .update(record, { id: node })
+          .set({ contenthash: parsed_contenthash });
       }
     });
   }
@@ -152,9 +199,17 @@ export class ResolverListener {
         return { codec: codec, decoded: decodedValue, encoded: value };
       }
     } catch (err) {
-      console.error(`Failed to encode contenthash value: ${value}, codec: ${codec}`);
+      console.error(
+        `Failed to encode contenthash value: ${value}, codec: ${codec}`
+      );
     }
 
-    return { codec: UNKNOWN, decoded: value, encoded: ""}
+    return { codec: UNKNOWN, decoded: value, encoded: "" };
   }
+
+  private isZeroAddress = (value: string): boolean => {
+    return (
+      value === ADDR_REMOVED || value === zeroAddress || value === zeroHash
+    );
+  };
 }

@@ -3,7 +3,6 @@ import { useParams, Link } from "react-router-dom";
 import { Calendar, User } from "lucide-react";
 import Text from "@components/Text";
 import Button from "@components/Button";
-import Modal from "@components/Modal";
 import { useCeloIndexer } from "@/hooks/useCeloIndexer";
 import type { Name } from "@/types/indexer";
 import { ENV } from "@/constants/environment";
@@ -12,11 +11,12 @@ import { RecordsTab } from "@/components/name-profile/RecordsTab";
 import { AddressesTab } from "@/components/name-profile/AddressesTab";
 import { OwnershipTab } from "@/components/name-profile/OwnershipTab";
 import ExtendModal from "@/components/ExtendModal";
+import UpdateRecordsModal from "@/components/UpdateRecordsModal";
 import "./Page.css";
 import "./NameProfile.css";
 import {
+  deepCopy,
   equalsIgnoreCase,
-  SelectRecordsForm,
   type EnsAddressRecord,
   type EnsContenthashRecord,
   type EnsRecords,
@@ -63,6 +63,10 @@ function NameProfile() {
   const [showExtendModal, setShowExtendModal] = useState(false);
   const [showRecordModal, setShowRecordModal] = useState(false);
 
+  const [initialRecords, setInitialRecords] = useState<EnsRecords>({
+    texts: [],
+    addresses:[]
+  })
   const [ensRecords, setEnsRecords] = useState<EnsRecords>({
     texts: [],
     addresses: [],
@@ -80,7 +84,9 @@ function NameProfile() {
     setNameData(data);
 
     if (data?.full_name) {
-      setEnsRecords(toEnsRecords(data));
+      const records = toEnsRecords(data);
+      setEnsRecords(deepCopy(records));
+      setInitialRecords(deepCopy(records));
     }
   };
 
@@ -103,6 +109,12 @@ function NameProfile() {
   const isNameOwner = useMemo(() => {
     return equalsIgnoreCase(address || "", nameData?.owner || zeroAddress);
   }, [nameData, address]);
+
+  const handleUpdateRecords = () => {
+    // TODO: Implement the actual update logic
+    console.log("Update records:", ensRecords);
+    setShowRecordModal(false);
+  };
 
   if (loading) {
     return (
@@ -266,7 +278,7 @@ function NameProfile() {
                       Extend
                     </Text>
                   </Button>
-                  {!isNameOwner && (
+                  {isNameOwner && (
                     <Button
                       variant="primary"
                       className="profile-action-btn"
@@ -360,12 +372,14 @@ function NameProfile() {
         }}
       />
       {/* Update records modal */}
-      <Modal isOpen={showRecordModal} onClose={() => setShowRecordModal(false)}>
-        <SelectRecordsForm
-          records={ensRecords}
-          onRecordsUpdated={(e) => setEnsRecords(e)}
-        />
-      </Modal>
+      <UpdateRecordsModal
+        isOpen={showRecordModal}
+        onClose={() => setShowRecordModal(false)}
+        initialRecords={initialRecords}
+        ensRecords={ensRecords}
+        onRecordsUpdated={(e) => setEnsRecords(e)}
+        onUpdate={handleUpdateRecords}
+      />
     </div>
   );
 }
