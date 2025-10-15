@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { usePublicClient } from "wagmi";
 import { toast } from "react-toastify";
-import { ContractFunctionExecutionError } from "viem";
+import { ContractFunctionExecutionError, zeroHash, type Hash } from "viem";
 import Modal from "@components/Modal";
 import Button from "@components/Button";
 import { useTransactionModal } from "@/hooks/useTransactionModal";
@@ -14,6 +14,8 @@ import {
   getSupportedAddressByCoin,
   type EnsRecords,
 } from "@thenamespace/ens-components";
+
+const USER_DENIED_TX_ERROR = "User denied transaction";
 
 interface UpdateRecordsModalProps {
   isOpen: boolean;
@@ -36,10 +38,13 @@ export default function UpdateRecordsModal({
 }: UpdateRecordsModalProps) {
   const publicClient = usePublicClient();
   const { updateRecords } = useRegistry();
-  const { showTransactionModal, updateTransactionStatus, waitForTransaction, TransactionModal } = useTransactionModal();
+  const {
+    showTransactionModal,
+    updateTransactionStatus,
+    waitForTransaction,
+    TransactionModal,
+  } = useTransactionModal();
   const [isUpdating, setIsUpdating] = useState(false);
-
-  const USER_DENIED_TX_ERROR = "User denied transaction";
 
   const handleCancel = () => {
     onRecordsUpdated(deepCopy(initialRecords));
@@ -54,19 +59,19 @@ export default function UpdateRecordsModal({
   // Validate address record
   const isValidAddressRecord = (address: any) => {
     if (address.value.length === 0) return false;
-    
+
     const supportedAddress = getSupportedAddressByCoin(address.coinType);
     if (!supportedAddress) return false;
-    
+
     return supportedAddress.validateFunc?.(address.value) || false;
   };
 
   // Check if there are any valid changes between initial and current records
   const hasValidChanges = () => {
     const diff = getEnsRecordsDiff(initialRecords, ensRecords);
-    
+
     // Check if there are any changes
-    const hasAnyChanges = (
+    const hasAnyChanges =
       diff.textsAdded.length > 0 ||
       diff.textsModified.length > 0 ||
       diff.textsRemoved.length > 0 ||
@@ -74,22 +79,20 @@ export default function UpdateRecordsModal({
       diff.addressesModified.length > 0 ||
       diff.addressesRemoved.length > 0 ||
       diff.contenthashRemoved ||
-      diff.contenthashModified
-    );
+      diff.contenthashModified;
 
     if (!hasAnyChanges) return false;
 
     // Validate all text records that are being added or modified
-    const allTextsValid = [
-      ...diff.textsAdded,
-      ...diff.textsModified
-    ].every(text => isValidTextRecord(text));
+    const allTextsValid = [...diff.textsAdded, ...diff.textsModified].every(
+      (text) => isValidTextRecord(text)
+    );
 
     // Validate all address records that are being added or modified
     const allAddressesValid = [
       ...diff.addressesAdded,
-      ...diff.addressesModified
-    ].every(address => isValidAddressRecord(address));
+      ...diff.addressesModified,
+    ].every((address) => isValidAddressRecord(address));
 
     return allTextsValid && allAddressesValid;
   };
@@ -118,13 +121,20 @@ export default function UpdateRecordsModal({
 
     setIsUpdating(true);
 
+    let txHash: Hash = zeroHash;
     try {
       const fullName = `${nameLabel}.${ENV.PARENT_NAME}`;
-      const txHash = await updateRecords(fullName, initialRecords, ensRecords);
-      
+      txHash = await updateRecords(fullName, initialRecords, ensRecords);
+    } catch (err) {
+       handleContractErr(err);
+       setIsUpdating(false);
+       return;
+    }
+
+    try {
       // Show transaction modal
       showTransactionModal(txHash);
-      
+
       // Wait for transaction confirmation
       await waitForTransaction(publicClient!, txHash);
 

@@ -10,6 +10,7 @@ import Input from "@components/Input";
 import { useRegistry } from "@/hooks/useRegistry";
 import { useTransactionModal } from "@/hooks/useTransactionModal";
 import { ENV } from "@/constants/environment";
+import { mainnet } from "viem/chains";
 
 interface TransferOwnershipModalProps {
   isOpen: boolean;
@@ -29,7 +30,7 @@ export default function TransferOwnershipModal({
   onSuccess,
 }: TransferOwnershipModalProps) {
   const { address } = useAccount();
-  const publicClient = usePublicClient();
+  const publicClient = usePublicClient({chainId: mainnet.id});
   const { transferName } = useRegistry();
   const { showTransactionModal, updateTransactionStatus, waitForTransaction, TransactionModal } = useTransactionModal();
   

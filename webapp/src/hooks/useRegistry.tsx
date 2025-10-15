@@ -2,7 +2,7 @@ import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 import { namehash } from "viem/ens";
 import { CONTRACT_ADDRESSES, L2_CHAIN_ID, ABIS } from "@/constants";
 import { ENV } from "@/constants/environment";
-import type { Address, Hash } from "viem";
+import { type Address, type Hash } from "viem";
 import {
   getEnsRecordsDiff,
   type EnsRecords,
@@ -21,8 +21,6 @@ export const useRegistry = () => {
   ) => {
     const diff = getEnsRecordsDiff(oldRecords, newRecords);
     const resolverData = convertRecordsDiffToResolverData(full_name, diff);
-
-    console.log(resolverData, "RESOLVER DATA!")
 
     const { request } = await publicClient!.simulateContract({
       address: CONTRACT_ADDRESSES.L2_REGISTRY,

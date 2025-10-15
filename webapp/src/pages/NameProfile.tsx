@@ -65,8 +65,8 @@ function NameProfile() {
 
   const [initialRecords, setInitialRecords] = useState<EnsRecords>({
     texts: [],
-    addresses:[]
-  })
+    addresses: [],
+  });
   const [ensRecords, setEnsRecords] = useState<EnsRecords>({
     texts: [],
     addresses: [],
@@ -77,6 +77,13 @@ function NameProfile() {
       fetchName();
     }
   }, [name]);
+
+  const handleRecordsUpdated = () => {
+    setTimeout(() => {
+      fetchName()
+      setShowRecordModal(false);
+    },1500)
+  };
 
   const fetchName = async () => {
     if (!name) return;
@@ -110,11 +117,6 @@ function NameProfile() {
     return equalsIgnoreCase(address || "", nameData?.owner || zeroAddress);
   }, [nameData, address]);
 
-  const handleUpdateRecords = () => {
-    // TODO: Implement the actual update logic
-    console.log("Update records:", ensRecords);
-    setShowRecordModal(false);
-  };
 
   if (loading) {
     return (
@@ -379,7 +381,7 @@ function NameProfile() {
         initialRecords={initialRecords}
         ensRecords={ensRecords}
         onRecordsUpdated={(e) => setEnsRecords(e)}
-        onUpdate={handleUpdateRecords}
+        onUpdate={handleRecordsUpdated}
       />
     </div>
   );
