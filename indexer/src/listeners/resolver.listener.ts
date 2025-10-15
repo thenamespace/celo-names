@@ -100,6 +100,7 @@ export class ResolverListener {
       const { node, coinType, newAddress } = event.args;
       const { db } = context;
 
+      const coin_type = Number(coinType);
       const existingRecord = await db.find(record, { id: node });
 
       // Handle removal of an address
@@ -117,7 +118,6 @@ export class ResolverListener {
         return;
       }
 
-      const coin_type = Number(coinType);
       const parsed_addr = this.parseAddress(newAddress, coin_type);
 
       if (!existingRecord?.id) {
