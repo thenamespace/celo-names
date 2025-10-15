@@ -1,5 +1,12 @@
+import { useState } from "react";
+import { usePublicClient } from "wagmi";
+import { toast } from "react-toastify";
+import { ContractFunctionExecutionError } from "viem";
 import Modal from "@components/Modal";
 import Button from "@components/Button";
+import { useTransactionModal } from "@/hooks/useTransactionModal";
+import { useRegistry } from "@/hooks/useRegistry";
+import { ENV } from "@/constants/environment";
 import {
   deepCopy,
   SelectRecordsForm,
@@ -11,6 +18,7 @@ import {
 interface UpdateRecordsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  nameLabel: string;
   initialRecords: EnsRecords;
   ensRecords: EnsRecords;
   onRecordsUpdated: (records: EnsRecords) => void;
@@ -20,13 +28,20 @@ interface UpdateRecordsModalProps {
 export default function UpdateRecordsModal({
   isOpen,
   onClose,
+  nameLabel,
   initialRecords,
   ensRecords,
   onRecordsUpdated,
   onUpdate,
 }: UpdateRecordsModalProps) {
-  
-   const handleCancel = () => {
+  const publicClient = usePublicClient();
+  const { updateRecords } = useRegistry();
+  const { showTransactionModal, updateTransactionStatus, waitForTransaction, TransactionModal } = useTransactionModal();
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  const USER_DENIED_TX_ERROR = "User denied transaction";
+
+  const handleCancel = () => {
     onRecordsUpdated(deepCopy(initialRecords));
     onClose();
   };
@@ -79,6 +94,53 @@ export default function UpdateRecordsModal({
     return allTextsValid && allAddressesValid;
   };
 
+  const handleContractErr = (err: any) => {
+    const contractErr = err as ContractFunctionExecutionError;
+    if (
+      contractErr?.details &&
+      contractErr.details.includes(USER_DENIED_TX_ERROR)
+    ) {
+      // User denied transaction - no toast needed
+    } else if (contractErr?.details?.includes("insufficient funds")) {
+      toast.error("Insufficient funds. Please add CELO to your wallet.");
+    } else {
+      // Generic error message
+      toast.error("Update failed. Please try again.");
+      console.error("Update error:", err);
+    }
+  };
+
+  const handleUpdateRecords = async () => {
+    if (!hasValidChanges()) {
+      toast.error("No valid changes to update");
+      return;
+    }
+
+    setIsUpdating(true);
+
+    try {
+      const fullName = `${nameLabel}.${ENV.PARENT_NAME}`;
+      const txHash = await updateRecords(fullName, initialRecords, ensRecords);
+      
+      // Show transaction modal
+      showTransactionModal(txHash);
+      
+      // Wait for transaction confirmation
+      await waitForTransaction(publicClient!, txHash);
+
+      updateTransactionStatus("success");
+      toast.success("Records updated successfully!");
+      onUpdate();
+      onClose();
+    } catch (err: unknown) {
+      handleContractErr(err);
+      showTransactionModal();
+      updateTransactionStatus("failed");
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={onClose}>
       <SelectRecordsForm
@@ -98,14 +160,15 @@ export default function UpdateRecordsModal({
           Cancel
         </Button>
         <Button
-          onClick={onUpdate}
+          onClick={handleUpdateRecords}
           size="large"
           className="w-50"
-          disabled={!hasValidChanges()}
+          disabled={!hasValidChanges() || isUpdating}
         >
-          Update
+          {isUpdating ? "Updating..." : "Update"}
         </Button>
       </div>
+      <TransactionModal />
     </Modal>
   );
 }

@@ -375,6 +375,7 @@ function NameProfile() {
       <UpdateRecordsModal
         isOpen={showRecordModal}
         onClose={() => setShowRecordModal(false)}
+        nameLabel={nameData?.label || ""}
         initialRecords={initialRecords}
         ensRecords={ensRecords}
         onRecordsUpdated={(e) => setEnsRecords(e)}

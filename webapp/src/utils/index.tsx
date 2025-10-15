@@ -137,7 +137,7 @@ const convertTextData = (
     resolverData.push(data);
   });
 
-  diff.textsModified.forEach(text => {
+  diff.textsRemoved.forEach(text => {
     const data = encodeFunctionData({
       functionName: "setText",
       abi: parseAbi([SET_TEXT_FUNC]),

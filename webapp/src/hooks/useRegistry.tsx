@@ -22,6 +22,8 @@ export const useRegistry = () => {
     const diff = getEnsRecordsDiff(oldRecords, newRecords);
     const resolverData = convertRecordsDiffToResolverData(full_name, diff);
 
+    console.log(resolverData, "RESOLVER DATA!")
+
     const { request } = await publicClient!.simulateContract({
       address: CONTRACT_ADDRESSES.L2_REGISTRY,
       abi: ABIS.L2_REGISTRY,
