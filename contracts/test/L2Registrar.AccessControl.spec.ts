@@ -9,12 +9,12 @@ import type { L2Registrar$Type } from '../artifacts/contracts/L2Registrar.sol/L2
 import type { L2Registry$Type } from '../artifacts/contracts/L2Registry.sol/L2Registry';
 import { TOKEN_NAME, TOKEN_SYMBOL, METADATA_URI } from './vars';
 
-describe("L2Registrar - AccessControl", () => {
+describe('L2Registrar - AccessControl', () => {
   const deployRegistrarFixture = async () => {
     const [owner, nonOwner, user01, user02] = await viem.getWalletClients();
 
     // Deploy L2Registry first
-    const registry: GetContractReturnType<L2Registry$Type['abi']> = 
+    const registry: GetContractReturnType<L2Registry$Type['abi']> =
       await viem.deployContract('L2Registry', [
         TOKEN_NAME,
         TOKEN_SYMBOL,
@@ -24,15 +24,20 @@ describe("L2Registrar - AccessControl", () => {
       ]);
 
     // Deploy mock USD oracle (using a simple contract for testing)
-    const mockOracle = await viem.deployContract('MockedUsdOracle', [2000_00000000n]); // $2000 ETH price
+    const mockOracle = await viem.deployContract('MockedUsdOracle', [
+      2000_00000000n,
+    ]); // $2000 ETH price
+
+    const storage = await viem.deployContract('RegistrarStorage', []);
 
     // Deploy L2Registrar
-    const registrar: GetContractReturnType<L2Registrar$Type['abi']> = 
+    const registrar: GetContractReturnType<L2Registrar$Type['abi']> =
       await viem.deployContract('L2Registrar', [
         registry.address,
         mockOracle.address,
         owner.account.address, // treasury
-        DEFAULT_REGISTRAR_CONFIG
+        storage.address,
+        DEFAULT_REGISTRAR_CONFIG,
       ]);
 
     return {
@@ -48,10 +53,12 @@ describe("L2Registrar - AccessControl", () => {
 
   describe('Owner Access Control - setBasePrice', () => {
     it('Should allow owner to set base price', async () => {
-      const { registrarContract, owner } = await loadFixture(deployRegistrarFixture);
-      
+      const { registrarContract, owner } = await loadFixture(
+        deployRegistrarFixture
+      );
+
       const newBasePrice = 1000n;
-      
+
       await expect(
         registrarContract.write.setBasePrice([newBasePrice], {
           account: owner.account,
@@ -63,14 +70,17 @@ describe("L2Registrar - AccessControl", () => {
     });
 
     it('Should NOT allow non-owner to set base price', async () => {
-      const { registrarContract, nonOwner } = await loadFixture(deployRegistrarFixture);
-      
+      const { registrarContract, nonOwner } = await loadFixture(
+        deployRegistrarFixture
+      );
+
       const newBasePrice = 1000n;
-      
+
       await expectContractCallToFail(
-        async () => await registrarContract.write.setBasePrice([newBasePrice], {
-          account: nonOwner.account,
-        }),
+        async () =>
+          await registrarContract.write.setBasePrice([newBasePrice], {
+            account: nonOwner.account,
+          }),
         ERRORS.OWNER_ONLY
       );
     });
@@ -78,11 +88,13 @@ describe("L2Registrar - AccessControl", () => {
 
   describe('Owner Access Control - setLabelPrices', () => {
     it('Should allow owner to set label prices', async () => {
-      const { registrarContract, owner } = await loadFixture(deployRegistrarFixture);
-      
+      const { registrarContract, owner } = await loadFixture(
+        deployRegistrarFixture
+      );
+
       const lengths = [1n, 3n, 5n];
       const prices = [1000n, 500n, 200n];
-      
+
       await expect(
         registrarContract.write.setLabelPrices([lengths, prices, false], {
           account: owner.account,
@@ -91,29 +103,41 @@ describe("L2Registrar - AccessControl", () => {
     });
 
     it('Should NOT allow non-owner to set label prices', async () => {
-      const { registrarContract, nonOwner } = await loadFixture(deployRegistrarFixture);
-      
+      const { registrarContract, nonOwner } = await loadFixture(
+        deployRegistrarFixture
+      );
+
       const lengths = [1n, 3n, 5n];
       const prices = [1000n, 500n, 200n];
-      
+
       await expectContractCallToFail(
-        async () => await registrarContract.write.setLabelPrices([lengths, prices, false], {
-          account: nonOwner.account,
-        }),
+        async () =>
+          await registrarContract.write.setLabelPrices(
+            [lengths, prices, false],
+            {
+              account: nonOwner.account,
+            }
+          ),
         ERRORS.OWNER_ONLY
       );
     });
 
     it('Should revert when arrays length mismatch', async () => {
-      const { registrarContract, owner } = await loadFixture(deployRegistrarFixture);
-      
+      const { registrarContract, owner } = await loadFixture(
+        deployRegistrarFixture
+      );
+
       const lengths = [1n, 3n];
       const prices = [1000n, 500n, 200n]; // Different length
-      
+
       await expectContractCallToFail(
-        async () => await registrarContract.write.setLabelPrices([lengths, prices, false], {
-          account: owner.account,
-        }),
+        async () =>
+          await registrarContract.write.setLabelPrices(
+            [lengths, prices, false],
+            {
+              account: owner.account,
+            }
+          ),
         'ArraysLengthMismatch'
       );
     });
@@ -121,34 +145,45 @@ describe("L2Registrar - AccessControl", () => {
 
   describe('Owner Access Control - setLabelLengthLimits', () => {
     it('Should allow owner to set label length limits', async () => {
-      const { registrarContract, owner } = await loadFixture(deployRegistrarFixture);
-      
+      const { registrarContract, owner } = await loadFixture(
+        deployRegistrarFixture
+      );
+
       const newMinLength = 2n;
       const newMaxLength = 50n;
-      
+
       await expect(
-        registrarContract.write.setLabelLengthLimits([newMinLength, newMaxLength], {
-          account: owner.account,
-        })
+        registrarContract.write.setLabelLengthLimits(
+          [newMinLength, newMaxLength],
+          {
+            account: owner.account,
+          }
+        )
       ).to.not.be.reverted;
 
       const minLength = await registrarContract.read.minLabelLength();
       const maxLength = await registrarContract.read.maxLabelLength();
-      
+
       expect(minLength).to.equal(newMinLength);
       expect(maxLength).to.equal(newMaxLength);
     });
 
     it('Should NOT allow non-owner to set label length limits', async () => {
-      const { registrarContract, nonOwner } = await loadFixture(deployRegistrarFixture);
-      
+      const { registrarContract, nonOwner } = await loadFixture(
+        deployRegistrarFixture
+      );
+
       const newMinLength = 2n;
       const newMaxLength = 50n;
-      
+
       await expectContractCallToFail(
-        async () => await registrarContract.write.setLabelLengthLimits([newMinLength, newMaxLength], {
-          account: nonOwner.account,
-        }),
+        async () =>
+          await registrarContract.write.setLabelLengthLimits(
+            [newMinLength, newMaxLength],
+            {
+              account: nonOwner.account,
+            }
+          ),
         ERRORS.OWNER_ONLY
       );
     });
@@ -156,8 +191,10 @@ describe("L2Registrar - AccessControl", () => {
 
   describe('Owner Access Control - setTreasury', () => {
     it('Should allow owner to set treasury', async () => {
-      const { registrarContract, owner, user01 } = await loadFixture(deployRegistrarFixture);
-      
+      const { registrarContract, owner, user01 } = await loadFixture(
+        deployRegistrarFixture
+      );
+
       await expect(
         registrarContract.write.setTreasury([user01.account.address], {
           account: owner.account,
@@ -166,12 +203,15 @@ describe("L2Registrar - AccessControl", () => {
     });
 
     it('Should NOT allow non-owner to set treasury', async () => {
-      const { registrarContract, nonOwner, user01 } = await loadFixture(deployRegistrarFixture);
-      
+      const { registrarContract, nonOwner, user01 } = await loadFixture(
+        deployRegistrarFixture
+      );
+
       await expectContractCallToFail(
-        async () => await registrarContract.write.setTreasury([user01.account.address], {
-          account: nonOwner.account,
-        }),
+        async () =>
+          await registrarContract.write.setTreasury([user01.account.address], {
+            account: nonOwner.account,
+          }),
         ERRORS.OWNER_ONLY
       );
     });
@@ -179,8 +219,10 @@ describe("L2Registrar - AccessControl", () => {
 
   describe('Owner Access Control - pause/unpause', () => {
     it('Should allow owner to pause contract', async () => {
-      const { registrarContract, owner } = await loadFixture(deployRegistrarFixture);
-      
+      const { registrarContract, owner } = await loadFixture(
+        deployRegistrarFixture
+      );
+
       await expect(
         registrarContract.write.pause({
           account: owner.account,
@@ -192,8 +234,10 @@ describe("L2Registrar - AccessControl", () => {
     });
 
     it('Should allow owner to unpause contract', async () => {
-      const { registrarContract, owner } = await loadFixture(deployRegistrarFixture);
-      
+      const { registrarContract, owner } = await loadFixture(
+        deployRegistrarFixture
+      );
+
       // First pause
       await registrarContract.write.pause({
         account: owner.account,
@@ -211,19 +255,24 @@ describe("L2Registrar - AccessControl", () => {
     });
 
     it('Should NOT allow non-owner to pause contract', async () => {
-      const { registrarContract, nonOwner } = await loadFixture(deployRegistrarFixture);
-      
+      const { registrarContract, nonOwner } = await loadFixture(
+        deployRegistrarFixture
+      );
+
       await expectContractCallToFail(
-        async () => await registrarContract.write.pause({
-          account: nonOwner.account,
-        }),
+        async () =>
+          await registrarContract.write.pause({
+            account: nonOwner.account,
+          }),
         ERRORS.OWNER_ONLY
       );
     });
 
     it('Should NOT allow non-owner to unpause contract', async () => {
-      const { registrarContract, owner, nonOwner } = await loadFixture(deployRegistrarFixture);
-      
+      const { registrarContract, owner, nonOwner } = await loadFixture(
+        deployRegistrarFixture
+      );
+
       // First pause as owner
       await registrarContract.write.pause({
         account: owner.account,
@@ -231,9 +280,10 @@ describe("L2Registrar - AccessControl", () => {
 
       // Try to unpause as non-owner
       await expectContractCallToFail(
-        async () => await registrarContract.write.unpause({
-          account: nonOwner.account,
-        }),
+        async () =>
+          await registrarContract.write.unpause({
+            account: nonOwner.account,
+          }),
         ERRORS.OWNER_ONLY
       );
     });
@@ -241,8 +291,10 @@ describe("L2Registrar - AccessControl", () => {
 
   describe('Integration - Pause affects registration', () => {
     it('Should prevent registration when paused', async () => {
-      const { registrarContract, owner, user01 } = await loadFixture(deployRegistrarFixture);
-      
+      const { registrarContract, owner, user01 } = await loadFixture(
+        deployRegistrarFixture
+      );
+
       // Pause contract
       await registrarContract.write.pause({
         account: owner.account,
@@ -250,22 +302,23 @@ describe("L2Registrar - AccessControl", () => {
 
       // Try to register when paused
       await expectContractCallToFail(
-        async () => await registrarContract.write.register([
-          'test',
-          1n,
-          user01.account.address,
-          []
-        ], {
-          account: user01.account,
-          value: 1000n,
-        }),
+        async () =>
+          await registrarContract.write.register(
+            ['test', 1n, user01.account.address, []],
+            {
+              account: user01.account,
+              value: 1000n,
+            }
+          ),
         'EnforcedPause'
       );
     });
 
     it('Should allow registration when unpaused', async () => {
-      const { registrarContract, owner, user01 } = await loadFixture(deployRegistrarFixture);
-      
+      const { registrarContract, owner, user01 } = await loadFixture(
+        deployRegistrarFixture
+      );
+
       // Ensure contract is unpaused (default state)
       const isPaused = await registrarContract.read.paused();
       expect(isPaused).to.be.false;

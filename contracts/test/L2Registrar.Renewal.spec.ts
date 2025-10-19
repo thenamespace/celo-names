@@ -38,6 +38,7 @@ describe('L2Registrar - Renewal', () => {
     const mockOracle = await viem.deployContract('MockedUsdOracle', [
       ETH_PRICE_DECIMALS_DOLLARS,
     ]);
+    const storage = await viem.deployContract("RegistrarStorage", []);
 
     // Deploy L2Registrar
     const registrar: GetContractReturnType<L2Registrar$Type['abi']> =
@@ -45,6 +46,7 @@ describe('L2Registrar - Renewal', () => {
         registry.address,
         mockOracle.address,
         treasury.account.address, // treasury
+        storage.address,
         DEFAULT_REGISTRAR_CONFIG
       ]);
 

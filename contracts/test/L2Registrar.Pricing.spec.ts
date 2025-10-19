@@ -42,12 +42,15 @@ describe('L2Registrar - Pricing', () => {
       ETH_PRICE_DECIMALS_DOLLARS,
     ]);
 
+    const storage = await viem.deployContract("RegistrarStorage", []);
+
     // Deploy L2Registrar
     const registrar: GetContractReturnType<L2Registrar$Type['abi']> =
       await viem.deployContract('L2Registrar', [
         registry.address,
         mockOracle.address,
         treasury.account.address, // treasury
+        storage.address,
         DEFAULT_REGISTRAR_CONFIG
       ]);
 

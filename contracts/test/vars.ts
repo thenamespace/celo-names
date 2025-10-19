@@ -53,3 +53,25 @@ export interface IPermit {
   r: Hash
   s: Hash
 }
+
+// Mock verification output for testing
+export const createMockVerificationOutput = (
+  userAddress: string,
+  nullifier: bigint,
+  name: readonly [string, string] = ['John', 'Doe'] as const
+) => ({
+  attestationId: '0x0000000000000000000000000000000000000000000000000000000000000000' as `0x${string}`,
+  userIdentifier: BigInt(userAddress),
+  nullifier: nullifier,
+  forbiddenCountriesListPacked: [0n, 0n, 0n, 0n] as const,
+  issuingState: 'US',
+  name: name,
+  idNumber: `PASSPORT${nullifier}`,
+  dateOfBirth: '1990-01-01',
+  sex: 'M',
+  nationality: 'US',
+  ofac: [false, false, false] as const,
+  gender: 'M',
+  expiryDate: '2030-01-01',
+  olderThan: 18n,
+});

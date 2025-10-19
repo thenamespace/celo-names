@@ -22,7 +22,9 @@ export const ERRORS = {
   VERIFICATION_CLAIMED: 'VerificationClaimed',
   // SelfStorage errors
   NOT_REGISTRAR: 'NotRegistrar',
-  VERIFICATION_ID_CLAIMED: 'VerificationIdClaimed'
+  VERIFICATION_ID_CLAIMED: 'VerificationIdClaimed',
+  // RegistrarStorage errors
+  NOT_WHITELISTED: 'NotWhitelisted'
 } as const;
 
 export interface ContractError extends Error {

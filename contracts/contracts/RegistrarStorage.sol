@@ -100,11 +100,23 @@ contract RegistrarStorage is IRegistrarStorage, Ownable {
     return verificationIds[user] > 0;
   }
 
+  /**
+   * @notice Checks if a label is blacklisted and cannot be registered
+   * @dev Uses the current blacklist version to check if the label hash is blacklisted
+   * @param label The domain label to check (e.g., "admin", "test")
+   * @return True if the label is blacklisted and cannot be registered, false otherwise
+   */
   function isBlacklisted(string calldata label) external view returns (bool) {
     bytes32 labelhash = keccak256(bytes(label));
     return blacklist[blacklistVersion][labelhash];
   }
 
+  /**
+   * @notice Checks if a user address is whitelisted for registration
+   * @dev If whitelist is disabled, all users are considered whitelisted
+   * @param user The address of the user to check
+   * @return True if the user is whitelisted or whitelist is disabled, false otherwise
+   */
   function isWhitelisted(address user) external view returns (bool) {
     if (!whitelistEnabled) {
       return true;
@@ -125,6 +137,13 @@ contract RegistrarStorage is IRegistrarStorage, Ownable {
 
   // ============ Owner Functions ============
 
+  /**
+   * @notice Updates the whitelist with new user addresses
+   * @dev Can add or remove multiple users from the whitelist in a single transaction
+   * @param users Array of user addresses to update
+   * @param enabled True to add users to whitelist, false to remove them
+   * @param clearEntries True to clear all previous whitelist entries before adding new ones
+   */
   function setWhitelist(
     address[] calldata users,
     bool enabled,
@@ -141,11 +160,23 @@ contract RegistrarStorage is IRegistrarStorage, Ownable {
     emit WhitelistEntriesUpdated(users, enabled, whitelistVersion);
   }
 
+  /**
+   * @notice Enables or disables the whitelist functionality
+   * @dev When disabled, all users are considered whitelisted and can register
+   * @param enabled True to enable whitelist restrictions, false to disable them
+   */
   function setWhitelistEnabled(bool enabled) external onlyOwner {
     whitelistEnabled = enabled;
     emit WhitelistChanged(enabled);
   }
 
+  /**
+   * @notice Updates the blacklist with new label hashes
+   * @dev Can add or remove multiple labels from the blacklist in a single transaction
+   * @param labelhashes Array of keccak256 hashes of labels to update
+   * @param enabled True to add labels to blacklist, false to remove them
+   * @param clearEntries True to clear all previous blacklist entries before adding new ones
+   */
   function setBlacklist(
     bytes32[] calldata labelhashes,
     bool enabled,

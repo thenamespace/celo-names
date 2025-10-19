@@ -1,6 +1,6 @@
 import { loadFixture } from '@nomicfoundation/hardhat-toolbox/network-helpers';
 import { viem } from 'hardhat';
-import { namehash, zeroAddress } from 'viem';
+import { namehash } from 'viem';
 import {
   PARENT_ENS,
   PARENT_NODE,
@@ -14,7 +14,7 @@ import { expectContractCallToFail, ERRORS } from './errors';
 import type { GetContractReturnType } from '@nomicfoundation/hardhat-viem/types';
 import type { L2Registry$Type } from '../artifacts/contracts/L2Registry.sol/L2Registry';
 import type { MockedSelfRegistrar$Type } from '../artifacts/contracts/test/MockedSelfRegistrar.sol/MockedSelfRegistrar';
-import type { SelfStorage$Type } from '../artifacts/contracts/SelfStorage.sol/SelfStorage';
+import type { RegistrarStorage$Type } from '../artifacts/contracts/RegistrarStorage.sol/RegistrarStorage';
 
 describe('L2SelfRegistrar - Claims', () => {
   const MAX_CLAIMS_PER_USER = 3n;
@@ -33,8 +33,8 @@ describe('L2SelfRegistrar - Claims', () => {
       ]);
 
     // Deploy SelfStorage
-    const selfStorage: GetContractReturnType<SelfStorage$Type['abi']> =
-      await viem.deployContract('SelfStorage', []);
+    const storage: GetContractReturnType<RegistrarStorage$Type['abi']> =
+      await viem.deployContract('RegistrarStorage', []);
 
     // Deploy MockIdentityHub
     const mockHub = await viem.deployContract('MockIdentityHub', []);
@@ -45,7 +45,7 @@ describe('L2SelfRegistrar - Claims', () => {
         mockHub.address,
         'test-scope',
         registry.address,
-        selfStorage.address,
+        storage.address,
       ]);
 
     // Set MockedSelfRegistrar as a registrar in the registry
@@ -54,7 +54,7 @@ describe('L2SelfRegistrar - Claims', () => {
     });
 
     // Set MockedSelfRegistrar as a registrar in SelfStorage
-    await selfStorage.write.setRegistrar([selfRegistrar.address, true], {
+    await storage.write.setRegistrar([selfRegistrar.address, true], {
       account: owner.account,
     });
 
@@ -66,7 +66,7 @@ describe('L2SelfRegistrar - Claims', () => {
     return {
       selfRegistrar,
       registry,
-      selfStorage,
+      storage,
       owner,
       user01,
       user02,

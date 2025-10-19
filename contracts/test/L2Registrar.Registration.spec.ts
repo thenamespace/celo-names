@@ -39,12 +39,15 @@ describe('L2Registrar - Registration', () => {
       ETH_PRICE_DECIMALS_DOLLARS,
     ]);
 
+    const storage = await viem.deployContract("RegistrarStorage", []);
+
     // Deploy L2Registrar
     const registrar: GetContractReturnType<L2Registrar$Type['abi']> =
       await viem.deployContract('L2Registrar', [
         registry.address,
         mockOracle.address,
         treasury.account.address, // treasury
+        storage.address,
         DEFAULT_REGISTRAR_CONFIG
       ]);
 
@@ -66,6 +69,7 @@ describe('L2Registrar - Registration', () => {
       user01,
       user02,
       treasury,
+      storage
     };
   };
 
@@ -364,7 +368,7 @@ describe('L2Registrar - Registration', () => {
     });
 
     it('Should prevent registration of blacklisted names', async () => {
-      const { registrarContract, user01, owner } =
+      const { registrarContract, user01, owner, storage } =
         await loadFixture(deployRegistrationFixture);
 
       const blacklistedLabel = 'admin';
@@ -375,7 +379,7 @@ describe('L2Registrar - Registration', () => {
       const labelHash = keccak256(toBytes(blacklistedLabel));
 
       // Set the label as blacklisted
-      await registrarContract.write.setBlacklist([[labelHash], true], {
+      await storage.write.setBlacklist([[labelHash], true, false], {
         account: owner.account,
       });
 
