@@ -9,6 +9,7 @@ import {IL2Registrar} from './interfaces/IL2Registrar.sol';
 import {StableERC20Payments, ERC20Permit} from './registrar/StableERC20Payments.sol';
 import {NativePayments} from './registrar/NativePayments.sol';
 import {RegistrarRules, RegistrarRulesConfig} from './registrar/RegistrarRules.sol';
+import {IRegistrarStorage} from "./interfaces/IRegistrarStorage.sol";
 
 contract L2Registrar is
   Ownable,
@@ -28,6 +29,9 @@ contract L2Registrar is
 
   /// @dev Registry contract for subdomain management
   IL2Registry private immutable registry;
+
+  /// @dev Registrar storage that contains whitelist/blacklist data
+  IRegistrarStorage private immutable registrarStorage;
 
   /// @dev Treasury address for collecting registration fees
   address private treasury;
@@ -67,9 +71,11 @@ contract L2Registrar is
     address _registry,
     address _usdOracle,
     address __treasury,
+    address _registrarStorage,
     RegistrarRulesConfig memory _rules
   ) Ownable(_msgSender()) NativePayments(_usdOracle) {
     registry = IL2Registry(_registry);
+    registrarStorage = IRegistrarStorage(_registrarStorage);
     treasury = __treasury;
     _configureRules(_rules, false);
   }
@@ -194,7 +200,7 @@ contract L2Registrar is
   /// @param label The subdomain label to check availability for
   /// @return True if the subname is available (not registered), false otherwise
   function available(string calldata label) external view returns (bool) {
-    if (!_isValidLabelLength(label) || _isBlacklisted(label)) {
+    if (!_isValidLabelLength(label) || registrarStorage.isBlacklisted(label)) {
       return false;
     }
 
@@ -228,17 +234,24 @@ contract L2Registrar is
     address owner,
     bytes[] calldata resolverData
   ) internal returns (bytes32) {
+
+    if (registrarStorage.isBlacklisted(label)) {
+      revert IRegistrarStorage.BlacklistedName(label);
+    }
+
+    if (registrarStorage.whitelistEnabled() 
+        && !registrarStorage.isWhitelisted(_msgSender())) {
+      revert IRegistrarStorage.NotWhitelisted(_msgSender());
+    }
+
     if (!_isValidDuration(durationInYears)) {
       revert InvalidDuration(
         durationInYears
       );
     }
+    
     if (!_isValidLabelLength(label)) {
       revert InvalidLabelLength();
-    }
-
-    if (_isBlacklisted(label)) {
-      revert BlacklistedName(label);
     }
 
     bytes32 root = registry.rootNode();

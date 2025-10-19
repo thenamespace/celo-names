@@ -36,11 +36,10 @@ contract L2Deployer_V1 {
       registry,
       usd_stable_oracle,
       treasury,
+      // Should be registrar storage
+      address(0),
       config
     );
-
-    _registrar.setBlacklist(blacklist, false);
-    registrar = address(_registrar);
 
     _registry.setRegistrar(registrar, true);
 

@@ -7,7 +7,7 @@ import {SelfStructs} from '@selfxyz/contracts/contracts/libraries/SelfStructs.so
 import {SelfUtils} from '@selfxyz/contracts/contracts/libraries/SelfUtils.sol';
 import {IIdentityVerificationHubV2} from '@selfxyz/contracts/contracts/interfaces/IIdentityVerificationHubV2.sol';
 import {IL2Registry} from './interfaces/IL2Registry.sol';
-import {ISelfStorage} from './interfaces/ISelfStorage.sol';
+import {IRegistrarStorage} from './interfaces/IRegistrarStorage.sol';
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {StringUtils} from './common/StringUtils.sol';
 import {ERC721Holder} from '@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol';
@@ -56,7 +56,11 @@ contract L2SelfRegistrar is SelfVerificationRoot, Ownable, ERC721Holder {
   event NameClaimed(string label, bytes32 node, address owner);
 
   /// @dev Emitted when user completed a verification
-  event VerificationCompleted(address user, uint256 verificationId, uint256 timestamp);
+  event VerificationCompleted(
+    address user,
+    uint256 verificationId,
+    uint256 timestamp
+  );
 
   // ============ State Variables ============
 
@@ -70,7 +74,7 @@ contract L2SelfRegistrar is SelfVerificationRoot, Ownable, ERC721Holder {
   IL2Registry immutable registry;
 
   /// @dev Storage contrat for verification information
-  ISelfStorage immutable selfStorage;
+  IRegistrarStorage immutable registrarStorage;
 
   // ============ Constructor ============
 
@@ -84,14 +88,14 @@ contract L2SelfRegistrar is SelfVerificationRoot, Ownable, ERC721Holder {
     address identityVerificationHubV2Address,
     string memory scopeSeed,
     address _registry,
-    address _selfStorage
+    address _registrarStorage
   )
     SelfVerificationRoot(identityVerificationHubV2Address, scopeSeed)
     Ownable(_msgSender())
   {
     _initSelfProtocol(identityVerificationHubV2Address);
     registry = IL2Registry(_registry);
-    selfStorage = ISelfStorage(_selfStorage);
+    registrarStorage = IRegistrarStorage(_registrarStorage);
   }
 
   // ============ Public Functions ============
@@ -120,18 +124,29 @@ contract L2SelfRegistrar is SelfVerificationRoot, Ownable, ERC721Holder {
     }
 
     // Check if user is verified via self protocol
-    if (!selfStorage.isVerified(_msgSender())) {
+    if (!registrarStorage.isVerified(_msgSender())) {
       revert NotSelfVerified(_msgSender());
     }
 
     // Check if user claimed max amount of free names
-    if (selfStorage.claimed(_msgSender()) >= maximumClaim) {
+    if (registrarStorage.claimed(_msgSender()) >= maximumClaim) {
       revert MaximumNamesClaimed();
+    }
+
+    if (registrarStorage.isBlacklisted(label)) {
+      revert IRegistrarStorage.BlacklistedName(label);
+    }
+
+    if (
+      registrarStorage.whitelistEnabled() &&
+      !registrarStorage.isWhitelisted(_msgSender())
+    ) {
+      revert IRegistrarStorage.NotWhitelisted(_msgSender());
     }
 
     bytes32 node = _namehash(label, registry.rootNode());
     // Update storage (checks-effects-interactions pattern)
-    selfStorage.claim(_msgSender(), node);
+    registrarStorage.claim(_msgSender(), node);
 
     // Create the subnode in registry
     uint64 oneYearExpiry = uint64(block.timestamp) + ONE_YEAR_SECONDS;
@@ -193,13 +208,13 @@ contract L2SelfRegistrar is SelfVerificationRoot, Ownable, ERC721Holder {
 
     // Prevent double verification
     if (
-      selfStorage.isVerified(user) ||
-      selfStorage.claimedVerifications(verificationId)
+      registrarStorage.isVerified(user) ||
+      registrarStorage.claimedVerifications(verificationId)
     ) {
       revert VerificationClaimed();
     }
 
-    selfStorage.setVerificationId(user, verificationId);
+    registrarStorage.setVerificationId(user, verificationId);
     emit VerificationCompleted(user, verificationId, block.timestamp);
   }
 

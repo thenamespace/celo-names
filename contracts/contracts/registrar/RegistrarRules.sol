@@ -40,16 +40,11 @@ abstract contract RegistrarRules is Ownable {
   // Base pricing configuration
   uint256 public basePrice;
 
-  // Blacklisted labels, cannot be minted by anyone
-  uint8 blacklistedLabelsVersion;
-  mapping(uint8 => mapping(bytes32 => bool)) blacklistedLabels;
-
   // ============ CUSTOM ERRORS ============
 
   /// @dev Thrown when user attempts to register a name with unsupported length
   error InvalidLabelLength();
-  /// @dev Thrown when when a name is blacklisted
-  error BlacklistedName(string label);
+ 
   /// @dev Thrown when arrays length mismatch in setLabelPrices
   error ArraysLengthMismatch(uint256 lengthsLength, uint256 pricesLength);
 
@@ -89,24 +84,8 @@ abstract contract RegistrarRules is Ownable {
     _setBasePrice(_basePrice);
   }
 
-  /// @notice Add labels to the blacklist to prevent registration
-  /// @param blacklisted Array of label hashes to blacklist
-  /// @param clearPreviousEntries Whether to clear existing blacklist entries
-  function setBlacklist(
-    bytes32[] calldata blacklisted,
-    bool clearPreviousEntries
-  ) external onlyOwner {
-    if (clearPreviousEntries) {
-      blacklistedLabelsVersion++;
-    }
-
-    for (uint i = 0; i < blacklisted.length; i++) {
-      blacklistedLabels[blacklistedLabelsVersion][blacklisted[i]] = true;
-    }
-  }
-
   // ============ INTERNAL FUNCTIONS ============
-
+  
   function _configureRules(
     RegistrarRulesConfig memory _rules,
     bool clearPrevious
@@ -158,10 +137,6 @@ abstract contract RegistrarRules is Ownable {
     }
 
     return basePrice;
-  }
-
-  function _isBlacklisted(string calldata label) internal view returns (bool) {
-    return blacklistedLabels[blacklistedLabelsVersion][_labelhash(label)];
   }
 
   function _isValidLabelLength(

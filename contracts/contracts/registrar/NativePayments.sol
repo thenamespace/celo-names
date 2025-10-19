@@ -15,12 +15,12 @@ import {AggregatorV3Interface} from '../interfaces/AggregatorV3Interface.sol';
  */
 abstract contract NativePayments is Ownable {
   // ============ State Variables ============
-  
+
   // USD price oracle for native token (ETH/CELO) conversion
   AggregatorV3Interface private immutable usdOracle;
 
   // ============ Custom Errors ============
-  
+
   /// @dev Thrown when USD price oracle is not set
   error PriceFeedNotSet();
   /// @dev Thrown when price feed returns invalid data
@@ -29,32 +29,31 @@ abstract contract NativePayments is Ownable {
   error InsufficientFunds(uint256 provided, uint256 required);
 
   // ============ Constructor ============
-  
+
   constructor(address _usdOracle) {
     usdOracle = AggregatorV3Interface(_usdOracle);
   }
 
   // ============ INTERNAL FUNCTIONS ============
 
-  function _collectFunds(uint256 value) internal {
+  function _collectFunds(uint256 price) internal {
+    
+    if (msg.value < price) {
+      revert InsufficientFunds(price, msg.value);
+    }
 
-    if (value == 0) {
+    if (price == 0) {
+      // If price is 0, we don't need to do anything
       return;
     }
 
-    if (msg.value < value) {
-      revert InsufficientFunds(value, msg.value);
-    }
-
     // Transfer required amount to treasury
-    if (value > 0) {
-      (bool success, ) = _treasury().call{value: value}('');
-      if (!success) {
-        revert('Treasury transfer failed');
-      }
+    (bool success, ) = _treasury().call{value: price}('');
+    if (!success) {
+      revert('Treasury transfer failed');
     }
 
-    uint256 remainder = msg.value - value;
+    uint256 remainder = msg.value - price;
     // Return remainder to sender
     if (remainder > 0) {
       (bool success, ) = msg.sender.call{value: remainder}('');

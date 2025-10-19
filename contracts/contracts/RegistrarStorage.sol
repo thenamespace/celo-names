@@ -2,15 +2,15 @@
 pragma solidity ^0.8.28;
 
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
-import {ISelfStorage} from './interfaces/ISelfStorage.sol';
+import {IRegistrarStorage} from './interfaces/IRegistrarStorage.sol';
 
 /**
- * @title SelfStorage
- * @notice Centralized storage for Self-verification based registrars
+ * @title IRegistrarStorage
+ * @notice Centralized storage for registrars
  * @dev This contract stores verification IDs and claim counts for users across
  *      multiple registrar contracts. Only authorized registrars can update storage.
  */
-contract SelfStorage is ISelfStorage, Ownable {
+contract RegistrarStorage is IRegistrarStorage, Ownable {
   // ============ State Variables ============
 
   /// @dev Maps registrar addresses to their authorization status
@@ -27,6 +27,17 @@ contract SelfStorage is ISelfStorage, Ownable {
 
   /// @dev Maps namehashes to claimed status to track all names claimed via self protocol
   mapping(bytes32 => bool) public names;
+
+  /// @dev Ability to set blacklisted labels that cannot be minted
+  mapping(uint8 => mapping(bytes32 => bool)) blacklist;
+  uint8 blacklistVersion;
+
+  /// @dev whitelistVersion ->
+  mapping(uint8 => mapping(address => bool)) whitelist;
+  /// @dev whitelist -> only whitelisted names can mint
+  uint8 whitelistVersion;
+  /// @dev whitelistEnabled ->
+  bool public whitelistEnabled;
 
   // ============ Modifiers ============
 
@@ -89,7 +100,67 @@ contract SelfStorage is ISelfStorage, Ownable {
     return verificationIds[user] > 0;
   }
 
+  function isBlacklisted(string calldata label) external view returns (bool) {
+    bytes32 labelhash = keccak256(bytes(label));
+    return blacklist[blacklistVersion][labelhash];
+  }
+
+  function isWhitelisted(address user) external view returns (bool) {
+    if (!whitelistEnabled) {
+      return true;
+    }
+    return whitelist[whitelistVersion][user];
+  }
+
+  /**
+   * @notice Checks if an address is an authorized registrar
+   * @param registrar The address to check
+   * @return True if the address is an authorized registrar, false otherwise
+   */
+  function isAuthorizedRegistrar(
+    address registrar
+  ) external view returns (bool) {
+    return registrars[registrar];
+  }
+
   // ============ Owner Functions ============
+
+  function setWhitelist(
+    address[] calldata users,
+    bool enabled,
+    bool clearEntries
+  ) external onlyOwner {
+    if (clearEntries) {
+      whitelistVersion++;
+    }
+
+    for (uint i = 0; i < users.length; i++) {
+      whitelist[whitelistVersion][users[i]] = enabled;
+    }
+
+    emit WhitelistEntriesUpdated(users, enabled, whitelistVersion);
+  }
+
+  function setWhitelistEnabled(bool enabled) external onlyOwner {
+    whitelistEnabled = enabled;
+    emit WhitelistChanged(enabled);
+  }
+
+  function setBlacklist(
+    bytes32[] calldata labelhashes,
+    bool enabled,
+    bool clearEntries
+  ) external onlyOwner {
+    if (clearEntries) {
+      blacklistVersion++;
+    }
+
+    for (uint i = 0; i < labelhashes.length; i++) {
+      blacklist[blacklistVersion][labelhashes[i]] = enabled;
+    }
+
+    emit BlacklistChanged(labelhashes, enabled, blacklistVersion);
+  }
 
   /**
    * @notice Authorizes or deauthorizes a registrar contract
@@ -115,18 +186,5 @@ contract SelfStorage is ISelfStorage, Ownable {
     delete verificationIds[user];
     delete claimedVerifications[verificationId];
     emit VerificationDeleted(user, verificationId);
-  }
-
-  // ============ View Functions ============
-
-  /**
-   * @notice Checks if an address is an authorized registrar
-   * @param registrar The address to check
-   * @return True if the address is an authorized registrar, false otherwise
-   */
-  function isAuthorizedRegistrar(
-    address registrar
-  ) external view returns (bool) {
-    return registrars[registrar];
   }
 }

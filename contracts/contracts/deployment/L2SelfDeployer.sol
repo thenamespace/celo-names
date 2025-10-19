@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import {SelfStorage} from '../SelfStorage.sol';
+import {RegistrarStorage} from '../RegistrarStorage.sol';
 import {L2SelfRegistrar} from '../L2SelfRegistrar.sol';
 
 contract L2SelfRegistrarDeployer_V1 {
@@ -15,7 +15,7 @@ contract L2SelfRegistrarDeployer_V1 {
     address owner,
     uint64 max_names_to_claim
   ) {
-    SelfStorage _storage = new SelfStorage();
+    RegistrarStorage _storage = new RegistrarStorage();
     selfStorage = address(_storage);
 
     L2SelfRegistrar _registrar = new L2SelfRegistrar(

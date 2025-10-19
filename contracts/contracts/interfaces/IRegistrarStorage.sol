@@ -6,7 +6,7 @@ pragma solidity ^0.8.28;
  * @dev Interface for SelfStorage contract
  * @notice Centralized storage for Self-verification based registrars
  */
-interface ISelfStorage {
+interface IRegistrarStorage {
     // ============ Custom Errors ============
 
     /// @dev Thrown when caller tries to claim already claimed verification Id
@@ -22,6 +22,21 @@ interface ISelfStorage {
 
     /// @dev Emitted when a verification is deleted by the owner
     event VerificationDeleted(address indexed user, uint256 indexed verificationId);
+
+    /// @dev Emitted when blacklist gets updated
+    event BlacklistChanged(bytes32[] labels, bool enabled, uint8 version);
+
+    /// @dev Emitted when whitelist gets updated
+    event WhitelistEntriesUpdated(address[] users, bool enabled, uint8 version);
+
+    /// @dev Emitted when whitelist gets enabled or disabled
+    event WhitelistChanged(bool enabled);
+
+    /// @dev Thrown when user is not whitelisted
+    error NotWhitelisted(address);
+
+    /// @dev Thown when label is blacklisted
+    error BlacklistedName(string);
 
     // ============ External Functions ============
 
@@ -99,5 +114,11 @@ interface ISelfStorage {
      * @return True if the address is an authorized registrar, false otherwise
      */
     function isAuthorizedRegistrar(address registrar) external view returns (bool);
+
+    function isWhitelisted(address user) external view returns (bool);
+
+    function isBlacklisted(string calldata label) external view returns (bool);
+
+    function whitelistEnabled() external view returns(bool);
 }
 
