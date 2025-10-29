@@ -17,10 +17,17 @@ export function AddressesTab({ nameData }: AddressesTabProps) {
       </Text>
       <div className="text-records-list">
         {addresses.map((address, idx) => {
-         
+
+          let name = address.name;
+          if (name === "arb1") {
+            name = "arb";
+          } else if (name === "btc") {
+            name = "bitcoin"
+          }
+
           return (
             <div key={idx} className="text-record-badge">
-              <ChainIcon chain={address.name} size={20} />
+              <ChainIcon chain={name} size={20} />
               <Text weight="medium" color="gray">
                 {address.value.slice(0, 6)}...{address.value.slice(-4)}
               </Text>
