@@ -8,6 +8,7 @@ import { useTransactionModal } from "@/hooks/useTransactionModal";
 import { useRegistry } from "@/hooks/useRegistry";
 import { ENV } from "@/constants/environment";
 import { L2_CHAIN_ID } from "@/constants";
+import { sleep } from "@/utils";
 import {
   deepCopy,
   SelectRecordsForm,
@@ -128,6 +129,7 @@ export default function UpdateRecordsModal({
     if (chain?.id !== L2_CHAIN_ID) {
       try {
         await switchChainAsync({ chainId: L2_CHAIN_ID });
+        await sleep(500);
       } catch (_err) {
         setIsUpdating(false);
         return; // silently exit if user cancels or switch fails

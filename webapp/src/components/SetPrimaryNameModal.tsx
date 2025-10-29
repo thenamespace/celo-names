@@ -7,9 +7,10 @@ import Button from "@components/Button";
 import Text from "@components/Text";
 import { toast } from "react-toastify";
 import { usePrimaryName } from "@/contexts/PrimaryNameContext";
+import { sleep } from "@/utils";
 import { useSetPrimaryName } from "@/hooks/useSetPrimaryName";
 import { useTransactionModal } from "@/hooks/useTransactionModal";
-import { ContractFunctionExecutionError } from "viem";
+import { ContractFunctionExecutionError, type Hash } from "viem";
 
 interface SetPrimaryNameModalProps {
   isOpen: boolean;
@@ -30,7 +31,7 @@ export default function SetPrimaryNameModal({
   const { switchChainAsync } = useSwitchChain();
   const { openConnectModal } = useConnectModal();
   const { setPrimaryName } = usePrimaryName();
-  const { setEthPrimaryName } = useSetPrimaryName({chainId: chain?.id || mainnet.id});
+  const { setEthPrimaryName } = useSetPrimaryName({chainId: mainnet.id});
   const pc = usePublicClient({chainId: mainnet.id})
   const { showTransactionModal, updateTransactionStatus, waitForTransaction, TransactionModal, closeTransactionModal } = useTransactionModal();
   const [showSuccess, setShowSuccess] = useState(false);
@@ -49,10 +50,33 @@ export default function SetPrimaryNameModal({
       if (chain?.id !== mainnet.id) {
         // If not on the right network -> prompt to switch chain
         await switchChainAsync({ chainId: mainnet.id });
+        // Wait a moment for React to re-render and clients to initialize
+        await sleep(500);
       }
 
-      // On-chain set primary name via Reverse Registrar
-      const tx = await setEthPrimaryName(fullName);
+      // On-chain set primary name via Reverse Registrar with retry logic
+      // (retry in case clients aren't ready immediately after chain switch)
+      let tx: Hash | null = null;
+      let retries = 0;
+      const maxRetries = 5;
+      
+      while (retries < maxRetries && !tx) {
+        try {
+          tx = await setEthPrimaryName(fullName);
+        } catch (err: any) {
+          if (err?.message?.includes("Ethereum client unavailable") && retries < maxRetries - 1) {
+            // Wait a bit longer and retry
+            retries++;
+            await sleep(300);
+            continue;
+          }
+          throw err; // Re-throw if not the expected error or max retries reached
+        }
+      }
+      
+      if (!tx) {
+        throw new Error("Failed to get transaction after retries");
+      }
 
       // Show transaction pending modal (no explorer link for Ethereum here)
       showTransactionModal();

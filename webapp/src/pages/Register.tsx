@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { normalize } from "viem/ens";
-import { useAccount, useSwitchChain, usePublicClient, useChainId } from "wagmi";
+import { useAccount, useSwitchChain, usePublicClient } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useNavigate } from "react-router-dom";
 import { Plus, CheckCircle } from "lucide-react";
@@ -26,6 +26,7 @@ import { formatUnits } from "viem";
 import { ENV } from "@/constants/environment";
 import { debounce } from "lodash";
 import { SelfQrCode } from "../components/SelfQrCode";
+import { sleep } from "@/utils";
 import {
   getSupportedAddressByCoin,
   getSupportedAddressByName,
@@ -210,6 +211,7 @@ function RegisterNew() {
     } else if (L2_CHAIN_ID !== chain?.id) {
       // If not on the right network -> prompt to switch chain
       await switchChainAsync({ chainId: L2_CHAIN_ID });
+      await sleep(500);
       return;
     } else {
       // If connected and on correct network -> proceed to pricing
@@ -267,14 +269,15 @@ function RegisterNew() {
     setIsModalOpen(true);
   };
 
-  const handleRegister = (isSelf: boolean = false) => {
+  const handleRegister = async (isSelf: boolean = false) => {
     if (!isConnected) {
       // 1. If not connected -> prompt to connect
       openConnectModal?.();
       return;
     } else if (L2_CHAIN_ID !== chain?.id) {
       // 2. If not on the right network -> prompt to switch chain
-      switchChainAsync({ chainId: L2_CHAIN_ID });
+      await switchChainAsync({ chainId: L2_CHAIN_ID });
+      await sleep(500);
       return;
     } else {
       // 3. Else register - add validation

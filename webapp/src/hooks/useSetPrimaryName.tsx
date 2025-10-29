@@ -9,9 +9,6 @@ export const useSetPrimaryName = ({ chainId }: { chainId: number }) => {
 
   const setEthPrimaryName = async (fullName: string): Promise<Hash> => {
 
-
-    console.log(signer, "SIGNER!!")
-
     if (!address) throw new Error("Wallet not connected");
     if (!publicClient || !signer.data) throw new Error("Ethereum client unavailable");
 
