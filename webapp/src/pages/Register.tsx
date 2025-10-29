@@ -54,7 +54,7 @@ type RegisterStep = (typeof RegisterStep)[keyof typeof RegisterStep];
 
 function RegisterNew() {
   const { address, isConnected, chain } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync, switchChain } = useSwitchChain();
   const { openConnectModal } = useConnectModal();
   const publicClient = usePublicClient({ chainId: L2_CHAIN_ID });
   const navigate = useNavigate();
@@ -276,7 +276,7 @@ function RegisterNew() {
       return;
     } else if (L2_CHAIN_ID !== chain?.id) {
       // 2. If not on the right network -> prompt to switch chain
-      await switchChainAsync({ chainId: L2_CHAIN_ID });
+      await switchChain({ chainId: L2_CHAIN_ID });
       await sleep(500);
       return;
     } else {

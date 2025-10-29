@@ -6,9 +6,9 @@ export const useSetPrimaryName = ({ chainId }: { chainId: number }) => {
   const { address } = useAccount();
   const publicClient = usePublicClient({ chainId: chainId });
   const signer = useWalletClient({ chainId: chainId });
+  
 
   const setEthPrimaryName = async (fullName: string): Promise<Hash> => {
-
     if (!address) throw new Error("Wallet not connected");
     if (!publicClient || !signer.data) throw new Error("Ethereum client unavailable");
 
@@ -25,5 +25,4 @@ export const useSetPrimaryName = ({ chainId }: { chainId: number }) => {
 
   return { setEthPrimaryName };
 };
-
 
