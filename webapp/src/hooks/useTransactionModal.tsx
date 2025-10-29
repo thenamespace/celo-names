@@ -53,7 +53,7 @@ export const useTransactionModal = () => {
         if (i === retry_count) {
           throw err;
         }
-        await sleep(1000); // Sleep for 1 second before retry
+        await sleep(2000); // Sleep for 2 second before retry
       }
     }
   };

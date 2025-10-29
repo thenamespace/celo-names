@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { usePublicClient } from "wagmi";
+import { useAccount, usePublicClient, useSwitchChain } from "wagmi";
 import { toast } from "react-toastify";
 import { ContractFunctionExecutionError, zeroHash, type Hash } from "viem";
 import Modal from "@components/Modal";
@@ -7,6 +7,7 @@ import Button from "@components/Button";
 import { useTransactionModal } from "@/hooks/useTransactionModal";
 import { useRegistry } from "@/hooks/useRegistry";
 import { ENV } from "@/constants/environment";
+import { L2_CHAIN_ID } from "@/constants";
 import {
   deepCopy,
   SelectRecordsForm,
@@ -36,7 +37,9 @@ export default function UpdateRecordsModal({
   onRecordsUpdated,
   onUpdate,
 }: UpdateRecordsModalProps) {
-  const publicClient = usePublicClient();
+  const publicClient = usePublicClient({chainId: L2_CHAIN_ID});
+  const { chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const { updateRecords } = useRegistry();
   const {
     showTransactionModal,
@@ -120,6 +123,16 @@ export default function UpdateRecordsModal({
     }
 
     setIsUpdating(true);
+
+    // Ensure CELO (L2) chain; do not throw or toast on user cancel
+    if (chain?.id !== L2_CHAIN_ID) {
+      try {
+        await switchChainAsync({ chainId: L2_CHAIN_ID });
+      } catch (_err) {
+        setIsUpdating(false);
+        return; // silently exit if user cancels or switch fails
+      }
+    }
 
     let txHash: Hash = zeroHash;
     try {

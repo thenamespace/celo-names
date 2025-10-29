@@ -120,26 +120,16 @@ function MyNames() {
               : `${names.length} registered ${names.length === 1 ? 'name' : 'names'}`
             }
           </Text>
+          {names.length === 0 &&  <Link to="/">
+          <Button variant="primary" className="cta-button mt-3">
+            <Text size="base" weight="medium" color="black">
+              Register Your First Name
+            </Text>
+          </Button>
+        </Link>}
         </div>
 
-        {names.length === 0 ? (
-          <div className="empty-state">
-            <Text size="2xl" weight="semibold" color="black" className="mb-2">
-              No names yet
-            </Text>
-            <Text size="base" weight="normal" color="gray" className="mb-6">
-              Start your CELO identity journey by registering your first name
-            </Text>
-            <Link to="/register">
-              <Button variant="primary" className="cta-button">
-                <Text size="base" weight="medium" color="black">
-                  Register Your First Name
-                </Text>
-              </Button>
-            </Link>
-          </div>
-        ) : (
-          <div className="names-list">
+        {names.length > 0 &&  <div className="names-list">
             {names.map((name, index) => {
               const expiry = formatExpiry(name.expiry);
               const avatar = getAvatar(name);
@@ -198,8 +188,7 @@ function MyNames() {
                 </Link>
               );
             })}
-          </div>
-        )}
+          </div>}
       </div>
     </div>
   );

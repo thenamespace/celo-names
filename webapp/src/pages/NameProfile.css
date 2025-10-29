@@ -15,7 +15,7 @@
 /* Header/Cover Section */
 .profile-header {
   width: 100%;
-  height: 200px;
+  height: 140px;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -94,6 +94,14 @@
   display: flex;
   gap: 0.5rem;
   align-items: center;
+}
+
+.profile-actions-row {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 0.75rem;
 }
 
 .profile-action-btn {
@@ -563,7 +571,7 @@
   }
 
   .profile-header {
-    height: 160px;
+    height: 112px;
   }
 
   .profile-content {
@@ -605,6 +613,16 @@
   .profile-action-buttons {
     width: 100%;
     justify-content: center;
+  }
+
+  .profile-actions-row {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .profile-action-btn {
+    width: 100%;
+    max-width: 280px;
   }
 
   .social-icons-grid {

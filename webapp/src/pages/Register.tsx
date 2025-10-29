@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { normalize } from "viem/ens";
-import { useAccount, useSwitchChain, usePublicClient } from "wagmi";
+import { useAccount, useSwitchChain, usePublicClient, useChainId } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useNavigate } from "react-router-dom";
 import { Plus, CheckCircle } from "lucide-react";
@@ -20,6 +20,7 @@ import "./Register.css";
 import { useRegistrar } from "@/hooks/useRegistrar";
 import { useTransactionModal } from "@/hooks/useTransactionModal";
 import { useERC20Permit } from "@/hooks/useERC20Permit";
+import { useBalanceCheck } from "@/hooks/useBalanceCheck";
 import { CELO_TOKEN, L2_CHAIN_ID, type PaymentToken } from "@/constants";
 import { formatUnits } from "viem";
 import { ENV } from "@/constants/environment";
@@ -52,7 +53,7 @@ type RegisterStep = (typeof RegisterStep)[keyof typeof RegisterStep];
 
 function RegisterNew() {
   const { address, isConnected, chain } = useAccount();
-  const { switchChain } = useSwitchChain();
+  const { switchChainAsync } = useSwitchChain();
   const { openConnectModal } = useConnectModal();
   const publicClient = usePublicClient({ chainId: L2_CHAIN_ID });
   const navigate = useNavigate();
@@ -100,6 +101,7 @@ function RegisterNew() {
   const { showTransactionModal, updateTransactionStatus, waitForTransaction, TransactionModal } =
     useTransactionModal();
   const { createSignedPermit } = useERC20Permit({ chainId: L2_CHAIN_ID });
+  const { getTokenBalance } = useBalanceCheck();
 
 
   const recordsToAdd = useMemo(() => {
@@ -118,7 +120,7 @@ function RegisterNew() {
       }
     })
     return count;
-  },[records])
+  }, [records])
 
   // Initialize records with user's address when they connect
   useEffect(() => {
@@ -200,14 +202,14 @@ function RegisterNew() {
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (!isConnected) {
       // If not connected -> prompt to connect
       openConnectModal?.();
       return;
     } else if (L2_CHAIN_ID !== chain?.id) {
       // If not on the right network -> prompt to switch chain
-      switchChain({ chainId: L2_CHAIN_ID });
+      await switchChainAsync({ chainId: L2_CHAIN_ID });
       return;
     } else {
       // If connected and on correct network -> proceed to pricing
@@ -272,7 +274,7 @@ function RegisterNew() {
       return;
     } else if (L2_CHAIN_ID !== chain?.id) {
       // 2. If not on the right network -> prompt to switch chain
-      switchChain({ chainId: L2_CHAIN_ID });
+      switchChainAsync({ chainId: L2_CHAIN_ID });
       return;
     } else {
       // 3. Else register - add validation
@@ -312,20 +314,42 @@ function RegisterNew() {
     await waitForTransactionWithDelay(_tx);
   };
 
+  const hasBalance = async (): Promise<boolean> => {
+    try {
+
+      // Check if user has sufficient balance before registering
+      const requiredPrice = await rentPrice(
+        label,
+        durationInYears,
+        selectedCurrency.address
+      );
+
+      const userBalance = await getTokenBalance(selectedCurrency, address!);
+
+      return userBalance >= requiredPrice
+    } catch (err) {
+      // Lets not do anything here for now
+      return true;
+    }
+  }
+
   const registerName = async () => {
     let _tx: Hash = zeroHash;
     try {
       setIsWaitingWallet(true);
+
+      const requiredPrice = await rentPrice(
+        label,
+        durationInYears,
+        selectedCurrency.address
+      );
+
       // We call register with native token
       if (selectedCurrency.address === CELO_TOKEN.address) {
         _tx = await register(label, durationInYears, address!, records);
       } else {
         // Spender should be the registrar contract
-        const permitValue = await rentPrice(
-          label,
-          durationInYears,
-          selectedCurrency.address
-        );
+        const permitValue = requiredPrice;
         // Create erc20 permit for gasless transfer
         const permit = await createSignedPermit(
           selectedCurrency,
@@ -343,7 +367,15 @@ function RegisterNew() {
         );
       }
     } catch (err) {
-      handleContractErr(err);
+
+      const hasEnoughBalance = await hasBalance();
+
+      if (!hasEnoughBalance) {
+        toast.error(`Insufficient ${selectedCurrency.name} balance.`);
+      } else {
+        handleContractErr(err);
+      }
+
       setIsWaitingWallet(false);
       return;
     }
@@ -358,8 +390,6 @@ function RegisterNew() {
       contractErr.details.includes(USER_DENIED_TX_ERROR)
     ) {
       // User denied transaction - no toast needed
-    } else if (contractErr?.details?.includes("insufficient funds")) {
-      toast.error("Insufficient funds. Please add CELO to your wallet.");
     } else {
       // Generic error message
       toast.error("Registration failed. Please try again.");
@@ -379,7 +409,7 @@ function RegisterNew() {
 
       // Use the centralized waitForTransaction function
       await waitForTransaction(publicClient!, _tx);
-      
+
       const end_time = new Date().getTime();
 
       const real_wait_time = end_time - start_time;
@@ -404,7 +434,7 @@ function RegisterNew() {
   };
 
   const handleContinueSuccess = () => {
-    navigate("/my-names");
+    navigate(`/name/${label}.${ENV.PARENT_NAME}`);
   };
 
   // If user disconnects after progressing past availability step, show connect prompt

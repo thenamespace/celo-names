@@ -16,6 +16,7 @@ import './index.css'
 import App from './App.tsx'
 import { config } from './config/wagmi'
 import '@rainbow-me/rainbowkit/styles.css'
+import { PrimaryNameProvider } from './contexts/PrimaryNameContext'
 
 const queryClient = new QueryClient()
 
@@ -24,7 +25,9 @@ createRoot(document.getElementById('root')!).render(
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider>
-          <App />
+          <PrimaryNameProvider>
+            <App />
+          </PrimaryNameProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>

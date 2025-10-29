@@ -1,49 +1,18 @@
-import { useEffect, useState } from "react";
-import { useAccount, useDisconnect, usePublicClient } from "wagmi";
+import { useState } from "react";
+import { useAccount, useDisconnect } from "wagmi";
 import { ChevronDown } from "lucide-react";
 import Text from "@components/Text";
 import { truncateAddress } from "@/utils";
 import "./ConnectedWallet.css";
-import { mainnet } from "viem/chains";
+import { usePrimaryName } from "@/contexts/PrimaryNameContext";
 
 export default function ConnectedWallet() {
   const { address } = useAccount();
   const { disconnect } = useDisconnect();
-  const publicClient = usePublicClient({ chainId: mainnet.id });
-  const [ensName, setEnsName] = useState<string | null>(null);
-  const [avatar, setAvatar] = useState<string | null>(null);
+  const { primaryName, avatar } = usePrimaryName();
   const [isOpen, setIsOpen] = useState(false);
 
-  useEffect(() => {
-    const fetchEnsData = async () => {
-      if (!address || !publicClient) return;
-      
-      try {
-        // Get ENS name for the address
-        const name = await publicClient.getEnsName({ address });
-        
-        if (name) {
-          setEnsName(name);
-          
-          // Get avatar text record for the ENS name
-          const avatarUrl = await publicClient.getEnsText({
-            name,
-            key: 'avatar'
-          });
-          
-          if (avatarUrl) {
-            setAvatar(avatarUrl);
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching ENS data:', error);
-      }
-    };
-
-    fetchEnsData();
-  }, [address, publicClient]);
-
-  const displayName = ensName || (address ? truncateAddress(address) : "");
+  const displayName = primaryName || (address ? truncateAddress(address) : "");
 
   return (
     <div className="connected-wallet">

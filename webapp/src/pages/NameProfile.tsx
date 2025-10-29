@@ -12,6 +12,7 @@ import { AddressesTab } from "@/components/name-profile/AddressesTab";
 import { OwnershipTab } from "@/components/name-profile/OwnershipTab";
 import ExtendModal from "@/components/ExtendModal";
 import UpdateRecordsModal from "@/components/UpdateRecordsModal";
+import SetPrimaryNameModal from "@/components/SetPrimaryNameModal";
 import "./Page.css";
 import "./NameProfile.css";
 import {
@@ -24,6 +25,7 @@ import {
 } from "@thenamespace/ens-components";
 import { useAccount } from "wagmi";
 import { zeroAddress } from "viem";
+import { usePrimaryName } from "@/contexts/PrimaryNameContext";
 
 type TabType = "records" | "addresses" | "ownership";
 
@@ -58,10 +60,12 @@ function NameProfile() {
   const { address } = useAccount();
   const { name } = useParams<{ name: string }>();
   const { getNameById, loading, error } = useCeloIndexer();
+  const { primaryName } = usePrimaryName();
   const [nameData, setNameData] = useState<Name | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>("records");
   const [showExtendModal, setShowExtendModal] = useState(false);
   const [showRecordModal, setShowRecordModal] = useState(false);
+  const [showSetPrimaryModal, setShowSetPrimaryModal] = useState(false);
 
   const [initialRecords, setInitialRecords] = useState<EnsRecords>({
     texts: [],
@@ -116,6 +120,11 @@ function NameProfile() {
   const isNameOwner = useMemo(() => {
     return equalsIgnoreCase(address || "", nameData?.owner || zeroAddress);
   }, [nameData, address]);
+
+  const isPrimaryName = useMemo(() => {
+    if (!primaryName || !nameData?.full_name) return false;
+    return primaryName.toLowerCase() === nameData.full_name.toLowerCase();
+  }, [primaryName, nameData?.full_name]);
 
 
   if (loading) {
@@ -270,7 +279,23 @@ function NameProfile() {
                   </div>
                 </div>
 
-                <div className="profile-action-buttons">
+                {!isNameOwner && (
+                  <div className="profile-action-buttons">
+                    <Button
+                      variant="secondary"
+                      className="profile-action-btn"
+                      onClick={() => setShowExtendModal(true)}
+                    >
+                      <Text size="sm" weight="medium" color="black">
+                        Extend
+                      </Text>
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {isNameOwner && (
+                <div className="profile-actions-row">
                   <Button
                     variant="secondary"
                     className="profile-action-btn"
@@ -280,19 +305,34 @@ function NameProfile() {
                       Extend
                     </Text>
                   </Button>
-                  {isNameOwner && (
+                  <Button
+                    variant="primary"
+                    className="profile-action-btn"
+                    onClick={() => setShowRecordModal(true)}
+                  >
+                    <Text size="sm" weight="medium" color="black">
+                      + Edit Profile
+                    </Text>
+                  </Button>
+                  {!isPrimaryName ? (
                     <Button
                       variant="primary"
                       className="profile-action-btn"
-                      onClick={() => setShowRecordModal(true)}
+                      onClick={() => setShowSetPrimaryModal(true)}
                     >
                       <Text size="sm" weight="medium" color="black">
-                        + Edit Profile
+                        Set as Primary
                       </Text>
                     </Button>
+                  ) : (
+                    <div className="meta-badge" style={{ backgroundColor: "#F0FDF4", border: "1px solid #35D07F" }}>
+                      <Text size="sm" weight="medium" color="green">
+                        Primary Name
+                      </Text>
+                    </div>
                   )}
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -382,6 +422,13 @@ function NameProfile() {
         ensRecords={ensRecords}
         onRecordsUpdated={(e) => setEnsRecords(e)}
         onUpdate={handleRecordsUpdated}
+      />
+
+      {/* Set Primary Modal */}
+      <SetPrimaryNameModal
+        isOpen={showSetPrimaryModal}
+        onClose={() => setShowSetPrimaryModal(false)}
+        fullName={`${nameData.label}.${ENV.PARENT_NAME}`}
       />
     </div>
   );

@@ -11,6 +11,7 @@ import { useRegistry } from "@/hooks/useRegistry";
 import { useTransactionModal } from "@/hooks/useTransactionModal";
 import { ENV } from "@/constants/environment";
 import { mainnet } from "viem/chains";
+import { L2_CHAIN_ID } from "@/constants";
 
 interface TransferOwnershipModalProps {
   isOpen: boolean;
@@ -31,6 +32,7 @@ export default function TransferOwnershipModal({
 }: TransferOwnershipModalProps) {
   const { address } = useAccount();
   const publicClient = usePublicClient({chainId: mainnet.id});
+  const l2publicClient = usePublicClient({chainId: L2_CHAIN_ID});
   const { transferName } = useRegistry();
   const { showTransactionModal, updateTransactionStatus, waitForTransaction, TransactionModal } = useTransactionModal();
   
@@ -129,7 +131,7 @@ export default function TransferOwnershipModal({
       showTransactionModal(txHash);
       
       // Wait for transaction confirmation using centralized function
-      await waitForTransaction(publicClient!, txHash);
+      await waitForTransaction(l2publicClient!, txHash);
 
       updateTransactionStatus("success");
       toast.success("Ownership transferred successfully!");
