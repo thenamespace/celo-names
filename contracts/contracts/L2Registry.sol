@@ -183,6 +183,26 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver, IL2Registry {
     return names[node];
   }
 
+  /**
+   * @dev Computes the nodehash for a label under the root node
+   * @param label The subdomain label
+   * @return The nodehash of the label under rootNode
+   */
+  function nodehash(string calldata label) public view returns (bytes32) {
+    IL2Registry registry = IL2Registry(address(this));
+    return registry.nodehash(label, rootNode);
+  }
+
+  /**
+   * @dev Computes the nodehash for a label under a parent node
+   * @param label The subdomain label
+   * @param parentNode The parent node hash
+   * @return The nodehash of the label under the parent
+   */
+  function nodehash(string calldata label, bytes32 parentNode) public pure returns (bytes32) {
+    return keccak256(abi.encodePacked(parentNode, keccak256(bytes(label))));
+  }
+
   // ============ Internal Functions ============
 
   /**
@@ -203,7 +223,7 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver, IL2Registry {
       revert EmptyLabel();
     }
 
-    bytes32 node = _namehash(label, parent);
+    bytes32 node = nodehash(label, parent);
     uint256 tokenId = uint256(node);
 
     // Validate subdomain availability
@@ -294,13 +314,6 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver, IL2Registry {
     if (bytes(names[node]).length == 0) {
       names[node] = string.concat(label, ".", names[parent]);
     }
-  }
-
-  function _namehash(
-    string calldata label,
-    bytes32 parent
-  ) internal pure returns (bytes32) {
-    return keccak256(abi.encodePacked(parent, keccak256(bytes(label))));
   }
 
   /**

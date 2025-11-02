@@ -144,8 +144,7 @@ contract L2SelfRegistrar is SelfVerificationRoot, Ownable, ERC721Holder {
       revert IRegistrarStorage.NotWhitelisted(_msgSender());
     }
 
-    bytes32 node = _namehash(label, registry.rootNode());
-    // Update storage (checks-effects-interactions pattern)
+    bytes32 node = registry.nodehash(label);
     registrarStorage.claim(_msgSender(), node);
 
     // Create the subnode in registry
@@ -216,19 +215,6 @@ contract L2SelfRegistrar is SelfVerificationRoot, Ownable, ERC721Holder {
 
     registrarStorage.setVerificationId(user, verificationId);
     emit VerificationCompleted(user, verificationId, block.timestamp);
-  }
-
-  /**
-   * @notice Computes the namehash for a label under a parent node
-   * @param label The subdomain label
-   * @param parent The parent node hash
-   * @return The namehash of the label under the parent
-   */
-  function _namehash(
-    string calldata label,
-    bytes32 parent
-  ) internal pure returns (bytes32) {
-    return keccak256(abi.encodePacked(parent, keccak256(bytes(label))));
   }
 
   /**
