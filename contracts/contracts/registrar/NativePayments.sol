@@ -47,10 +47,26 @@ abstract contract NativePayments is Ownable {
       return;
     }
 
-    // Transfer required amount to treasury
-    (bool success, ) = _treasury().call{value: price}('');
-    if (!success) {
-      revert('Treasury transfer failed');
+    // Calculate ENS treasury fee and regular treasury amount
+    (uint256 ensTreasuryAmount, uint256 treasuryAmount) = _splitPayment(price);
+
+    // Transfer ENS treasury portion if configured
+    if (ensTreasuryAmount > 0) {
+      address ensTreasury = _ensTreasury();
+      if (ensTreasury != address(0)) {
+        (bool success, ) = ensTreasury.call{value: ensTreasuryAmount}('');
+        if (!success) {
+          revert('ENS Treasury transfer failed');
+        }
+      }
+    }
+
+    // Transfer remaining amount to regular treasury
+    if (treasuryAmount > 0) {
+      (bool success, ) = _treasury().call{value: treasuryAmount}('');
+      if (!success) {
+        revert('Treasury transfer failed');
+      }
     }
 
     uint256 remainder = msg.value - price;
@@ -99,4 +115,21 @@ abstract contract NativePayments is Ownable {
   }
 
   function _treasury() internal virtual returns (address);
+
+  function _ensTreasury() internal virtual view returns (address);
+
+  function _ensTreasuryFeePercent() internal virtual view returns (uint16);
+
+  function _splitPayment(uint256 totalAmount) internal view returns (uint256 ensTreasuryAmount, uint256 treasuryAmount) {
+    uint16 feePercent = _ensTreasuryFeePercent();
+    
+    if (feePercent == 0 || _ensTreasury() == address(0)) {
+      // No ENS treasury configured, send everything to regular treasury
+      return (0, totalAmount);
+    }
+
+    // Calculate ENS treasury amount (feePercent is in basis points, so divide by 10000)
+    ensTreasuryAmount = (totalAmount * feePercent) / 10000;
+    treasuryAmount = totalAmount - ensTreasuryAmount;
+  }
 }

@@ -36,6 +36,13 @@ contract L2Registrar is
   /// @dev Treasury address for collecting registration fees
   address private treasury;
 
+  /// @dev ENS treasury address for collecting ENS fees
+  address private ensTreasury;
+
+  /// @dev ENS treasury fee percentage in basis points (1 = 0.01%, 1000 = 10%)
+  /// Range: 10 (0.1%) to 1000 (10%)
+  uint16 private ensTreasuryFeePercent;
+
   // ============ Custom Errors ============
 
   /// @dev Thrown when attempting to renew a subname that doesn't exist
@@ -43,6 +50,9 @@ contract L2Registrar is
 
   /// @dev Thrown when duration is outside valid range
   error InvalidDuration(uint64 duration);
+
+  /// @dev Thrown when ENS treasury fee percent is outside valid range
+  error InvalidEnsTreasuryFeePercent(uint16 feePercent);
 
   // ============ Events ============
 
@@ -204,7 +214,7 @@ contract L2Registrar is
       return false;
     }
 
-    bytes32 node = _namehash(label, registry.rootNode());
+    bytes32 node = registry.nodehash(label);
     return registry.ownerOf(uint256(node)) == address(0);
   }
 
@@ -214,6 +224,22 @@ contract L2Registrar is
   /// @param __treasury Address where registration fees will be sent
   function setTreasury(address __treasury) external onlyOwner {
     treasury = __treasury;
+  }
+
+  /// @notice Set ENS treasury address for ENS fee collection
+  /// @param __ensTreasury Address where ENS fees will be sent
+  function setEnsTreasury(address __ensTreasury) external onlyOwner {
+    ensTreasury = __ensTreasury;
+  }
+
+  /// @notice Set ENS treasury fee percentage
+  /// @param _feePercent Fee percentage in basis points (10 = 0.1%, 1000 = 10%)
+  /// Must be between 10 and 1000 (0.1% to 10%)
+  function setEnsTreasuryFeePercent(uint16 _feePercent) external onlyOwner {
+    if (_feePercent < 10 || _feePercent > 1000) {
+      revert InvalidEnsTreasuryFeePercent(_feePercent);
+    }
+    ensTreasuryFeePercent = _feePercent;
   }
 
   /// @notice Pause contract operations
@@ -254,10 +280,9 @@ contract L2Registrar is
       revert InvalidLabelLength();
     }
 
-    bytes32 root = registry.rootNode();
-    _createSubnode(label, root, durationInYears, owner, resolverData);
+    _createSubnode(label, durationInYears, owner, resolverData);
 
-    return _namehash(label, root);
+    return registry.nodehash(label);
   }
 
   function _renew(
@@ -265,7 +290,7 @@ contract L2Registrar is
     uint64 durationInYears
   ) internal returns (bytes32) {
     bytes32 root = registry.rootNode();
-    bytes32 node = _namehash(label, root);
+    bytes32 node = registry.nodehash(label, root);
 
     if (_available(node)) {
       revert SubnameDoesNotExist(node);
@@ -298,13 +323,12 @@ contract L2Registrar is
 
   function _createSubnode(
     string calldata label,
-    bytes32 parentNode,
     uint64 durationInYears,
     address owner,
     bytes[] calldata resolverData
   ) internal {
     uint64 expiry = _toExpiry(durationInYears);
-    registry.createSubnode(label, parentNode, expiry, owner, resolverData);
+    registry.createSubnode(label, expiry, owner, resolverData);
   }
 
   function _setNodeExpiry(bytes32 node, uint64 durationInYears) internal {
@@ -322,13 +346,6 @@ contract L2Registrar is
     return uint64(block.timestamp + expiry);
   }
 
-  function _namehash(
-    string calldata label,
-    bytes32 parent
-  ) internal pure returns (bytes32) {
-    return keccak256(abi.encodePacked(parent, keccak256(bytes(label))));
-  }
-
   function _treasury()
     internal
     view
@@ -336,5 +353,25 @@ contract L2Registrar is
     returns (address)
   {
     return treasury;
+  }
+
+  /// @dev Get ENS treasury address
+  function _ensTreasury()
+    internal
+    view
+    override(NativePayments, StableERC20Payments)
+    returns (address)
+  {
+    return ensTreasury;
+  }
+
+  /// @dev Get ENS treasury fee percentage in basis points
+  function _ensTreasuryFeePercent()
+    internal
+    view
+    override(NativePayments, StableERC20Payments)
+    returns (uint16)
+  {
+    return ensTreasuryFeePercent;
   }
 }

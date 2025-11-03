@@ -89,8 +89,21 @@ abstract contract StableERC20Payments is Ownable {
       permit.s
     );
 
-    // Transfer tokens to treasury
-    IERC20(token).safeTransferFrom(_msgSender(), _treasury(), amount);
+    // Calculate ENS treasury fee and regular treasury amount
+    (uint256 ensTreasuryAmount, uint256 treasuryAmount) = _splitPaymentERC20(amount);
+
+    // Transfer ENS treasury portion if configured
+    if (ensTreasuryAmount > 0) {
+      address ensTreasury = _ensTreasury();
+      if (ensTreasury != address(0)) {
+        IERC20(token).safeTransferFrom(_msgSender(), ensTreasury, ensTreasuryAmount);
+      }
+    }
+
+    // Transfer remaining amount to regular treasury
+    if (treasuryAmount > 0) {
+      IERC20(token).safeTransferFrom(_msgSender(), _treasury(), treasuryAmount);
+    }
   }
 
   /// @notice Process ERC20 payment using pre-approved allowance
@@ -107,7 +120,21 @@ abstract contract StableERC20Payments is Ownable {
       revert InsufficientApprovalAmount();
     }
 
-    tokenContract.safeTransferFrom(_msgSender(), _treasury(), amount);
+    // Calculate ENS treasury fee and regular treasury amount
+    (uint256 ensTreasuryAmount, uint256 treasuryAmount) = _splitPaymentERC20(amount);
+
+    // Transfer ENS treasury portion if configured
+    if (ensTreasuryAmount > 0) {
+      address ensTreasury = _ensTreasury();
+      if (ensTreasury != address(0)) {
+        tokenContract.safeTransferFrom(_msgSender(), ensTreasury, ensTreasuryAmount);
+      }
+    }
+
+    // Transfer remaining amount to regular treasury
+    if (treasuryAmount > 0) {
+      tokenContract.safeTransferFrom(_msgSender(), _treasury(), treasuryAmount);
+    }
   }
 
   function _stablecoinPrice(address token, uint256 usdAmount) internal view returns(uint256) {
@@ -123,4 +150,21 @@ abstract contract StableERC20Payments is Ownable {
   }
 
   function _treasury() internal virtual returns (address);
+
+  function _ensTreasury() internal virtual view returns (address);
+
+  function _ensTreasuryFeePercent() internal virtual view returns (uint16);
+
+  function _splitPaymentERC20(uint256 totalAmount) internal view returns (uint256 ensTreasuryAmount, uint256 treasuryAmount) {
+    uint16 feePercent = _ensTreasuryFeePercent();
+    
+    if (feePercent == 0 || _ensTreasury() == address(0)) {
+      // No ENS treasury configured, send everything to regular treasury
+      return (0, totalAmount);
+    }
+
+    // Calculate ENS treasury amount (feePercent is in basis points, so divide by 10000)
+    ensTreasuryAmount = (totalAmount * feePercent) / 10000;
+    treasuryAmount = totalAmount - ensTreasuryAmount;
+  }
 }

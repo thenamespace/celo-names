@@ -38,4 +38,8 @@ interface IL2Registry {
     function totalSupply() external view returns (uint256);
 
     function ownerOf(uint256 token) external view returns(address);
+
+    function nodehash(string calldata label) external view returns (bytes32);
+
+    function nodehash(string calldata label, bytes32 parentNode) external pure returns (bytes32);
 }
