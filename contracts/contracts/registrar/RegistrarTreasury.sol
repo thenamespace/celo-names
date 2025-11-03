@@ -125,7 +125,7 @@ abstract contract RegistrarTreasury is Ownable, NativePayments, StableERC20Payme
   /// @param _feePercent Fee percentage in basis points (10 = 0.1%, 1000 = 10%)
   /// Must be between 10 and 1000 (0.1% to 10%)
   function setEnsTreasuryFeePercent(uint16 _feePercent) external onlyOwner {
-    if (_feePercent < 10 || _feePercent > 1000) {
+    if ( _feePercent > 1000) {
       revert InvalidEnsTreasuryFeePercent(_feePercent);
     }
     uint16 oldFeePercent = ensTreasuryFeePercent;

@@ -3,7 +3,7 @@ pragma solidity ^0.8.28;
 
 import {L1Resolver} from '../L1Resolver.sol';
 
-contract L1Deployer_V1 {
+contract L1ResolverDeployer {
   address public resolver;
   address immutable ens_registry = 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e;
 
