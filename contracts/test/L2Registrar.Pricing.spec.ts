@@ -12,6 +12,7 @@ import {
   LABEL_LEN_3_PRICE_DOLLARS,
   LABEL_LEN_4_PRICE_DOLLARS,
   BASE_PRICE_DOLLARS,
+  CENTS_MULTIPLIER,
   DEFAULT_REGISTRAR_CONFIG,
   RegistrarConfig
 } from './vars';
@@ -59,24 +60,22 @@ describe('L2Registrar - Pricing', () => {
       account: owner.account,
     });
 
-    // Set base price to $5
-    await registrar.write.setBasePrice([5n], {
+    // Set base price to $5 (500 cents)
+    await registrar.write.setBasePrice([BASE_PRICE_DOLLARS * CENTS_MULTIPLIER], {
       account: owner.account,
     });
 
-    // Set special prices for different label lengths
+    // Set special prices for different label lengths (convert dollars to cents)
     const lengths = [1n, 2n, 3n, 4n];
     const prices = [
-      LABEL_LEN_1_PRICE_DOLLARS,
-      LABEL_LEN_2_PRICE_DOLLARS,
-      LABEL_LEN_3_PRICE_DOLLARS,
-      LABEL_LEN_4_PRICE_DOLLARS,
-    ]; // USD prices
+      LABEL_LEN_1_PRICE_DOLLARS * CENTS_MULTIPLIER,
+      LABEL_LEN_2_PRICE_DOLLARS * CENTS_MULTIPLIER,
+      LABEL_LEN_3_PRICE_DOLLARS * CENTS_MULTIPLIER,
+      LABEL_LEN_4_PRICE_DOLLARS * CENTS_MULTIPLIER,
+    ]; // Prices in cents
     await registrar.write.setLabelPrices([lengths, prices, true], {
       account: owner.account,
     });
-
-    await registrar.write.setBasePrice([BASE_PRICE_DOLLARS]);
 
     return {
       registrarContract: registrar,
@@ -278,13 +277,14 @@ describe('L2Registrar - Pricing', () => {
 
       // Configure new pricing: 640->3 letter, 420->2 letter, 120->5 letter, base->5
       // Also set min label length to 2 to allow 2-letter labels
+      // Convert prices from dollars to cents
       const config:RegistrarConfig = {
-        basePrice: CONFIGURE_BASE_PRICE_DOLLARS,
+        basePrice: CONFIGURE_BASE_PRICE_DOLLARS * CENTS_MULTIPLIER,
         minLabelLength: CONFIGURE_MIN_LABEL_LEN,
         maxLabelLength: CONFIGURE_MAX_LABEL_LEN,
         labelLength: [2n, 3n, 5n],
-        labelPrices: [CONFIGURE_LABEL_LEN_2_PRICE_DOLLARS, 
-          CONFIGURE_LABEL_LEN_3_PRICE_DOLLARS, CONFIGURE_LABEL_LEN_5_PRICE_DOLLARS]
+        labelPrices: [CONFIGURE_LABEL_LEN_2_PRICE_DOLLARS * CENTS_MULTIPLIER, 
+          CONFIGURE_LABEL_LEN_3_PRICE_DOLLARS * CENTS_MULTIPLIER, CONFIGURE_LABEL_LEN_5_PRICE_DOLLARS * CENTS_MULTIPLIER]
       };
 
       await registrarContract.write.configureRules([config, true], {

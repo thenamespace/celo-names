@@ -9,6 +9,7 @@ import {
   METADATA_URI,
   ETH_PRICE_DECIMALS_DOLLARS,
   BASE_PRICE_DOLLARS,
+  CENTS_MULTIPLIER,
   YEAR_IN_SECONDS,
   DEFAULT_REGISTRAR_CONFIG,
 } from './vars';
@@ -55,8 +56,8 @@ describe('L2Registrar - Renewal', () => {
       account: owner.account,
     });
 
-    // Set base price to $5
-    await registrar.write.setBasePrice([BASE_PRICE_DOLLARS], {
+    // Set base price to $5 (500 cents)
+    await registrar.write.setBasePrice([BASE_PRICE_DOLLARS * CENTS_MULTIPLIER], {
       account: owner.account,
     });
 
