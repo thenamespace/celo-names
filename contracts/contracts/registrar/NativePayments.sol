@@ -80,10 +80,10 @@ abstract contract NativePayments is Ownable {
   }
 
   /// @notice Convert USD price to native token (ETH/CELO) equivalent
-  /// @param usdPrice Price in USD (whole dollars)
+  /// @param priceInCents Price in USD (stored in cents, e.g., 500 = $5.00, 1 = $0.01)
   /// @return Price in native token wei
   function _convertToNativePrice(
-    uint256 usdPrice
+    uint256 priceInCents
   ) internal view returns (uint256) {
     if (address(usdOracle) == address(0)) {
       revert PriceFeedNotSet();
@@ -102,9 +102,11 @@ abstract contract NativePayments is Ownable {
       revert InvalidPriceFeedAnswer(answer);
     }
 
-    // 1. Scale usdPrice (whole dollars) to feed decimals
-    // e.g. $5 with decimals=8 => 5 * 1e8
-    uint256 usdPriceScaled = usdPrice * 1e8;
+    // 1. Convert usdPrice from cents to dollars, then scale to feed decimals
+    // usdPrice is in cents, so divide by USD cents divisor to get dollars
+    // e.g. 500 cents ($5.00) => 5 dollars => 5 * 1e8
+    // e.g. 1 cent ($0.01) => 0.01 dollars => 0.01 * 1e8 = 1e6
+    uint256 usdPriceScaled = (priceInCents * 1e8) / _usdCentsDivisor();
 
     // 2. Convert USD → native token with overflow protection
     // answer = price of 1 native token in USD with `decimals`
@@ -120,6 +122,10 @@ abstract contract NativePayments is Ownable {
 
   function _ensTreasuryFeePercent() internal virtual view returns (uint16);
 
+  function _basisPointsDivisor() internal virtual pure returns (uint256);
+
+  function _usdCentsDivisor() internal virtual pure returns (uint256);
+
   function _splitPayment(uint256 totalAmount) internal view returns (uint256 ensTreasuryAmount, uint256 treasuryAmount) {
     uint16 feePercent = _ensTreasuryFeePercent();
     
@@ -128,8 +134,9 @@ abstract contract NativePayments is Ownable {
       return (0, totalAmount);
     }
 
-    // Calculate ENS treasury amount (feePercent is in basis points, so divide by 10000)
-    ensTreasuryAmount = (totalAmount * feePercent) / 10000;
+    // Calculate ENS treasury amount (feePercent is in basis points, so divide by basis points divisor)
+    uint256 divisor = _basisPointsDivisor();
+    ensTreasuryAmount = (totalAmount * feePercent) / divisor;
     treasuryAmount = totalAmount - ensTreasuryAmount;
   }
 }

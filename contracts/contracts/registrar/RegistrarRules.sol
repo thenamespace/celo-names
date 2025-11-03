@@ -48,6 +48,17 @@ abstract contract RegistrarRules is Ownable {
   /// @dev Thrown when arrays length mismatch in setLabelPrices
   error ArraysLengthMismatch(uint256 lengthsLength, uint256 pricesLength);
 
+  // ============ EVENTS ============
+
+  /// @dev Emitted when base price is changed
+  event BasePriceChanged(uint256 indexed newBasePrice);
+
+  /// @dev Emitted when label length limits are changed
+  event LabelLengthLimitsChanged(uint256 indexed newMinLength, uint256 indexed newMaxLength);
+
+  /// @dev Emitted when label prices are updated
+  event LabelPricesChanged(uint256[] lengths, uint256[] prices, bool clearPrevious);
+
   // ============ OWNER FUNCTIONS ============
 
   /// @notice Configure registrar rules with a single configuration struct
@@ -62,7 +73,7 @@ abstract contract RegistrarRules is Ownable {
 
   /// @notice Set multiple label prices at once
   /// @param lengths Array of label lengths
-  /// @param prices Array of prices for each length
+  /// @param prices Array of prices in USD cents for each length (e.g., 500 = $5.00, 1 = $0.01)
   function setLabelPrices(
     uint256[] calldata lengths,
     uint256[] calldata prices,
@@ -79,7 +90,7 @@ abstract contract RegistrarRules is Ownable {
   } 
 
   /// @notice Set the base price for labels without specific length pricing
-  /// @param _basePrice Base price in USD for labels
+  /// @param _basePrice Base price in USD cents (e.g., 500 = $5.00, 1 = $0.01)
   function setBasePrice(uint256 _basePrice) external onlyOwner {
     _setBasePrice(_basePrice);
   }
@@ -101,6 +112,7 @@ abstract contract RegistrarRules is Ownable {
   ) internal {
     minLabelLength = _minLabelLength;
     maxLabelLength = _maxLabelLength;
+    emit LabelLengthLimitsChanged(_minLabelLength, _maxLabelLength);
   }
 
   function _setLabelPrices(
@@ -120,13 +132,16 @@ abstract contract RegistrarRules is Ownable {
       labelPrices[labelPricesVersion][lengths[i]] = prices[i];
       labelPriceSet[labelPricesVersion][lengths[i]] = true;
     }
+
+    emit LabelPricesChanged(lengths, prices, clearPrevious);
   }
 
   function _setBasePrice(uint256 _basePrice) internal {
     basePrice = _basePrice;
+    emit BasePriceChanged(_basePrice);
   }
 
-  function _getUsdPriceForLabel(
+  function _getPriceForLabel(
     string calldata label
   ) internal view returns (uint256) {
     uint256 labelLength = label.strlen();
@@ -135,7 +150,7 @@ abstract contract RegistrarRules is Ownable {
     if (labelPriceSet[labelPricesVersion][labelLength]) {
       return labelPrices[labelPricesVersion][labelLength];
     }
-
+    
     return basePrice;
   }
 

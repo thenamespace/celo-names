@@ -137,8 +137,11 @@ abstract contract StableERC20Payments is Ownable {
     }
   }
 
-  function _stablecoinPrice(address token, uint256 usdAmount) internal view returns(uint256) {
-    return usdAmount * (10 ** _decimals(token));
+  function _stablecoinPrice(address token, uint256 priceInCents) internal view returns(uint256) {
+    // priceInCents is in cents, so divide by USD cents divisor to get dollars, then multiply by token decimals
+    // e.g. 500 cents ($5.00) with 6 decimals => (500 / 100) * 1e6 = 5 * 1e6
+    // e.g. 1 cent ($0.01) with 6 decimals => (1 / 100) * 1e6 = 0.01 * 1e6 = 1e4
+    return (priceInCents * (10 ** _decimals(token))) / _usdCentsDivisor();
   }
 
   function _isTokenAllowed(address token) internal view returns (bool) {
@@ -155,6 +158,10 @@ abstract contract StableERC20Payments is Ownable {
 
   function _ensTreasuryFeePercent() internal virtual view returns (uint16);
 
+  function _basisPointsDivisor() internal virtual pure returns (uint256);
+
+  function _usdCentsDivisor() internal virtual pure returns (uint256);
+
   function _splitPaymentERC20(uint256 totalAmount) internal view returns (uint256 ensTreasuryAmount, uint256 treasuryAmount) {
     uint16 feePercent = _ensTreasuryFeePercent();
     
@@ -163,8 +170,9 @@ abstract contract StableERC20Payments is Ownable {
       return (0, totalAmount);
     }
 
-    // Calculate ENS treasury amount (feePercent is in basis points, so divide by 10000)
-    ensTreasuryAmount = (totalAmount * feePercent) / 10000;
+    // Calculate ENS treasury amount (feePercent is in basis points, so divide by basis points divisor)
+    uint256 divisor = _basisPointsDivisor();
+    ensTreasuryAmount = (totalAmount * feePercent) / divisor;
     treasuryAmount = totalAmount - ensTreasuryAmount;
   }
 }
