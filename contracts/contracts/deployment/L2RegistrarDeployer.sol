@@ -54,8 +54,8 @@ contract L2RegistrarDeployer {
 
     // Deploy L2Registrar
     RegistrarRulesConfig memory rulesConfig = RegistrarRulesConfig(
-      registrar_cfg.min_label_len,
       registrar_cfg.max_label_len,
+      registrar_cfg.min_label_len,
       registrar_cfg.label_prices,
       registrar_cfg.label_lengths,
       registrar_cfg.base_price

@@ -160,7 +160,7 @@ function RegisterNew() {
       setDurationInYears(1);
     }
 
-    if (_value.length > MIN_NAME_LENGTH) {
+    if (_value.length >= MIN_NAME_LENGTH) {
       setNameAvailable({ ...nameAvailable, isChecking: true });
       setNamePrice({ ...namePrice, isChecking: true });
       debouncedCheckName(_value, namePrice.paymentToken);
@@ -198,7 +198,7 @@ function RegisterNew() {
 
   const handleCurrencyChange = (currency: PaymentToken) => {
     setSelectedCurrency(currency);
-    if (label.length > MIN_NAME_LENGTH) {
+    if (label.length >= MIN_NAME_LENGTH) {
       checkNamePrice(label, currency);
     }
   };
@@ -502,7 +502,7 @@ function RegisterNew() {
               />
 
               {/* Name availability display */}
-              {label.length > MIN_NAME_LENGTH && (
+              {label.length >= MIN_NAME_LENGTH && (
                 <div className="name-status">
                   {nameAvailable.isChecking ? (
                     <div className="loading-status">

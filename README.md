@@ -27,18 +27,12 @@ Deployed at -> https://celo-gateway.namespace.ninja
 
 ## Contracts:
 
-L1Resolver -> Deployed at https://etherscan.io/address/0xC6FC912C5DACb6BF0a24Bad113493c900fEA254a#code and verified
-
-L2 Contracts -> Initial version of contracts support register/renew using CELO token (USD values)
-
-L2RegistrarV1 -> Deployed and Verified at https://celoscan.io/address/0x650b162Ef4812097E2005845A7baAE9DeeB22723
-L2RegistrarV2 (Stablecoin payments) -> [0x43D76cb9be60f677e58e15F71Dd760Aaa0a2fae0](https://celoscan.io/address/0x43D76cb9be60f677e58e15F71Dd760Aaa0a2fae0)
-
-L2Registry/Resolver -> Deployed and Verified at https://celoscan.io/address/0x968A5c0f00F5D6CE6B29Ee9fD8e4Ea5e748a03BE
-
-SelfRegistrar -> 2 contracts responsible for minting names for veirifed users:
-1. L2SelfRegistrar -> https://celoscan.io/address/0x7Ea39a854098308b0E732222AA221cEFF4a726E6#code
-2. SelfStorage -> Stores verification data -> https://celoscan.io/address/0x6342ee37B4CfBAF0F2dCd4692FFD6Eb1053A0F06#code
+Contract Addresses : {
+  registry: 0xf1f32c316fF183A27F3b6966adAA0c0781606028,
+  registrar: 0x07406B4C49eE511bB059004907AB83390f10B831
+  selfRegistrar: 0x995Fc9C8e01dde9FbD3c6eC4A034456e9D24BCA3
+  storage: 0x78E117f74FAdc8722A5E7A02278494080A9EEf14
+}
 
 
 ## Indexer/Metadata

@@ -47,7 +47,7 @@ export const useRegistrar = () => {
     tokenCurrency: Address = zeroAddress
   ): Promise<bigint> => {
     const price = await publicClient!.readContract({
-      address: CONTRACT_ADDRESSES.L2_REGISTRAR_V2,
+      address: CONTRACT_ADDRESSES.L2_REGISTRAR,
       abi: ABIS.L2_REGISTRAR_V2,
       functionName: "rentPrice",
       args: [label, durationInYears, tokenCurrency],
@@ -85,7 +85,7 @@ export const useRegistrar = () => {
     const resolverData = convertToResolverData(`${label}.${ENV.PARENT_NAME}`, records);
 
     const { request } = await publicClient!.simulateContract({
-      address: CONTRACT_ADDRESSES.L2_REGISTRAR_V2,
+      address: CONTRACT_ADDRESSES.L2_REGISTRAR,
       abi: ABIS.L2_REGISTRAR_V2,
       functionName: "registerERC20",
       args: [
@@ -107,7 +107,7 @@ export const useRegistrar = () => {
       functionName: "isVerified",
       abi: ABIS.SELF_STORAGE_ABI,
       args: [user],
-      address: CONTRACT_ADDRESSES.SELF_STORAGE
+      address: CONTRACT_ADDRESSES.REGISTRAR_STORAGE
     }) as Promise<boolean>
   }
 
@@ -121,7 +121,7 @@ export const useRegistrar = () => {
     const resolverData = convertToResolverData(`${label}.${ENV.PARENT_NAME}`, records);
 
     const { request } = await publicClient!.simulateContract({
-      address: CONTRACT_ADDRESSES.L2_REGISTRAR_V2,
+      address: CONTRACT_ADDRESSES.L2_REGISTRAR,
       abi: ABIS.L2_REGISTRAR_V2,
       functionName: "register",
       args: [label, durationInYears, owner, resolverData],
@@ -139,7 +139,7 @@ export const useRegistrar = () => {
     const price = await rentPrice(label, durationInYears);
     
     const { request } = await publicClient!.simulateContract({
-      address: CONTRACT_ADDRESSES.L2_REGISTRAR_V2,
+      address: CONTRACT_ADDRESSES.L2_REGISTRAR,
       abi: ABIS.L2_REGISTRAR_V2,
       functionName: "renew",
       args: [label, durationInYears],
@@ -157,7 +157,7 @@ export const useRegistrar = () => {
     permit: ERC20Permit
   ) => {
     const { request } = await publicClient!.simulateContract({
-      address: CONTRACT_ADDRESSES.L2_REGISTRAR_V2,
+      address: CONTRACT_ADDRESSES.L2_REGISTRAR,
       abi: ABIS.L2_REGISTRAR_V2,
       functionName: "renewERC20",
       args: [label, durationInYears, paymentToken, permit],
@@ -172,7 +172,7 @@ export const useRegistrar = () => {
     register,
     rentPrice,
     registerERC20,
-    registrarAddress: CONTRACT_ADDRESSES.L2_REGISTRAR_V2,
+    registrarAddress: CONTRACT_ADDRESSES.L2_REGISTRAR,
     claimWithSelf,
     isSelfVerified,
     renew,
