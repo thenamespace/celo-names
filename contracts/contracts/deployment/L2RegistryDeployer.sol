@@ -27,7 +27,6 @@ contract L2RegistryDeployer {
       registry_cfg.metadata_uri
     );
     registry = address(_registry);
-    _registry.setAdmin(owner, true);
     _registry.transferOwnership(owner);
   }
 }

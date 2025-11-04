@@ -3,6 +3,7 @@ pragma solidity ^0.8.28;
 
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {IRegistrarStorage} from './interfaces/IRegistrarStorage.sol';
+import {RegistrarControl} from './RegistrarControl.sol';
 
 /**
  * @title IRegistrarStorage
@@ -11,11 +12,9 @@ import {IRegistrarStorage} from './interfaces/IRegistrarStorage.sol';
  *      multiple registrar contracts. Only authorized registrars can update storage.
  *      Contains blacklist/whitelist functionality shared among different registrars
  */
-contract RegistrarStorage is IRegistrarStorage, Ownable {
+contract RegistrarStorage is IRegistrarStorage, RegistrarControl {
+  
   // ============ State Variables ============
-
-  /// @dev Maps registrar addresses to their authorization status
-  mapping(address => bool) private registrars;
 
   /// @dev Maps user addresses to their verification IDs
   mapping(address => uint256) public verificationIds;
@@ -40,26 +39,6 @@ contract RegistrarStorage is IRegistrarStorage, Ownable {
   /// @dev whitelistEnabled ->
   bool public whitelistEnabled;
 
-  // ============ Modifiers ============
-
-  /**
-   * @dev Modifier to restrict access to authorized registrars only
-   */
-  modifier isRegistrar() {
-    if (!registrars[_msgSender()]) {
-      revert NotRegistrar();
-    }
-    _;
-  }
-
-  // ============ Constructor ============
-
-  /**
-   * @notice Initializes the SelfStorage contract
-   * @dev Sets the deployer as the contract owner
-   */
-  constructor() Ownable(_msgSender()) {}
-
   // ============ External Functions ============
 
   /**
@@ -71,7 +50,7 @@ contract RegistrarStorage is IRegistrarStorage, Ownable {
   function setVerificationId(
     address user,
     uint256 verificationId
-  ) external isRegistrar {
+  ) external onlyRegistrar {
     if (claimedVerifications[verificationId]) {
       revert VerificationIdClaimed(verificationId);
     }
@@ -86,7 +65,7 @@ contract RegistrarStorage is IRegistrarStorage, Ownable {
    * @param user The address of the user who is claiming a name
    * @param namehash The namehash of the claimed name
    */
-  function claim(address user, bytes32 namehash) external isRegistrar {
+  function claim(address user, bytes32 namehash) external onlyRegistrar {
     claimed[user]++;
     names[namehash] = true;
   }
@@ -123,17 +102,6 @@ contract RegistrarStorage is IRegistrarStorage, Ownable {
       return true;
     }
     return whitelist[whitelistVersion][user];
-  }
-
-  /**
-   * @notice Checks if an address is an authorized registrar
-   * @param registrar The address to check
-   * @return True if the address is an authorized registrar, false otherwise
-   */
-  function isAuthorizedRegistrar(
-    address registrar
-  ) external view returns (bool) {
-    return registrars[registrar];
   }
 
   // ============ Owner Functions ============
@@ -193,17 +161,6 @@ contract RegistrarStorage is IRegistrarStorage, Ownable {
     }
 
     emit BlacklistChanged(labelhashes, enabled, blacklistVersion);
-  }
-
-  /**
-   * @notice Authorizes or deauthorizes a registrar contract
-   * @dev Can only be called by the contract owner
-   * @param registrar The address of the registrar contract
-   * @param enabled True to authorize, false to revoke authorization
-   */
-  function setRegistrar(address registrar, bool enabled) external onlyOwner {
-    registrars[registrar] = enabled;
-    emit RegistrarChanged(registrar, enabled);
   }
 
   /**

@@ -84,6 +84,7 @@ const registrarConfig: RegistrarConfig = {
   ],
   min_label_len: 3n,
   max_label_len: 64n,
+  allowed_stablecoins: STABLECOINS
 };
 
 const selfRegistrarCfg: SelfRegistrarConfig = {
@@ -139,18 +140,6 @@ async function main() {
     true,
   ]);
   await pc.waitForTransactionReceipt({ hash: tx02 });
-
-  // Allow stablecoin payments
-  const registrarContract = await viem.getContractAt(
-    'L2Registrar',
-    registrar as Address
-  );
-  const tx03 = await registrarContract.write.modifyApprovedTokens([
-    STABLECOINS,
-    true,
-    false,
-  ]);
-  await pc.waitForTransactionReceipt({ hash: tx03 });
 }
 
 main().catch((error) => {

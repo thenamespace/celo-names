@@ -274,7 +274,7 @@ contract L1Resolver is
     return super.supportsInterface(interfaceId);
   }
 
-  function _isExpired(bytes32 node) pure internal override returns(bool) {
+  function _isExpired(bytes32 /**node */) pure internal override returns(bool) {
     return false;
   }
 }

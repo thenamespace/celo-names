@@ -4,19 +4,15 @@ pragma solidity ^0.8.28;
 import {ERC721} from '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 import {Strings} from '@openzeppelin/contracts/utils/Strings.sol';
-import {RegistryManager} from './RegistryManager.sol';
+import {RegistrarControl} from './RegistrarControl.sol';
 import {L2Resolver} from './L2Resolver.sol';
 import {IL2Registry} from './interfaces/IL2Registry.sol';
 
 /**
  * @title L2Registry
  * @dev An ERC721-based ENS registry for L2 networks that manages subdomain names as NFTs
-
- * The registry allows only authorized registrars to create new subdomains,
- * while admins can revoke any subdomain. Each subdomain is represented as
- * an NFT that can be transferred, with automatic expiration handling.
  */
-contract L2Registry is ERC721, RegistryManager, L2Resolver, IL2Registry {
+contract L2Registry is ERC721, L2Resolver, IL2Registry, RegistrarControl {
   // ============ Custom Errors ============
 
   /// @dev Thrown when attempting to register a subdomain that is already taken
@@ -170,7 +166,7 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver, IL2Registry {
    * Requirements:
    * - Caller must be an authorized admin
    */
-  function revoke(bytes32 node) external onlyAdmin {
+  function revoke(bytes32 node) external onlyOwner {
     _revoke(node);
     emit NameRevoked(node, _msgSender());
   }

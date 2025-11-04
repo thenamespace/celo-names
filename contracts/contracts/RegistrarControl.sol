@@ -3,13 +3,8 @@ pragma solidity ^0.8.28;
 
 import {Ownable} from '@openzeppelin/contracts/access/Ownable.sol';
 
-/**
- * @title RegistryManager
- * @dev Manages access control for the L2 Registry using Ownable and custom role mappings
- * @notice This contract defines roles for administrators and registrars who can manage subdomains
- * The owner can assign admin and registrar roles to other accounts
- */
-abstract contract RegistryManager is Ownable {
+
+abstract contract RegistrarControl is Ownable {
   // ============ Custom Errors ============
   
   /// @dev Thrown when attempting to set a role that is already set to the same value
@@ -20,16 +15,10 @@ abstract contract RegistryManager is Ownable {
 
   // ============ State Variables ============
   
-  /// @dev Mapping of addresses to admin status
-  mapping(address => bool) public admins;
-  
   /// @dev Mapping of addresses to registrar status
   mapping(address => bool) public registrars;
 
   // ============ Events ============
-  
-  /// @dev Emitted when an admin role is granted or revoked
-  event AdminRoleChanged(address indexed account, bool enabled);
   
   /// @dev Emitted when a registrar role is granted or revoked
   event RegistrarRoleChanged(address indexed account, bool enabled);
@@ -45,17 +34,6 @@ abstract contract RegistryManager is Ownable {
   // ============ Modifiers ============
   
   /**
-   * @dev Restricts access to accounts with admin role
-   * @notice Only admins can revoke subdomains
-   */
-  modifier onlyAdmin() {
-    if (!admins[_msgSender()]) {
-      revert InsufficientRole("ADMIN", _msgSender());
-    }
-    _;
-  }
-
-  /**
    * @dev Restricts access to accounts with registrar role
    * @notice Only registrars can register subdomains and set expiry
    */
@@ -68,18 +46,6 @@ abstract contract RegistryManager is Ownable {
 
   // ============ Public Functions ============
   
-  /// @dev Grants or revokes admin role for an account
-  /// @param admin The account to grant/revoke admin role
-  /// @param enabled True to grant role, false to revoke
-  function setAdmin(address admin, bool enabled) public onlyOwner {
-    if (admins[admin] == enabled) {
-      revert RoleAlreadySet(admin, "ADMIN", enabled);
-    }
-
-    admins[admin] = enabled;
-    emit AdminRoleChanged(admin, enabled);
-  }
-
   /// @dev Grants or revokes registrar role for an account
   /// @param registrar The account to grant/revoke registrar role
   /// @param enabled True to grant role, false to revoke
@@ -93,13 +59,6 @@ abstract contract RegistryManager is Ownable {
   }
 
   // ============ View Functions ============
-  
-  /// @dev Checks if an account has admin role
-  /// @param account The account to check
-  /// @return True if the account has admin role
-  function isAdmin(address account) public view returns (bool) {
-    return admins[account];
-  }
 
   /// @dev Checks if an account has registrar role
   /// @param account The account to check

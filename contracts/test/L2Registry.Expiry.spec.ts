@@ -28,11 +28,9 @@ describe('L2Registry - Expiry', () => {
       registrar.account.address,
       true,
     ]);
-    const tx02 = await registry.write.setAdmin([admin.account.address, true]);
 
     await client.waitForTransactionReceipt({ hash: tx01 });
-    await client.waitForTransactionReceipt({ hash: tx02 });
-
+    
     return {
       registryContract: registry,
       owner,

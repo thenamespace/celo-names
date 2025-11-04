@@ -3,11 +3,7 @@ import { viem } from 'hardhat';
 import { expect } from 'chai';
 import '@nomicfoundation/hardhat-chai-matchers';
 import { ERRORS, expectContractCallToFail } from './errors';
-import type { GetContractReturnType } from '@nomicfoundation/hardhat-viem/types';
-import type { L2Registrar$Type } from '../artifacts/contracts/L2Registrar.sol/L2Registrar';
-import type { MockedSelfRegistrar$Type } from '../artifacts/contracts/test/MockedSelfRegistrar.sol/MockedSelfRegistrar';
-import type { L2Registry$Type } from '../artifacts/contracts/L2Registry.sol/L2Registry';
-import type { RegistrarStorage$Type } from '../artifacts/contracts/RegistrarStorage.sol/RegistrarStorage';
+
 import { 
   TOKEN_NAME, 
   TOKEN_SYMBOL, 
@@ -15,11 +11,10 @@ import {
   PARENT_NODE, 
   METADATA_URI,
   DEFAULT_REGISTRAR_CONFIG,
-  NATIVE_TOKEN_ADDRESS,
   ETH_PRICE_DECIMALS_DOLLARS,
   createMockVerificationOutput
 } from './vars';
-import { keccak256, labelhash, namehash, zeroAddress } from 'viem';
+import { labelhash } from 'viem';
 
 describe('Registrars - Storage Integrations', () => {
   const deployIntegrationFixture = async () => {
