@@ -9,6 +9,7 @@ import {IRegistrarStorage} from './interfaces/IRegistrarStorage.sol';
  * @notice Centralized storage for registrars
  * @dev This contract stores verification IDs and claim counts for users across
  *      multiple registrar contracts. Only authorized registrars can update storage.
+ *      Contains blacklist/whitelist functionality shared among different registrars
  */
 contract RegistrarStorage is IRegistrarStorage, Ownable {
   // ============ State Variables ============
@@ -149,6 +150,7 @@ contract RegistrarStorage is IRegistrarStorage, Ownable {
     bool enabled,
     bool clearEntries
   ) external onlyOwner {
+    
     if (clearEntries) {
       whitelistVersion++;
     }
