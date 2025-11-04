@@ -6,13 +6,17 @@ import {IVersionableResolver} from "./IVersionableResolver.sol";
 
 abstract contract ResolverBase is ERC165, IVersionableResolver {
     mapping(bytes32 => uint64) public recordVersions;
+    // constant used as a version for expired names
+    uint64 constant MAX_UINT64 = type(uint64).max;
 
-    function isAuthorisedToUpdateRecords(
+    function isAuthorizedToUpdateRecords(
         bytes32 node
     ) internal view virtual returns (bool);
 
+    function _isExpired(bytes32 node) internal virtual view returns (bool);
+
     modifier authorised(bytes32 node) {
-        require(isAuthorisedToUpdateRecords(node), "Not authorized");
+        require(isAuthorizedToUpdateRecords(node), "Not authorized");
         _;
     }
 
@@ -28,6 +32,10 @@ abstract contract ResolverBase is ERC165, IVersionableResolver {
 
     function _clearRecords(bytes32 node) internal {
         recordVersions[node]++;
+    }
+
+    function expiredNodeVersion() internal pure returns(uint64) {
+        return MAX_UINT64;
     }
 
     function supportsInterface(

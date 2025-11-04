@@ -241,26 +241,16 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver, IL2Registry {
       _revoke(node);
     }
 
-    // Determine initial owner (registrar if resolver data, otherwise intended owner)
-    bool hasResolverData = resolverData.length > 0;
-    address initialOwner = hasResolverData ? _msgSender() : owner;
-
     expiries[node] = expiry;
     _setName(label, node, parent);
 
-    // Mint NFT to initial owner
-    _safeMint(initialOwner, tokenId);
+    _safeMint(owner, tokenId);
     totalSupply++;
 
-    // Execute resolver data if provided
-    if (hasResolverData) {
+    if (resolverData.length > 0) {
       multicallSetRecords(node, resolverData);
     }
 
-    // Transfer to final owner if different from initial owner
-    if (initialOwner != owner) {
-      _safeTransfer(initialOwner, owner, tokenId);
-    }
     emit NewName(label, expiry, owner, node);
   }
 
@@ -320,7 +310,7 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver, IL2Registry {
    * @param node The node hash to check
    * @return expired True if the subdomain has expired
    */
-  function _isExpired(bytes32 node) internal view returns (bool) {
+  function _isExpired(bytes32 node) internal override view returns (bool) {
     return expiries[node] <= block.timestamp;
   }
 
@@ -347,14 +337,15 @@ contract L2Registry is ERC721, RegistryManager, L2Resolver, IL2Registry {
    * @param node The node to check authorization for
    * @return authorized True if the caller can update records
    */
-  function isAuthorisedToUpdateRecords(
+  function isAuthorizedToUpdateRecords(
     bytes32 node
   ) internal view override returns (bool) {
     address owner = _ownerOfExpirable(uint256(node));
     return owner == _msgSender() || 
            isApprovedForAll(owner, _msgSender()) ||
-           registrars[_msgSender()];
+           isRegistrar(_msgSender());
   }
+
 
   /// @dev Get the owner of a token, considering expiration
   /// @param tokenId The token ID to query
