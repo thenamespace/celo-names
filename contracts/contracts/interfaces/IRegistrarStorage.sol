@@ -12,13 +12,7 @@ interface IRegistrarStorage {
     /// @dev Thrown when caller tries to claim already claimed verification Id
     error VerificationIdClaimed(uint256 id);
 
-    /// @dev Thrown when caller is not an authorized registrar
-    error NotRegistrar();
-
     // ============ Events ============
-
-    /// @dev Emitted when a registrar's authorization status is changed
-    event RegistrarChanged(address indexed registrar, bool enabled);
 
     /// @dev Emitted when a verification is deleted by the owner
     event VerificationDeleted(address indexed user, uint256 indexed verificationId);
@@ -56,13 +50,6 @@ interface IRegistrarStorage {
      * @param namehash namehash of claimed name
      */
     function claim(address user, bytes32 namehash) external;
-
-    /**
-     * @notice Authorizes or deauthorizes a registrar contract
-     * @param registrar The address of the registrar contract
-     * @param enabled True to authorize, false to revoke authorization
-     */
-    function setRegistrar(address registrar, bool enabled) external;
 
     /**
      * @notice Removes an existing verification
@@ -107,13 +94,6 @@ interface IRegistrarStorage {
      * @return True if the user has a verification ID assigned, false otherwise
      */
     function isVerified(address user) external view returns (bool);
-
-    /**
-     * @notice Checks if an address is an authorized registrar
-     * @param registrar The address to check
-     * @return True if the address is an authorized registrar, false otherwise
-     */
-    function isAuthorizedRegistrar(address registrar) external view returns (bool);
 
     function isWhitelisted(address user) external view returns (bool);
 

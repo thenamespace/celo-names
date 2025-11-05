@@ -40,10 +40,8 @@ describe('L2Registry - Resolver', () => {
       registrar.account.address,
       true,
     ]);
-    const tx02 = await registry.write.setAdmin([admin.account.address, true]);
 
     await client.waitForTransactionReceipt({ hash: tx01 });
-    await client.waitForTransactionReceipt({ hash: tx02 });
 
     return {
       registryContract: registry,
@@ -141,22 +139,17 @@ describe('L2Registry - Resolver', () => {
 
       await expectContractCallToFail(
         () =>
-          registryContract.write.setText(
-            [node, AVATAR, AVATAR_VALUE],
-            { account: user02.account }
-          ),
+          registryContract.write.setText([node, AVATAR, AVATAR_VALUE], {
+            account: user02.account,
+          }),
         'Not authorized'
       );
 
       await expectContractCallToFail(
         () =>
-          registryContract.write.setContenthash(
-            [
-              node,
-              CONTENTHASH_VALUE,
-            ],
-            { account: user02.account }
-          ),
+          registryContract.write.setContenthash([node, CONTENTHASH_VALUE], {
+            account: user02.account,
+          }),
         'Not authorized'
       );
     });
@@ -367,6 +360,183 @@ describe('L2Registry - Resolver', () => {
         user02.account.address.toLowerCase()
       );
       expect(newAvatar).to.equal('https://newuser.com/avatar.png');
+    });
+
+    it('Should resolve records after registration, return blank data after expiry, and resolve again after re-registration', async () => {
+      const { registryContract, registrar, user01, user02 } = await loadFixture(
+        deployRegistryFixture
+      );
+
+      const label = 'resolutiontest';
+      const fullname = `${label}.${PARENT_ENS}`;
+      const node = namehash(fullname);
+
+      // Register with 1 year expiry
+      const oneYearInSeconds = 365 * 24 * 60 * 60;
+      const currentTime = await time.latest();
+      const oneYearExpiry = BigInt(currentTime + oneYearInSeconds);
+
+      // Step 1: Register a name
+      await registryContract.write.createSubnode(
+        [label, oneYearExpiry, user01.account.address, []],
+        { account: registrar.account }
+      );
+
+      // Step 2: Set text and address records
+      const testAddress = user01.account.address;
+      const testTextKey = 'description';
+      const testTextValue = 'My test domain description';
+
+      await registryContract.write.setAddr([node, testAddress], {
+        account: user01.account,
+      });
+
+      await registryContract.write.setText([node, testTextKey, testTextValue], {
+        account: user01.account,
+      });
+
+      // Step 3: Verify records can be resolved
+      const resolvedAddress: string = await registryContract.read.addr([node]);
+      const resolvedText = await registryContract.read.text([
+        node,
+        testTextKey,
+      ]);
+
+      expect(resolvedAddress.toLowerCase()).to.equal(testAddress.toLowerCase());
+      expect(resolvedText).to.equal(testTextValue);
+
+      // Step 4: Wait until name expires
+      await time.increase(2 * oneYearInSeconds);
+
+      // Verify name is expired
+      const expiredOwner = await registryContract.read.ownerOf([BigInt(node)]);
+      expect(expiredOwner).to.equal(zeroAddress);
+
+      // Step 5: Verify resolver returns "blank" data for text and address
+      const expiredAddress: string = await registryContract.read.addr([node]);
+      const expiredText = await registryContract.read.text([node, testTextKey]);
+
+      expect(expiredAddress).to.equal(zeroAddress);
+      expect(expiredText).to.equal('');
+
+      // Step 6: Re-register a new name (same label, different owner)
+      const newTime = await time.latest();
+      const newExpiry = BigInt(newTime + oneYearInSeconds);
+
+      await registryContract.write.createSubnode(
+        [label, newExpiry, user02.account.address, []],
+        { account: registrar.account }
+      );
+
+      // Verify new ownership
+      const newOwner = await registryContract.read.ownerOf([BigInt(node)]);
+      expect(newOwner.toLowerCase()).to.equal(
+        user02.account.address.toLowerCase()
+      );
+
+      // Step 7: Set new records and verify they resolve again
+      const newTestAddress = user02.account.address;
+      const newTestTextValue = 'New owner domain description';
+
+      await registryContract.write.setAddr([node, newTestAddress], {
+        account: user02.account,
+      });
+
+      await registryContract.write.setText(
+        [node, testTextKey, newTestTextValue],
+        { account: user02.account }
+      );
+
+      // Verify new records resolve correctly
+      const newResolvedAddress: string = await registryContract.read.addr([
+        node,
+      ]);
+      const newResolvedText = await registryContract.read.text([
+        node,
+        testTextKey,
+      ]);
+
+      expect(newResolvedAddress.toLowerCase()).to.equal(
+        newTestAddress.toLowerCase()
+      );
+      expect(newResolvedText).to.equal(newTestTextValue);
+    });
+
+    it('Should NOT resolve expired name', async () => {
+      const { registryContract, registrar, user01 } = await loadFixture(
+        deployRegistryFixture
+      );
+
+      const label = 'expireblanktest';
+      const fullname = `${label}.${PARENT_ENS}`;
+      const node = namehash(fullname);
+
+      // Register with short expiry (1 day)
+      const oneDayInSeconds = 24 * 60 * 60;
+      const currentTime = await time.latest();
+      const shortExpiry = BigInt(currentTime + oneDayInSeconds);
+      const avatar_text_value = 'https://example.com/avatar.png';
+
+      // Register and set records
+      await registryContract.write.createSubnode(
+        [label, shortExpiry, user01.account.address, []],
+        { account: registrar.account }
+      );
+
+      await registryContract.write.setAddr([node, user01.account.address], {
+        account: user01.account,
+      });
+
+      await registryContract.write.setText(
+        [node, 'avatar', avatar_text_value],
+        { account: user01.account }
+      );
+
+      // Verify records resolve initially
+      const initialAddress: string = await registryContract.read.addr([node]);
+      const initialText = await registryContract.read.text([node, 'avatar']);
+
+      expect(initialAddress.toLowerCase()).to.equal(
+        user01.account.address.toLowerCase()
+      );
+      expect(initialText).to.equal(avatar_text_value);
+
+      // Advance time to expire the name
+      await time.increase(2 * oneDayInSeconds);
+
+      // Verify name is expired
+      const expiredOwner = await registryContract.read.ownerOf([BigInt(node)]);
+      expect(expiredOwner).to.equal(zeroAddress);
+
+      // Verify resolver returns blank data for all record types
+      const blankAddress: string = await registryContract.read.addr([node]);
+      const blankText = await registryContract.read.text([node, 'avatar']);
+      const blankTextNonExistent = await registryContract.read.text([
+        node,
+        'nonexistent',
+      ]);
+
+      expect(blankAddress).to.equal(zeroAddress);
+      expect(blankText).to.equal('');
+      expect(blankTextNonExistent).to.equal('');
+
+      // Register a new expired name and verify the resoulutin continues to work
+      const setTextFunc = encodeFunctionData({
+        abi: RESOLVER_ABI,
+        functionName: "setText",
+        args: [node, "avatar", avatar_text_value]
+      })
+
+      const currentTime2 = await time.latest();
+      const newExpiry = BigInt(currentTime2 * (5 * oneDayInSeconds));
+      await registryContract.write.createSubnode(
+        [label, newExpiry, user01.account.address, [setTextFunc]],
+        { account: registrar.account }
+      );
+
+      const newAvatarRecord = await registryContract.read.text([node, 'avatar']);
+      expect(newAvatarRecord).to.equal(avatar_text_value)
+
     });
   });
 });

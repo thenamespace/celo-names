@@ -58,7 +58,8 @@ abstract contract AddrResolver is
         bytes32 node,
         uint256 coinType
     ) public view virtual override returns (bytes memory) {
-        return versionable_addresses[recordVersions[node]][node][coinType];
+        uint64 version = _isExpired(node) ? MAX_UINT64 : recordVersions[node];
+        return versionable_addresses[version][node][coinType];
     }
 
     function supportsInterface(

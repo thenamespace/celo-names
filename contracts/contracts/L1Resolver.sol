@@ -218,7 +218,7 @@ contract L1Resolver is
   /// @dev Checks if the caller is authorized to update records for a given node
   /// @param node The ENS node to check authorization for
   /// @return True if the caller is authorized to update records
-  function isAuthorisedToUpdateRecords(
+  function isAuthorizedToUpdateRecords(
     bytes32 node
   ) internal view override returns (bool) {
     return
@@ -272,5 +272,9 @@ contract L1Resolver is
     returns (bool)
   {
     return super.supportsInterface(interfaceId);
+  }
+
+  function _isExpired(bytes32 /**node */) pure internal override returns(bool) {
+    return false;
   }
 }

@@ -24,6 +24,7 @@ struct RegistrarCfg {
   uint256[] label_prices;
   uint256 min_label_len;
   uint256 max_label_len;
+  address[] allowed_stablecoins;
 }
 
 struct SelfRegistrarCfg {
@@ -67,6 +68,11 @@ contract L2RegistrarDeployer {
       registrarStorage,
       rulesConfig
     );
+
+    // Set allow stablecoin addresses
+    if (registrar_cfg.allowed_stablecoins.length > 0) {
+      _registrar.modifyApprovedTokens(registrar_cfg.allowed_stablecoins, true, false);
+    }
 
     // Configure ENS Fees
     _registrar.setEnsTreasury(registrar_cfg.ensTreasury);

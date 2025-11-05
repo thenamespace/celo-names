@@ -42,7 +42,7 @@ describe('RegistrarStorage - Access Control', () => {
       ).to.not.be.reverted;
 
       // Verify registrar was set
-      const isRegistrar = await storage.read.isAuthorizedRegistrar([
+      const isRegistrar = await storage.read.isRegistrar([
         user01.account.address,
       ]);
       expect(isRegistrar).to.be.true;
@@ -224,7 +224,7 @@ describe('RegistrarStorage - Access Control', () => {
             [user02.account.address, 789012n],
             { account: user01.account }
           ),
-        ERRORS.NOT_REGISTRAR
+        ERRORS.REGISTRAR_ONLY
       );
     });
 
@@ -256,7 +256,7 @@ describe('RegistrarStorage - Access Control', () => {
           storage.write.claim([user02.account.address, namehash], {
             account: user01.account,
           }),
-        ERRORS.NOT_REGISTRAR
+        ERRORS.REGISTRAR_ONLY
       );
     });
   });

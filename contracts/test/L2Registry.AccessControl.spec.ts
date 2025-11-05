@@ -27,10 +27,8 @@ describe('L2Registry - Access Control', () => {
       registrar.account.address,
       true,
     ]);
-    const tx02 = await registry.write.setAdmin([admin.account.address, true]);
 
     await client.waitForTransactionReceipt({ hash: tx01 });
-    await client.waitForTransactionReceipt({ hash: tx02 });
 
     return {
       registryContract: registry,
@@ -43,28 +41,6 @@ describe('L2Registry - Access Control', () => {
   };
 
   describe('Owner Access Control', () => {
-    it('Should allow only owner to modify admins', async () => {
-      const { registryContract, owner, admin, user01 } = await loadFixture(
-        deployRegistryFixture
-      );
-
-      // Owner should be able to set admin
-      await expect(
-        registryContract.write.setAdmin([user01.account.address, true], {
-          account: owner.account,
-        })
-      ).to.not.be.reverted;
-
-      // Non-owner should not be able to set admin
-      await expectContractCallToFail(
-        () =>
-          registryContract.write.setAdmin([user01.account.address, true], {
-            account: user01.account,
-          }),
-        ERRORS.OWNER_ONLY
-      );
-    });
-
     it('Should allow only owner to modify registrars', async () => {
       const { registryContract, owner, registrar, user01 } = await loadFixture(
         deployRegistryFixture
@@ -151,11 +127,12 @@ describe('L2Registry - Access Control', () => {
     });
   });
 
-  describe('Admin Access Control', () => {
-    it('Should allow only admin to revoke subnames', async () => {
-      const { registryContract, registrar, admin, user01 } = await loadFixture(
+  describe('Owner Revoke Control', () => {
+    it('Should allow only owner to revoke subnames', async () => {
+      const { registryContract, registrar, user01, owner } = await loadFixture(
         deployRegistryFixture
       );
+      
       const label = 'test';
       const expiry = BigInt(Math.floor(Date.now() / 1000) + 86400);
       // First register a subname
@@ -168,13 +145,13 @@ describe('L2Registry - Access Control', () => {
 
       // Admin should be able to revoke
       await expect(
-        registryContract.write.revoke([node], { account: admin.account })
+        registryContract.write.revoke([node], { account: owner.account })
       ).to.not.be.reverted;
 
         // Non-admin should not be able to revoke
       expectContractCallToFail(async() => {
         registryContract.write.revoke([node], { account: user01.account })
-      }, ERRORS.ADMIN_ONLY)
+      }, ERRORS.OWNER_ONLY)
     });
   });
 });

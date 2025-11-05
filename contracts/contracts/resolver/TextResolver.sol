@@ -33,7 +33,8 @@ abstract contract TextResolver is ITextResolver, ResolverBase {
         bytes32 node,
         string calldata key
     ) external view virtual override returns (string memory) {
-        return versionable_texts[recordVersions[node]][node][key];
+        uint64 version = _isExpired(node) ? MAX_UINT64 : recordVersions[node];
+        return versionable_texts[version][node][key];
     }
 
     function supportsInterface(
