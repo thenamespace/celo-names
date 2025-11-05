@@ -27,11 +27,11 @@ Deployed at -> https://celo-gateway.namespace.ninja
 
 ## Contracts:
 
-Contract Addresses : {
-  registry: 0xf1f32c316fF183A27F3b6966adAA0c0781606028,
-  registrar: 0x07406B4C49eE511bB059004907AB83390f10B831
-  selfRegistrar: 0x995Fc9C8e01dde9FbD3c6eC4A034456e9D24BCA3
-  storage: 0x78E117f74FAdc8722A5E7A02278494080A9EEf14
+Contracts deployed at: {
+  registry: 0x3e5D74A8D791b381d86678c4Fd8a616a9b9BF180
+  registrar: '0x1C650333ECB93408bD5f64761B9ABFED19369Ade',
+  selfRegistrar: '0x5C9599EB6AD051e250d4608f064E3bae2C476154',
+  storage: '0x08D97997291a1D555e7bfAA8a5921024d1D2a943'
 }
 
 
