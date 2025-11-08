@@ -154,4 +154,34 @@ describe('L2Registry - Access Control', () => {
       }, ERRORS.OWNER_ONLY)
     });
   });
+
+  describe('Owner Metadata URL Control', () => {
+    it('Should allow only owner to update metadata-uri', async () => {
+      const { registryContract, owner, user01 } = await loadFixture(
+        deployRegistryFixture
+      );
+
+      const newMetadataUri = 'https://new-metadata.example.com';
+
+      // Owner should be able to update metadata-uri
+      await expect(
+        registryContract.write.setMetadataUrl([newMetadataUri], {
+          account: owner.account,
+        })
+      ).to.not.be.reverted;
+
+      // Verify metadata-uri was updated
+      const updatedUri = await registryContract.read.metadataUrl();
+      expect(updatedUri).to.equal(newMetadataUri);
+
+      // Non-owner should not be able to update metadata-uri
+      await expectContractCallToFail(
+        () =>
+          registryContract.write.setMetadataUrl([newMetadataUri], {
+            account: user01.account,
+          }),
+        ERRORS.OWNER_ONLY
+      );
+    });
+  });
 });

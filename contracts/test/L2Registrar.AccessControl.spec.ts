@@ -64,9 +64,6 @@ describe('L2Registrar - AccessControl', () => {
           account: owner.account,
         })
       ).to.not.be.reverted;
-
-      const currentPrice = await registrarContract.read.basePrice();
-      expect(currentPrice).to.equal(newBasePrice);
     });
 
     it('Should NOT allow non-owner to set base price', async () => {
@@ -160,12 +157,6 @@ describe('L2Registrar - AccessControl', () => {
           }
         )
       ).to.not.be.reverted;
-
-      const minLength = await registrarContract.read.minLabelLength();
-      const maxLength = await registrarContract.read.maxLabelLength();
-
-      expect(minLength).to.equal(newMinLength);
-      expect(maxLength).to.equal(newMaxLength);
     });
 
     it('Should NOT allow non-owner to set label length limits', async () => {

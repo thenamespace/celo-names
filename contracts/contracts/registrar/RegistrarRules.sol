@@ -35,10 +35,10 @@ abstract contract RegistrarRules is Ownable {
     /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
     /// @notice Minimum allowed label length.
-    uint256 public minLabelLength;
+    uint256 private minLabelLength;
 
     /// @notice Maximum allowed label length.
-    uint256 public maxLabelLength;
+    uint256 private maxLabelLength;
 
     /// @notice Dynamic pricing system version for label prices.
     uint8 private labelPricesVersion;
@@ -50,7 +50,7 @@ abstract contract RegistrarRules is Ownable {
     mapping(uint8 => mapping(uint256 => bool)) private labelPriceSet;
 
     /// @notice Base price for labels without specific length pricing (in USD cents).
-    uint256 public basePrice;
+    uint256 private basePrice;
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                          ERRORS                            */
