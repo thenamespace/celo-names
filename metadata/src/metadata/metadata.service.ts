@@ -1,13 +1,17 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { createCanvas, loadImage, registerFont, CanvasRenderingContext2D } from 'canvas';
 import { join } from 'path';
+import { NameMetadata } from './metadata.types';
 
 @Injectable()
-export class MetadataImageService implements OnModuleInit {
+export class MetadataService implements OnModuleInit {
   private celoLogo: any = null;
   private ensLogo: any = null;
   private imageCache: Map<string, Buffer> = new Map();
   private readonly MAX_CACHE_SIZE_BYTES = 1024 * 1024 * 1024; // 1GB limit
+
+  constructor(private readonly configService: ConfigService) {}
 
   async onModuleInit() {
     // Load font at startup
@@ -27,26 +31,6 @@ export class MetadataImageService implements OnModuleInit {
       this.ensLogo = await loadImage(ensLogoPath);
     } catch (error) {
       console.error('Error loading logo images at startup:', error);
-    }
-  }
-
-  /**
-   * Parse domain name to extract parts
-   * e.g., "test.celo.eth" -> ["test", "test.eth"]
-   */
-  private parseDomainName(name: string): { firstLevel: string; secondLevel: string } {
-    const parts = name.split('.');
-    if (parts.length >= 3) {
-      // 3-level domain: test.celo.eth
-      const firstLevel = parts[0]; // test
-      const secondLevel = `${parts[1]}.${parts[2]}`; // test.eth
-      return { firstLevel, secondLevel };
-    } else if (parts.length === 2) {
-      // 2-level domain: test.eth
-      return { firstLevel: parts[0], secondLevel: name };
-    } else {
-      // Single level: test
-      return { firstLevel: name, secondLevel: name };
     }
   }
 
@@ -70,6 +54,50 @@ export class MetadataImageService implements OnModuleInit {
     return imageBuffer;
   }
 
+  public getMetadata(name: string): NameMetadata {
+    const baseUrl = this.configService.get<string>('BASE_URL');
+    return {
+      name,
+      description: 'Celo ENS Name',
+      image: `${baseUrl}/metadata/${name}/image`
+    };
+  }
+
+  public getCacheSize(): { current: number; max: number; sizeMB: number; maxMB: number } {
+    const totalBytes = this.getCacheSizeBytes();
+    
+    // Convert to MB (1 MB = 1024 * 1024 bytes)
+    const sizeMB = totalBytes / (1024 * 1024);
+    const maxMB = this.MAX_CACHE_SIZE_BYTES / (1024 * 1024);
+    
+    return {
+      current: this.imageCache.size,
+      max: this.imageCache.size, // Number of entries (no longer a fixed limit)
+      sizeMB: Math.round(sizeMB * 100) / 100, // Round to 2 decimal places
+      maxMB: Math.round(maxMB * 100) / 100, // Max size in MB (1024 MB = 1GB)
+    };
+  }
+
+  /**
+   * Parse domain name to extract parts
+   * e.g., "test.celo.eth" -> ["test", "test.eth"]
+   */
+  private parseDomainName(name: string): { firstLevel: string; secondLevel: string } {
+    const parts = name.split('.');
+    if (parts.length >= 3) {
+      // 3-level domain: test.celo.eth
+      const firstLevel = parts[0]; // test
+      const secondLevel = `${parts[1]}.${parts[2]}`; // test.eth
+      return { firstLevel, secondLevel };
+    } else if (parts.length === 2) {
+      // 2-level domain: test.eth
+      return { firstLevel: parts[0], secondLevel: name };
+    } else {
+      // Single level: test
+      return { firstLevel: name, secondLevel: name };
+    }
+  }
+
   /**
    * Calculate total cache size in bytes
    */
@@ -90,7 +118,6 @@ export class MetadataImageService implements OnModuleInit {
     const currentSize = this.getCacheSizeBytes();
     return currentSize + newImageSize <= this.MAX_CACHE_SIZE_BYTES;
   }
-
 
   private attachLogo(
     type: 'ens' | 'celo',
@@ -113,7 +140,6 @@ export class MetadataImageService implements OnModuleInit {
       ctx.drawImage(logo, width - logoSize - padding, padding, logoSize + 5, logoSize + 5);
     }
   }
-
 
   private setNameText(
     label: string,
@@ -178,20 +204,4 @@ export class MetadataImageService implements OnModuleInit {
     // Convert canvas to buffer with explicit PNG options
     return canvas.toBuffer('image/png', { compressionLevel: 6 });
   }
-
-  getCacheSize(): { current: number; max: number; sizeMB: number; maxMB: number } {
-    const totalBytes = this.getCacheSizeBytes();
-    
-    // Convert to MB (1 MB = 1024 * 1024 bytes)
-    const sizeMB = totalBytes / (1024 * 1024);
-    const maxMB = this.MAX_CACHE_SIZE_BYTES / (1024 * 1024);
-    
-    return {
-      current: this.imageCache.size,
-      max: this.imageCache.size, // Number of entries (no longer a fixed limit)
-      sizeMB: Math.round(sizeMB * 100) / 100, // Round to 2 decimal places
-      maxMB: Math.round(maxMB * 100) / 100, // Max size in MB (1024 MB = 1GB)
-    };
-  }
 }
-

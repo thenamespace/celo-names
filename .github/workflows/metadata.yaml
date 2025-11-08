@@ -1,0 +1,65 @@
+name: Metadata - Build & Push
+
+on:
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: metadata
+  REGION: ${{ secrets.GHEC_REGION }}
+  PROJECT_ID: ${{ secrets.GHEC_PROJECT }}
+  REPO: ${{ secrets.GHEC_REPOSITORY }}
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    # export a job-level output named "version" from the step below
+    outputs:
+      version: ${{ steps.set_version.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set short SHA version
+        id: set_version
+        run: |
+          # create a 7-char short sha
+          SHORT_SHA=${GITHUB_SHA::7}
+          echo "version=$SHORT_SHA" >> $GITHUB_OUTPUT
+          # optional: export to GITHUB_ENV in case you want local step usage in this job
+          echo "VERSION=$SHORT_SHA" >> $GITHUB_ENV
+
+  build-and-push:
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GHEC_AUTH }}
+
+      - name: Set up gcloud CLI
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Build Docker image
+        run: |
+          VERSION=${{ needs.prepare.outputs.version }}
+          docker build -t ${{ env.IMAGE_NAME }}:${VERSION} -f ./metadata/Dockerfile ./metadata
+
+      - name: Tag Docker image for Artifact Registry
+        run: |
+          VERSION=${{ needs.prepare.outputs.version }}
+          docker tag ${{ env.IMAGE_NAME }}:${VERSION} \
+            ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${VERSION}
+
+      - name: Push Docker image
+        run: |
+          VERSION=${{ needs.prepare.outputs.version }}
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO }}/${{ env.IMAGE_NAME }}:${VERSION}

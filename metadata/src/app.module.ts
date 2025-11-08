@@ -1,8 +1,9 @@
 import { Module } from '@nestjs/common';
-import { MetadataImageModule } from './metadata-image/metadata-image.module';
+import { MetadataModule } from './metadata/metadata.module';
+import { ConfigModule } from './config/config.module';
 
 @Module({
-  imports: [MetadataImageModule],
+  imports: [ConfigModule, MetadataModule],
 })
 export class AppModule {}
 
