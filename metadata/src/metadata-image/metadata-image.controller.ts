@@ -35,5 +35,10 @@ export class MetadataImageController {
     
     res.send(imageBuffer);
   }
+
+  @Get('/cache/size')
+  getCacheSize() {
+    return this.metadataImageService.getCacheSize();
+  }
 }
 
