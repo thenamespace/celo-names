@@ -235,6 +235,22 @@ abstract contract RegistrarRules is Ownable {
     return basePrice;
   }
 
+  /// @dev Get price for a label based on its length.
+  ///
+  /// @param label The label to get price for.
+  /// @param isSelfVerified Uses special fee for names claimed by self verified users
+  ///
+  /// @return Price in USD cents (uses special price if set, otherwise base price).
+  function _getPriceForLabel(
+    string calldata label,
+    bool isSelfVerified
+  ) internal view returns (uint256) {
+    if (isSelfVerified) {
+        return selfVerifiedFee;
+    }
+    return _getPriceForLabel(label);
+  }
+
   /// @dev Check if label length is within valid range.
   ///
   /// @param label The label to validate.
