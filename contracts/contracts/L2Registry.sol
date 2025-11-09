@@ -84,7 +84,7 @@ contract L2Registry is ERC721, L2Resolver, IL2Registry, RegistrarControl {
     ///
     /// @param node The namehash of the revoked subdomain.
     /// @param admin The address of the admin who revoked the subdomain.
-    event NameRevoked(bytes32 indexed node, address indexed admin);
+    event NameRevoked(bytes32 indexed node, address admin);
 
     /// @notice Emitted when the metadata URL is updated.
     ///

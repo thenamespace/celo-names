@@ -15,7 +15,7 @@ interface IRegistrarStorage {
     // ============ Events ============
 
     /// @dev Emitted when a verification is deleted by the owner
-    event VerificationDeleted(address indexed user, uint256 indexed verificationId);
+    event VerificationDeleted(address user, uint256 verificationId);
 
     /// @dev Emitted when blacklist gets updated
     event BlacklistChanged(bytes32[] labels, bool enabled, uint8 version);

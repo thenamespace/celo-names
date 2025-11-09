@@ -72,15 +72,15 @@ abstract contract RegistrarRules is Ownable {
   /// @notice Emitted when base price is changed.
   ///
   /// @param newBasePrice The new base price in USD cents.
-  event BasePriceChanged(uint256 indexed newBasePrice);
+  event BasePriceChanged(uint256 newBasePrice);
 
   /// @notice Emitted when label length limits are changed.
   ///
   /// @param newMinLength The new minimum label length.
   /// @param newMaxLength The new maximum label length.
   event LabelLengthLimitsChanged(
-    uint256 indexed newMinLength,
-    uint256 indexed newMaxLength
+    uint256 newMinLength,
+    uint256 newMaxLength
   );
 
   /// @notice Emitted when label prices are updated.

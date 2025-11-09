@@ -49,19 +49,19 @@ abstract contract RegistrarTreasury is Ownable, NativePayments, StableERC20Payme
     ///
     /// @param oldTreasury The previous treasury address.
     /// @param newTreasury The new treasury address.
-    event TreasuryChanged(address indexed oldTreasury, address indexed newTreasury);
+    event TreasuryChanged(address oldTreasury, address newTreasury);
 
     /// @notice Emitted when ENS treasury address is changed.
     ///
     /// @param oldEnsTreasury The previous ENS treasury address.
     /// @param newEnsTreasury The new ENS treasury address.
-    event EnsTreasuryChanged(address indexed oldEnsTreasury, address indexed newEnsTreasury);
+    event EnsTreasuryChanged(address oldEnsTreasury, address newEnsTreasury);
 
     /// @notice Emitted when ENS treasury fee percentage is changed.
     ///
     /// @param oldFeePercent The previous fee percentage in basis points.
     /// @param newFeePercent The new fee percentage in basis points.
-    event EnsFeeChanged(uint16 indexed oldFeePercent, uint16 indexed newFeePercent);
+    event EnsFeeChanged(uint16 oldFeePercent, uint16 newFeePercent);
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        IMPLEMENTATION                      */

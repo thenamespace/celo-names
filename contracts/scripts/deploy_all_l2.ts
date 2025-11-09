@@ -84,7 +84,8 @@ const registrarConfig: RegistrarConfig = {
   ],
   min_label_len: 3n,
   max_label_len: 64n,
-  allowed_stablecoins: STABLECOINS
+  allowed_stablecoins: STABLECOINS,
+  self_verified_fee: 1n // 1 cent renewal fee
 };
 
 const selfRegistrarCfg: SelfRegistrarConfig = {

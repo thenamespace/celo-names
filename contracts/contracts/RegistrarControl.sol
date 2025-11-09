@@ -36,7 +36,7 @@ abstract contract RegistrarControl is Ownable {
     ///
     /// @param account The address whose registrar role was changed.
     /// @param enabled Whether the registrar role was enabled or disabled.
-    event RegistrarRoleChanged(address indexed account, bool enabled);
+    event RegistrarRoleChanged(address account, bool enabled);
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        IMPLEMENTATION                      */
