@@ -81,23 +81,28 @@ export const useRegistrar = () => {
   };
 
   const getRecordsWithDefaultImageRecords = (originalRecords: EnsRecords) => {
+
+
     const hasAvatarRecord = originalRecords?.texts.find(
       (txt) => txt.key === "avatar"
-    );
+    ) !== undefined
     const hasHeaderRecord = originalRecords?.texts.find(
       (txt) => txt.key === "Header"
-    );
+    ) !== undefined
 
     // if user sets these records, we wont use defaults
     if (
-      hasAvatarRecord ||
-      hasHeaderRecord ||
-      originalRecords.texts?.length === 0
+      hasAvatarRecord &&
+      hasHeaderRecord
     ) {
       return originalRecords;
     }
 
     const recordsCopy = deepCopy(originalRecords) as EnsRecords;
+
+    if (!recordsCopy.texts) {
+      recordsCopy.texts = []
+    }
 
     if (!hasAvatarRecord) {
       recordsCopy.texts.push({ key: "avatar", value: DEFAULT_CELO_AVATAR });

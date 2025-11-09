@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
 import Navigation from '@components/Navigation'
+import Footer from '@components/Footer'
 import RegisterNew from '@/pages/Register'
 import MyNames from '@pages/MyNames'
 import NameProfile from '@pages/NameProfile'
@@ -12,13 +13,16 @@ import "@thenamespace/ens-components/index.css";
 function App() {
   return (
     <Router>
-      <div className="bg-taupe-100">
+      <div className="bg-taupe-100 app-container">
         <Navigation />
-        <Routes>
-          <Route path="/" element={<RegisterNew />} />
-          <Route path="/my-names" element={<MyNames />} />
-          <Route path="/name/:name" element={<NameProfile />} />
-        </Routes>
+        <div className="app-content">
+          <Routes>
+            <Route path="/" element={<RegisterNew />} />
+            <Route path="/my-names" element={<MyNames />} />
+            <Route path="/name/:name" element={<NameProfile />} />
+          </Routes>
+        </div>
+        <Footer />
         <ToastContainer
           position="top-right"
           autoClose={5000}
