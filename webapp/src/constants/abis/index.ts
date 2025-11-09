@@ -5,7 +5,7 @@ import L2RegistrarV2ABI from "./L2RegistrarV2.json";
 import ERC20 from "./ERC20.json"
 import ERC20_PERMIT from "./ERC20Permit.json";
 import L2_SELF_REGISTRAR_ABI from "./L2SelfRegistrar.json";
-import SELF_STORAGE_ABI from "./SelfStorage.json";
+import REGISTRAR_STORAGE_ABI from "./RegistrarStorage.json";
 import REVERSE_REGISTRAR_ABI from "./ReverseRegistrar.json"
 
 export const ABIS = {
@@ -16,6 +16,6 @@ export const ABIS = {
   ERC20,
   ERC20_PERMIT,
   L2_SELF_REGISTRAR_ABI,
-  SELF_STORAGE_ABI,
+  REGISTRAR_STORAGE_ABI,
   REVERSE_REGISTRAR_ABI
 };

@@ -47,6 +47,7 @@ const RegisterStep = {
   REGISTER_RECEIPT: "register_receipt",
   SELF_CLAIM: "self_claim",
   SELF_VERIFIED: "self_verified",
+  SELF_MAXIMUM_CLAIMED: "self_maximum_claimed",
   SUCCESS: "success",
 } as const;
 
@@ -98,11 +99,39 @@ function RegisterNew() {
     registerERC20,
     claimWithSelf,
     isSelfVerified,
+    getSelfClaimCount
   } = useRegistrar();
   const { showTransactionModal, updateTransactionStatus, waitForTransaction, TransactionModal } =
     useTransactionModal();
   const { createSignedPermit } = useERC20Permit({ chainId: L2_CHAIN_ID });
   const { getTokenBalance } = useBalanceCheck();
+  const [selfClaimCount, setSelfClaimCount] = useState<{
+    isChecking: boolean
+    value: number
+  }>({
+    isChecking: true,
+    value: 0
+  })
+
+  useEffect(() => {
+
+    if (address) {
+      getSelfClaimCount(address).then(res => {
+        setSelfClaimCount({
+          isChecking: false,
+          value: Number(res)
+        })
+      }).catch(err => {
+        console.error(err);
+        toast.error("Failed to fetch number of self claimed names")
+        setSelfClaimCount({
+          isChecking: false,
+          value: 999
+        })
+      })
+    }
+
+  },[address])
 
 
   const recordsToAdd = useMemo(() => {
@@ -250,14 +279,24 @@ function RegisterNew() {
   const handleClaimWithSelf = async () => {
     const _verified = await isSelfVerified(address!);
     if (_verified) {
-      setCurrentStep(RegisterStep.SELF_VERIFIED);
+      // Check if user has reached max claim count
+      if (selfClaimCount.value >= ENV.MAX_SELF_CLAIM_COUNT) {
+        setCurrentStep(RegisterStep.SELF_MAXIMUM_CLAIMED);
+      } else {
+        setCurrentStep(RegisterStep.SELF_VERIFIED);
+      }
     } else {
       setCurrentStep(RegisterStep.SELF_CLAIM);
     }
   };
 
   const handleVerificationSuccess = () => {
-    setCurrentStep(RegisterStep.SELF_VERIFIED);
+    // Check if user has reached max claim count
+    if (selfClaimCount.value >= ENV.MAX_SELF_CLAIM_COUNT) {
+      setCurrentStep(RegisterStep.SELF_MAXIMUM_CLAIMED);
+    } else {
+      setCurrentStep(RegisterStep.SELF_VERIFIED);
+    }
   };
 
   const handleVerificationError = (error: any) => {
@@ -782,6 +821,16 @@ function RegisterNew() {
                 >
                   You can now claim this name for free
                 </Text>
+                {!selfClaimCount.isChecking && (
+                  <Text
+                    size="sm"
+                    weight="normal"
+                    color="gray"
+                    className="success-subtitle mt-1"
+                  >
+                    Claims used: {selfClaimCount.value}/{ENV.MAX_SELF_CLAIM_COUNT}
+                  </Text>
+                )}
               </div>
 
               {/* Add Profile and Claim buttons */}
@@ -817,6 +866,40 @@ function RegisterNew() {
                     </Text>
                   </Button>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Self Maximum Claimed step */}
+          {currentStep === RegisterStep.SELF_MAXIMUM_CLAIMED && (
+            <div className="form-group">
+              {/* Warning message */}
+              <div className="maximum-claimed-warning">
+                <Text size="lg" weight="semibold" color="black">
+                  Maximum Claims Reached
+                </Text>
+                <Text
+                  size="sm"
+                  weight="normal"
+                  color="gray"
+                  className="warning-subtitle"
+                >
+                  You have claimed the maximum number of names {`${selfClaimCount.value}/${ENV.MAX_SELF_CLAIM_COUNT}`}. 
+                  Please register additional names using the standard registration process.
+                </Text>
+              </div>
+
+              {/* Back button */}
+              <div className="button-row">
+                <Button
+                  onClick={() => setCurrentStep(RegisterStep.PRICING)}
+                  variant="secondary"
+                  className="back-button"
+                >
+                  <Text size="base" weight="medium" color="black">
+                    Back
+                  </Text>
+                </Button>
               </div>
             </div>
           )}

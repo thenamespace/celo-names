@@ -9,11 +9,13 @@ interface TransactionPendingProps {
   status: TransactionStatus;
   transactionHash?: string;
   onClose: () => void;
+  successMessage?: string
 }
 
 const CELOSCAN_BASE_URL = 'https://celoscan.io/tx/';
+const DEFAULT_SUCCESS_MESSAGE = "Your CELO name has been registered successfully"
 
-export default function TransactionPending({ status, transactionHash, onClose }: TransactionPendingProps) {
+export default function TransactionPending({ status, transactionHash, onClose, successMessage }: TransactionPendingProps) {
 
   const getStatusContent = () => {
     switch (status) {
@@ -32,7 +34,7 @@ export default function TransactionPending({ status, transactionHash, onClose }:
         return {
           icon: <CheckCircle size={48} color="#35D07F" />,
           title: "Transaction Successful!",
-          description: "Your CELO name has been registered successfully",
+          description: successMessage || DEFAULT_SUCCESS_MESSAGE,
           showButton: true
         };
       case 'failed':
@@ -85,8 +87,9 @@ export default function TransactionPending({ status, transactionHash, onClose }:
               variant="primary"
               onClick={onClose}
               className="close-button"
+              style={{ width: "100%"}}
             >
-              <Text size="base" weight="medium" color="red">
+              <Text size="base" weight="medium">
                 {status === 'success' ? 'Continue' : 'Try Again'}
               </Text>
             </Button>

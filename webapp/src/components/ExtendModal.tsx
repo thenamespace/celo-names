@@ -55,7 +55,7 @@ export default function ExtendModal({
     renewERC20,
   } = useRegistrar();
   const { showTransactionModal, updateTransactionStatus, waitForTransaction, TransactionModal } =
-    useTransactionModal();
+    useTransactionModal("You name has been extended succesfully");
   const { createSignedPermit } = useERC20Permit({ chainId: L2_CHAIN_ID });
 
   // Check price when duration or currency changes
@@ -63,14 +63,14 @@ export default function ExtendModal({
     if (nameLabel && durationInYears > 0) {
       checkNamePrice(nameLabel, selectedCurrency);
     }
-  }, [nameLabel, durationInYears, selectedCurrency]);
+  }, [nameLabel, selectedCurrency]);
 
   const checkNamePrice = async (label: string, currency?: PaymentToken) => {
     const tokenToUse = currency || selectedCurrency;
     setNamePrice({ ...namePrice, isChecking: true });
     
     try {
-      const _price = await rentPrice(label, durationInYears, tokenToUse.address);
+      const _price = await rentPrice(label, 1, tokenToUse.address);
       const parsedPrice = Number(formatUnits(_price, tokenToUse.decimals));
       setNamePrice({
         ...namePrice,
@@ -142,6 +142,8 @@ export default function ExtendModal({
       handleContractErr(err);
       setIsWaitingWallet(false);
       return;
+    } finally {
+      setIsWaitingWallet(false)
     }
 
     await waitForTransactionWithSuccess(_tx);
