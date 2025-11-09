@@ -146,7 +146,7 @@ contract L2SelfRegistrar is SelfVerificationRoot, Ownable, ERC721Holder {
         }
 
         // Check if user claimed max amount of free names
-        if (registrarStorage.claimed(_msgSender()) >= maximumClaim) {
+        if (registrarStorage.claimCount(_msgSender()) >= maximumClaim) {
             revert MaximumNamesClaimed();
         }
 

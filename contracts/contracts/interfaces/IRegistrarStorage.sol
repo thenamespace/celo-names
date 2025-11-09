@@ -72,7 +72,7 @@ interface IRegistrarStorage {
      * @param user The address of the user
      * @return The number of names claimed by the user
      */
-    function claimed(address user) external view returns (uint256);
+    function claimCount(address user) external view returns (uint256);
 
     /**
      * @notice Checks if a verification ID has been claimed
@@ -82,11 +82,11 @@ interface IRegistrarStorage {
     function claimedVerifications(uint256 verificationId) external view returns (bool);
 
     /**
-     * @notice Checks if a name has been claimed
+     * @notice Checks if a name has been claimed via self protocol
      * @param namehash The namehash of the name to check
      * @return True if the name has been claimed, false otherwise
      */
-    function names(bytes32 namehash) external view returns (bool);
+    function verifiedNames(bytes32 namehash) external view returns (bool);
 
     /**
      * @notice Checks if a user has completed verification
@@ -100,5 +100,10 @@ interface IRegistrarStorage {
     function isBlacklisted(string calldata label) external view returns (bool);
 
     function whitelistEnabled() external view returns(bool);
+
+    function isClaimedViaSelf(
+    address user,
+    bytes32 nodehash
+  ) external view returns (bool);
 }
 
