@@ -48,7 +48,7 @@ describe('L2Registry - Setup', () => {
     const contractOwner = await registryContract.read.owner();
     const tokenName: string = await registryContract.read.name();
     const tokenSymbol: string = await registryContract.read.symbol();
-    const metadataUri: string = await registryContract.read.metadataUri();
+    const metadataUri: string = await registryContract.read.metadataUrl();
 
     // You can now use these with proper type checking
     expect(contractOwner.toLowerCase()).to.equal(

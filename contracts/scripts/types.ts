@@ -34,6 +34,7 @@ export interface RegistrarConfig {
   min_label_len: bigint;
   max_label_len: bigint;
   allowed_stablecoins: Address[]
+  self_verified_fee: bigint
 }
 
 /**

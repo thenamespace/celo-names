@@ -243,11 +243,11 @@ describe('RegistrarStorage - Access Control', () => {
       ).to.not.be.reverted;
 
       // Verify claim count was incremented
-      const claimCount = await storage.read.claimed([user01.account.address]);
+      const claimCount = await storage.read.claimCount([user01.account.address]);
       expect(claimCount).to.equal(1n);
 
       // Verify name was marked as claimed
-      const isNameClaimed = await storage.read.names([namehash]);
+      const isNameClaimed = await storage.read.verifiedNames([namehash]);
       expect(isNameClaimed).to.be.true;
 
       // Non-registrar should not be able to claim
@@ -347,28 +347,28 @@ describe('RegistrarStorage - Access Control', () => {
       const namehash3 = namehash('name3.eth');
 
       // Initial count should be 0
-      let claimCount = await storage.read.claimed([user01.account.address]);
+      let claimCount = await storage.read.claimCount([user01.account.address]);
       expect(claimCount).to.equal(0n);
 
       // First claim
       await storage.write.claim([user01.account.address, namehash1], {
         account: registrar.account,
       });
-      claimCount = await storage.read.claimed([user01.account.address]);
+      claimCount = await storage.read.claimCount([user01.account.address]);
       expect(claimCount).to.equal(1n);
 
       // Second claim
       await storage.write.claim([user01.account.address, namehash2], {
         account: registrar.account,
       });
-      claimCount = await storage.read.claimed([user01.account.address]);
+      claimCount = await storage.read.claimCount([user01.account.address]);
       expect(claimCount).to.equal(2n);
 
       // Third claim
       await storage.write.claim([user01.account.address, namehash3], {
         account: registrar.account,
       });
-      claimCount = await storage.read.claimed([user01.account.address]);
+      claimCount = await storage.read.claimCount([user01.account.address]);
       expect(claimCount).to.equal(3n);
     });
 
@@ -381,8 +381,8 @@ describe('RegistrarStorage - Access Control', () => {
       const namehash2 = keccak256(toBytes('notclaimed.eth'));
 
       // Names should not be claimed initially
-      let isClaimed1 = await storage.read.names([namehash1]);
-      let isClaimed2 = await storage.read.names([namehash2]);
+      let isClaimed1 = await storage.read.verifiedNames([namehash1]);
+      let isClaimed2 = await storage.read.verifiedNames([namehash2]);
       expect(isClaimed1).to.be.false;
       expect(isClaimed2).to.be.false;
 
@@ -392,8 +392,8 @@ describe('RegistrarStorage - Access Control', () => {
       });
 
       // First name should be claimed, second should not
-      isClaimed1 = await storage.read.names([namehash1]);
-      isClaimed2 = await storage.read.names([namehash2]);
+      isClaimed1 = await storage.read.verifiedNames([namehash1]);
+      isClaimed2 = await storage.read.verifiedNames([namehash2]);
       expect(isClaimed1).to.be.true;
       expect(isClaimed2).to.be.false;
     });
@@ -417,8 +417,8 @@ describe('RegistrarStorage - Access Control', () => {
       });
 
       // Each user should have 1 claim
-      const user01Claims = await storage.read.claimed([user01.account.address]);
-      const user02Claims = await storage.read.claimed([user02.account.address]);
+      const user01Claims = await storage.read.claimCount([user01.account.address]);
+      const user02Claims = await storage.read.claimCount([user02.account.address]);
       expect(user01Claims).to.equal(1n);
       expect(user02Claims).to.equal(1n);
     });

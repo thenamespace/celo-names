@@ -25,6 +25,7 @@ struct RegistrarCfg {
   uint256 min_label_len;
   uint256 max_label_len;
   address[] allowed_stablecoins;
+  uint256 self_verified_fee;
 }
 
 struct SelfRegistrarCfg {
@@ -77,6 +78,7 @@ contract L2RegistrarDeployer {
     // Configure ENS Fees
     _registrar.setEnsTreasury(registrar_cfg.ensTreasury);
     _registrar.setEnsTreasuryFeePercent(registrar_cfg.ensTreasuryFee);
+    _registrar.setSelfVerifiedFee(registrar_cfg.self_verified_fee);
     registrar = address(_registrar);
 
     // Deploy SELF Registrar

@@ -52,7 +52,7 @@ contract L2Registry is ERC721, L2Resolver, IL2Registry, RegistrarControl {
     bytes32 public immutable rootNode;
 
     /// @notice Base metadata URI for token metadata.
-    string public metadataUri;
+    string public metadataUrl;
 
     /// @notice Variable to keep track of the number of issued subnames at any level.
     uint256 public totalSupply;
@@ -84,7 +84,12 @@ contract L2Registry is ERC721, L2Resolver, IL2Registry, RegistrarControl {
     ///
     /// @param node The namehash of the revoked subdomain.
     /// @param admin The address of the admin who revoked the subdomain.
-    event NameRevoked(bytes32 indexed node, address indexed admin);
+    event NameRevoked(bytes32 indexed node, address admin);
+
+    /// @notice Emitted when the metadata URL is updated.
+    ///
+    /// @param metadataUrl The new metadata URI.
+    event MetadataUrlUpdated(string metadataUrl);
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
     /*                        IMPLEMENTATION                      */
@@ -98,17 +103,17 @@ contract L2Registry is ERC721, L2Resolver, IL2Registry, RegistrarControl {
     ///                  Contract doesn't enforce rootName == namehash(rootName),
     ///                  _rootNode should match namehash(_rootName).
     /// @param _rootNode The namehash of parent ENS name (e.g., namehash("celo.eth")).
-    /// @param _metadataUri Base metadata URI for token metadata.
+    /// @param _metadataUrl Base metadata URI for token metadata.
     constructor(
         string memory tokenName,
         string memory tokenSymbol,
         string memory _rootName,
         bytes32 _rootNode,
-        string memory _metadataUri
+        string memory _metadataUrl
     ) ERC721(tokenName, tokenSymbol) {
         rootNode = _rootNode;
         names[_rootNode] = _rootName;
-        metadataUri = _metadataUri;
+        metadataUrl = _metadataUrl;
     }
 
     /// @notice Creates a new subdomain with optional resolver data.
@@ -189,19 +194,6 @@ contract L2Registry is ERC721, L2Resolver, IL2Registry, RegistrarControl {
         emit ExpiryUpdated(node, expiry);
     }
 
-    /// @notice Revokes a subdomain, burning the NFT and clearing all records.
-    ///
-    /// @dev Permanently removes a subdomain from the registry. This action cannot be undone.
-    ///
-    /// @param node The node hash of the subdomain to revoke.
-    ///
-    /// Requirements:
-    /// - Caller must be the contract owner.
-    function revoke(bytes32 node) external onlyOwner {
-        _revoke(node);
-        emit NameRevoked(node, _msgSender());
-    }
-
     /// @notice Returns a string representation of the name for a given node.
     ///
     /// @param node The node hash to look up.
@@ -228,6 +220,36 @@ contract L2Registry is ERC721, L2Resolver, IL2Registry, RegistrarControl {
     /// @return The nodehash of the label under the parent.
     function nodehash(string calldata label, bytes32 parentNode) public pure returns (bytes32) {
         return _nodehash(label, parentNode);
+    }
+
+    /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+    /*                    OWNER FUNCTIONS                         */
+    /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+    /// @notice Revokes a subdomain, burning the NFT and clearing all records.
+    ///
+    /// @dev Permanently removes a subdomain from the registry. This action cannot be undone.
+    ///
+    /// @param node The node hash of the subdomain to revoke.
+    ///
+    /// Requirements:
+    /// - Caller must be the contract owner.
+    function revoke(bytes32 node) external onlyOwner {
+        _revoke(node);
+        emit NameRevoked(node, _msgSender());
+    }
+
+    /// @notice Updates the base metadata URL for token metadata.
+    ///
+    /// @dev Allows the contract owner to update the metadata URI used for token metadata.
+    ///
+    /// @param _metadataUrl The new base metadata URI.
+    ///
+    /// Requirements:
+    /// - Caller must be the contract owner.
+    function setMetadataUrl(string memory _metadataUrl) external onlyOwner {
+        metadataUrl = _metadataUrl;
+        emit MetadataUrlUpdated(_metadataUrl);
     }
 
     /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -431,6 +453,6 @@ contract L2Registry is ERC721, L2Resolver, IL2Registry, RegistrarControl {
             revert TokenDoesNotExist();
         }
 
-        return string.concat(metadataUri, "/", name);
+        return string.concat(metadataUrl, "/", name);
     }
 }

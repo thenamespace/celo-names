@@ -383,7 +383,7 @@ contract L2Registrar is
         uint64 durationInYears,
         address paymentToken
     ) internal view returns (uint256) {
-        uint256 price = _getPriceForLabel(label);
+        uint256 price = _getPriceForLabel(label, _isSelfClaimedName(label));
 
         if (paymentToken == NATIVE_TOKEN_ADDRESS) {
             return _convertToNativePrice(price * durationInYears);
@@ -435,5 +435,9 @@ contract L2Registrar is
     function _toExpiry(uint64 expiryInYears) internal view returns (uint64) {
         uint64 expiry = expiryInYears * SECONDS_IN_YEAR;
         return uint64(block.timestamp + expiry);
+    }
+
+    function _isSelfClaimedName(string memory label) internal view returns(bool) {
+        return registrarStorage.isClaimedViaSelf(_msgSender(), registry.nodehash(label));
     }
 }
