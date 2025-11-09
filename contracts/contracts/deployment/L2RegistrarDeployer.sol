@@ -48,9 +48,7 @@ contract L2RegistrarDeployer {
   ) {
     // Deploy registrar storage
     RegistrarStorage _storage = new RegistrarStorage();
-    _storage.setWhitelistEnabled(storage_cfg.whitelist_enabled);
     _storage.setBlacklist(storage_cfg.blacklist, true, false);
-    _storage.setWhitelist(storage_cfg.whitelist, true, false);
 
     registrarStorage = address(_storage);
 
