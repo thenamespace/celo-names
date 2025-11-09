@@ -2,9 +2,9 @@ import { useState } from "react";
 import Modal from "@components/Modal";
 import TransactionPending from "@components/TransactionPending";
 import { sleep } from "@/utils";
-import type{ Hash } from "viem";
+import type { Hash } from "viem";
 
-export type TransactionStatus = 'pending' | 'success' | 'failed';
+export type TransactionStatus = "pending" | "success" | "failed";
 
 export const retry_count = 3;
 
@@ -14,33 +14,33 @@ interface TransactionModalState {
   transactionHash?: string;
 }
 
-export const useTransactionModal = () => {
+export const useTransactionModal = (successMessage?: string) => {
   const [modalState, setModalState] = useState<TransactionModalState>({
     isOpen: false,
-    status: 'pending',
-    transactionHash: undefined
+    status: "pending",
+    transactionHash: undefined,
   });
 
   const showTransactionModal = (transactionHash?: string) => {
     setModalState({
       isOpen: true,
-      status: 'pending',
-      transactionHash
+      status: "pending",
+      transactionHash,
     });
   };
 
   const updateTransactionStatus = (status: TransactionStatus) => {
-    setModalState(prev => ({
+    setModalState((prev) => ({
       ...prev,
-      status
+      status,
     }));
   };
 
   const closeTransactionModal = () => {
     setModalState({
       isOpen: false,
-      status: 'pending',
-      transactionHash: undefined
+      status: "pending",
+      transactionHash: undefined,
     });
   };
 
@@ -64,6 +64,7 @@ export const useTransactionModal = () => {
         status={modalState.status}
         transactionHash={modalState.transactionHash}
         onClose={closeTransactionModal}
+        successMessage={successMessage}
       />
     </Modal>
   );
@@ -75,6 +76,6 @@ export const useTransactionModal = () => {
     waitForTransaction,
     TransactionModal,
     isOpen: modalState.isOpen,
-    status: modalState.status
+    status: modalState.status,
   };
 };

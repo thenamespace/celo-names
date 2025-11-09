@@ -360,3 +360,17 @@
   align-items: center;
   gap: 8px;
 }
+
+.maximum-claimed-warning {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 2rem;
+  background: linear-gradient(135deg, #fefce8 0%, #fef9c3 100%);
+  border: 1px solid #facc15;
+  border-radius: 16px;
+}
+
+.warning-subtitle {
+  margin-top: 0.75rem;
+  line-height: 1.5;
+}
