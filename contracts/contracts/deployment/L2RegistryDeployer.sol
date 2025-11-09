@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import {L2Registry} from '../L2Registry.sol';
+import {CeloNames} from '../CeloNames.sol';
 
 struct RegistryCfg {
   string name;
@@ -19,7 +19,7 @@ contract L2RegistryDeployer {
     address owner
   ) {
     // Deploy l2 registry
-    L2Registry _registry = new L2Registry(
+    CeloNames _registry = new CeloNames(
       registry_cfg.name,
       registry_cfg.symbol,
       registry_cfg.ens_name,
