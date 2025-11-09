@@ -33,11 +33,7 @@ const BLACKLIST: Hash[] = [
   labelhash('damb'),
 ];
 
-const WHITELIST: Address[] = [
-  '0x035eBd096AFa6b98372494C7f08f3402324117D3',
-  '0x1d84ad46f1ec91b4bb3208f645ad2fa7abec19f8',
-  '0x7a1439668d09735576817fed278d6e414dcf8c19',
-];
+const WHITELIST: Address[] = [];
 const USDC_TOKEN_ADDRESS = '0xcebA9300f2b948710d2653dD7B07f33A8B32118C';
 const USDT_TOKEN_ADDRESS = '0x48065fbbe25f71c9282ddf5e1cd6d6a887483d5e';
 const CUSD_TOKEN_ADDRESS = '0x765DE816845861e75A25fCA122bb6898B8B1282a';
@@ -58,7 +54,7 @@ const registryConfig: RegistryConfig = {
 
 const storageConfig: StorageConfig = {
   blacklist: BLACKLIST,
-  whitelist_enabled: true,
+  whitelist_enabled: false,
   whitelist: WHITELIST,
 };
 

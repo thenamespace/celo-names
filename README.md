@@ -1,44 +1,43 @@
-A home for CELO usernames
+# Celo Usernames
 
-1. Contracts
-We need:
-  - L1 Contracts
-     Resolver that supports CCIP-read ( the same one we ENS uses )
-     For starters, it doesn't need to be unruggable, we can always update it in the future
-  - L2 Contracts
-    1. Registry/Resolver -> contract which will store subname NFTS and name records, i am still thinking if they need to be separate contracts or the same ( ex. Durin ). Subnames need to be expirable and revokable
-    2. MintController. -> Has minting logic, prices, token gating, reservations ETC.
+A ENS based naming system for the Celo network, enabling users to register and manage human-readable subnames under the `celo.eth` parent domain.
 
-2. CCIP-gatway
-  Offchain server responsible for resolving CCIP requests
+## Components
 
-3. Indexer
-  A service for indexing l2 subnames, we can use ponder, the graph, subsquid or we can write our own
+### [Contracts](./contracts/)
 
-4. Metadata service -> We need something to create NFT images
+Smart contracts for L1 (Ethereum) and L2 (Celo) including Registry, Resolver, Registrar, and SelfRegistrar contracts.
 
-5. Frontend -> Simple frontend app which will show all this
+**Deployed Contracts:**
+```
+registry: 0x8fDA856EF4691A9A2ac57e28eC313c9b8A12dD79
+registrar: 0xcd8342EDDFc87BB1C5904f794C34cbCc91f1c57c
+selfRegistrar: 0x5F8268DB98f4AB54649AF562811C388D85429e5f
+storage: 0x4fd8CA373a13f61c46f5B42cf57a9877516F1B76
+```
 
-We will first do a POC with "celoo.eth" name
+### [Gateway](./gateway/)
 
-## Gateway:
+CCIP-read gateway server for off-chain name resolution. Handles cross-chain resolution requests from Ethereum to Celo.
 
-Deployed at -> https://celo-gateway.namespace.ninja
+Deployed at: https://celo-gateway.namespace.ninja
 
-## Contracts:
+### [Indexer](./indexer/)
 
-Contracts deployed at: {
-  registry: 0x9F22e723Bb51B42B551955176b212dbD073D6227
-  registrar: '0x9D5Def4994480E8Ba459c397F72Ee45da3621FbD',
-  selfRegistrar: '0x8760E1C47CCB065505A52b2b44a20EB7614D2a30',
-  storage: '0x882d9369F4E5979BC6e53eA81564553d4F91Eb5A'
-}
+Blockchain event indexer using Ponder. Indexes contract events and provides a queryable API for names and records.
 
+Deployed at: https://celo-indexer.namespace.ninja
 
-## Indexer/Metadata
+### [Metadata](./metadata/)
 
-Indexer created and deployed at -> https://celo-indexer.namespace.ninja
+NFT metadata image generation service. Generates dynamic images for registered names.
 
-## Webapp
+### [Webapp](./webapp/)
 
-Webapp created 60-70% and deployed at -> https://webapp-738104270314.europe-west1.run.app/
+React frontend for registering names, managing resolver records, and transferring ownership.
+
+Deployed at: https://webapp-738104270314.europe-west1.run.app/
+
+## Parent Domain
+
+All subnames are registered under `celoo.eth` (e.g., `alice.celoo.eth`).
