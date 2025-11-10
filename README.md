@@ -10,10 +10,10 @@ Smart contracts for L1 (Ethereum) and L2 (Celo) including Registry, Resolver, Re
 
 **Deployed Contracts:**
 ```
-registry: 0x8fDA856EF4691A9A2ac57e28eC313c9b8A12dD79
-registrar: 0xcd8342EDDFc87BB1C5904f794C34cbCc91f1c57c
-selfRegistrar: 0x5F8268DB98f4AB54649AF562811C388D85429e5f
-storage: 0x4fd8CA373a13f61c46f5B42cf57a9877516F1B76
+CeloNames Registry: 0x4d7912779679AFdC592CBd4674b32Fcb189395F7
+Multicoin Registrar: 0x9Eb22700eFa1558eb2e0E522eB1DECC8025C3127
+Self Verification Registrar: 0x063E9F0bA0061F6C3c6169674c81f43BE21fe8cc
+Registrar Storage: 0xaAF67A46b99bE9a183580Cd86236cd0c6f2a85cb
 ```
 
 ### [Gateway](./gateway/)
@@ -40,4 +40,4 @@ Deployed at: https://webapp-738104270314.europe-west1.run.app/
 
 ## Parent Domain
 
-All subnames are registered under `celoo.eth` (e.g., `alice.celoo.eth`).
+All subnames are registered under `celo.eth` (e.g., `alice.celo.eth`).
