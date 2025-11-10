@@ -52,7 +52,7 @@ abstract contract NativePayments is Ownable {
     /// @param price The required price in wei for the registration.
     function _collectFunds(uint256 price) internal {
         if (msg.value < price) {
-            revert InsufficientFunds(price, msg.value);
+            revert InsufficientFunds(msg.value, price);
         }
 
         if (price == 0) {
