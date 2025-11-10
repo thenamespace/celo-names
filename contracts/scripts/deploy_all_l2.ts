@@ -1,4 +1,4 @@
-import { Address, Hash, labelhash, namehash } from 'viem';
+import { Address, namehash } from 'viem';
 import {
   RegistrarConfig,
   RegistryConfig,
@@ -6,34 +6,35 @@ import {
   StorageConfig,
 } from './types';
 import { viem } from 'hardhat';
+import { getBlackList } from './blacklist';
 
 // CELO Mainnet parameters
 
 export const CONTRACT_OWNER: Address =
   '0x7a1439668d09735576817fed278d6e414dcf8c19';
-export const CELO_TREASURY: Address =
-  '0x7a1439668d09735576817fed278d6e414dcf8c19';
-export const ENS_TREASURY: Address =
-  '0xa0a834ade578f87ae0a34b51ffd0e1e2850a15aa';
+
+export const CONTRACT_OWNER_MULTISIG: Address = "0xd3268C4f8C2e44b02FE7E6A6a7Fb1902e51F4248"
+
+// CELO Treasury wallet for receiving registration/renewal fees
+export const CELO_OFFICIAL_TREASURY: Address =
+  '0x7A1E98FC9a008107DbD1f430a05Ace8cf6f3FE19';
+
+// ENS Treasury wallet on Celo for receiving fees
+export const ENS_MULTISIG_TREASURY: Address =
+  '0xcb2C613415e254477E39F1640eC6fC1414634F9E';
+
 export const USD_STABLE_ORACLE = '0x0568fD19986748cEfF3301e55c0eb1E729E0Ab7e';
-export const ENS_FEES_PERCENT = 10;
+export const ENS_FEES_PERCENT = 1000; // equivalent to 10%, we use 1-10000
 export const CENT_MULTIPLIER = 100n;
 export const SELF_UNIVERSAL_VERIFIER =
   '0xe57F4773bd9c9d8b6Cd70431117d353298B9f5BF';
-export const SELF_SCOPE_SEED = 'celo-test-names';
+export const SELF_SCOPE_SEED = 'celo-names';
 
 // Self verified users can claim 3 names
 // this should be 1 when we go with celo
-export const SELF_MAX_CLAIM = 3n;
+export const SELF_MAX_CLAIM = 1n;
 
-const BLACKLIST: Hash[] = [
-  labelhash('offensive'),
-  labelhash('badname'),
-  labelhash('bad'),
-  labelhash('damb'),
-];
-
-const WHITELIST: Address[] = [];
+// Stablecoin addresses on CELO
 const USDC_TOKEN_ADDRESS = '0xcebA9300f2b948710d2653dD7B07f33A8B32118C';
 const USDT_TOKEN_ADDRESS = '0x48065fbbe25f71c9282ddf5e1cd6d6a887483d5e';
 const CUSD_TOKEN_ADDRESS = '0x765DE816845861e75A25fCA122bb6898B8B1282a';
@@ -45,42 +46,44 @@ const STABLECOINS: Address[] = [
 ];
 
 const registryConfig: RegistryConfig = {
-  name: 'Celo ENS',
-  symbol: 'ENS',
-  ens_name: 'celoo.eth',
-  ens_nodehash: namehash('celoo.eth'),
+  name: 'Celonames',
+  symbol: 'CENS',
+  ens_name: 'celo.eth',
+  ens_nodehash: namehash('celo.eth'),
   metadata_uri: 'https://celo-metadata.namespace.ninja/metadata',
 };
 
 const storageConfig: StorageConfig = {
-  blacklist: BLACKLIST,
+  blacklist: getBlackList(),
   whitelist_enabled: false,
-  whitelist: WHITELIST,
+  whitelist: [],
 };
 
 const registrarConfig: RegistrarConfig = {
   usdOracle: USD_STABLE_ORACLE,
-  treasury: CELO_TREASURY,
-  ensTreasury: ENS_TREASURY,
-  ensTreasuryFee: 1000, // equals to 10% fee
-  // Base price is 5 dolar
-  base_price: 5n * 100n,
+  treasury: CELO_OFFICIAL_TREASURY,
+  ensTreasury: ENS_MULTISIG_TREASURY,
+  ensTreasuryFee: ENS_FEES_PERCENT, // equals to 10% fee
+  // Base price is 1 dollar
+  base_price: 1n * CENT_MULTIPLIER,
   // The testing pirces
   // 3 letter - 500$, 4 letter - 250$, 5 letter - 120$,
   // 7 letter -> 1$, 8 letter -> 0.1$, 9 letter -> 0.01$, 10 letter free
-  label_lengths: [3n, 4n, 5n, 7n, 8n, 9n, 10n],
+  label_lengths: [3n, 4n, 5n, 6n, 7n, 8n, 9n],
   label_prices: [
-    500n * CENT_MULTIPLIER,
-    250n * CENT_MULTIPLIER,
-    120n * CENT_MULTIPLIER,
-    1n * CENT_MULTIPLIER,
-    10n,
-    1n,
-    0n,
+    400n * CENT_MULTIPLIER,
+    160n * CENT_MULTIPLIER,
+    50n * CENT_MULTIPLIER,
+    5n * CENT_MULTIPLIER,
+    5n * CENT_MULTIPLIER,
+    5n * CENT_MULTIPLIER,
+    5n * CENT_MULTIPLIER,
   ],
   min_label_len: 3n,
-  max_label_len: 64n,
+  max_label_len: 128n,
   allowed_stablecoins: STABLECOINS,
+
+  // Names claimed via self protocol have 1 cent renewal fee per year
   self_verified_fee: 1n // 1 cent renewal fee
 };
 
@@ -143,3 +146,4 @@ main().catch((error) => {
   console.error(error);
   process.exit(1);
 });
+

@@ -1,6 +1,6 @@
 import { viem } from "hardhat";
 
-const ROOT_NAME = "celoo.eth";
+const ROOT_NAME = "celo.eth";
 const NAME_WRAPPER_ADDRESS = "0xD4416b13d2b3a9aBae7AcD5D6C2BbDBE25686401"
 const CCIP_GATEWAY_URL = "https://celo-gateway.namespace.ninja/resolver/{sender}/{data}";
 const GATEWAY_SIGNER_ADDRESS = "0x510aC6D3334C5a009B25ac4cc74f28d70715ea01";

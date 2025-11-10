@@ -6,9 +6,11 @@ const L2_REGISTRY_ABI = parseAbi([
 
   "event ExpiryUpdated(bytes32 indexed node, uint256 expiry)",
 
-  'event NameRevoked(bytes32 indexed node, address indexed admin)',
+  'event NameRevoked(bytes32 indexed node, address admin)',
 
-  'event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)'
+  'event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)',
+
+  'event NewOwner(bytes32 node, address newOwner)'
 ]);
 
 export default L2_REGISTRY_ABI;

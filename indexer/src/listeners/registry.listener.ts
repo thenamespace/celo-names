@@ -1,7 +1,7 @@
 import { ponder } from "ponder:registry";
 import { name } from "ponder:schema";
 import { getEnvironment } from "../env";
-import { toBytes, toHex, zeroAddress } from "viem";
+import { zeroAddress } from "viem";
 import {CONTRACTS} from "../contracts";;
 
 const env = getEnvironment();
@@ -53,7 +53,7 @@ export class RegistryListener {
       });
 
       if (!existingName?.id) {
-        console.log("Cannot set expiry for name that doesn't exist");
+        console.warn("Cannot set expiry for name that doesn't exist");
       } else {
         await db.update(name, { id: node }).set({ expiry: expiry });
       }
@@ -70,23 +70,24 @@ export class RegistryListener {
   }
 
   private async handleNameTransfered() {
-    ponder.on("Registry:Transfer", async ({ context, event }) => {
-      const { to, tokenId } = event.args;
+     ponder.on("Registry:NewOwner", async ({ context, event }) => {
+      const { node, newOwner } = event.args;
       const { db } = context;
 
       const internalOwners = [zeroAddress, CONTRACTS.L2_REGISTRAR, CONTRACTS.L2_SELF_REGISTRAR];
       const isInternalOwner = internalOwners
-          .find(o => o.toLocaleLowerCase() === to.toLocaleLowerCase());
+          .find(o => o.toLocaleLowerCase() === newOwner.toLocaleLowerCase());
 
       if (isInternalOwner) {
         return;
       }
 
-      const node: string = toHex(toBytes(tokenId));
-
       try {
-          await db.update(name, { id: node }).set({ owner: to });
-      } catch(err) {} 
+          await db.update(name, { id: node }).set({ owner: newOwner });
+      } catch(err) {
+        console.error("Failed to handle NewOwner event", err);
+      } 
     });
   }
+
 }
