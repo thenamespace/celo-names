@@ -50,7 +50,7 @@ jobs:
 
       - name: Create .htpasswd file
         run: |
-          echo "${{ secrets.WEBAPP_CREDS }}" > ./webapp/.htpasswd
+          printf '%s\n' "${{ secrets.WEBAPP_CREDS }}" > ./webapp/.htpasswd
 
       - name: Build Docker image
         run: |
