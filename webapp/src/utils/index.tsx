@@ -29,8 +29,8 @@ export const sleep = (ms: number): Promise<void> => {
   return new Promise((resolve) => setTimeout(resolve, ms));
 };
 
-export const truncateAddress = (address: string): string => {
-  return `${address.slice(0, 6)}...${address.slice(-4)}`;
+export const truncateAddress = (address: string, len: number = 5): string => {
+  return `${address.slice(0, len)}...${address.slice(-len)}`;
 };
 
 export const convertToResolverData = (

@@ -41,6 +41,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
     <>
       {/* Confetti Effect */}
       <Confetti
+        style={{zIndex: 9999}}
         width={windowDimensions.width}
         height={windowDimensions.height}
         recycle={false}
