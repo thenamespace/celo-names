@@ -13,7 +13,8 @@ import { getBlackList } from './blacklist';
 export const CONTRACT_OWNER: Address =
   '0x7a1439668d09735576817fed278d6e414dcf8c19';
 
-export const CONTRACT_OWNER_MULTISIG: Address = "0xd3268C4f8C2e44b02FE7E6A6a7Fb1902e51F4248"
+export const CONTRACT_OWNER_MULTISIG: Address =
+  '0xd3268C4f8C2e44b02FE7E6A6a7Fb1902e51F4248';
 
 // CELO Treasury wallet for receiving registration/renewal fees
 export const CELO_OFFICIAL_TREASURY: Address =
@@ -84,7 +85,7 @@ const registrarConfig: RegistrarConfig = {
   allowed_stablecoins: STABLECOINS,
 
   // Names claimed via self protocol have 1 cent renewal fee per year
-  self_verified_fee: 1n // 1 cent renewal fee
+  self_verified_fee: 1n, // 1 cent renewal fee
 };
 
 const selfRegistrarCfg: SelfRegistrarConfig = {
@@ -146,4 +147,3 @@ main().catch((error) => {
   console.error(error);
   process.exit(1);
 });
-

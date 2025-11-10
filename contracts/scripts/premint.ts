@@ -209,7 +209,7 @@ const reservedNames: string[] = [
 ];
 
 
-const getPremintedLabels = (): string[] => {
+export const getPremintedLabels = (): string[] => {
 
     const uniques: Record<string,boolean> = {}
     reservedNames.forEach(item => {
