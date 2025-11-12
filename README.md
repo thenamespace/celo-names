@@ -36,7 +36,7 @@ NFT metadata image generation service. Generates dynamic images for registered n
 
 React frontend for registering names, managing resolver records, and transferring ownership.
 
-Deployed at: https://webapp-738104270314.europe-west1.run.app/
+Deployed at: [Celonames App](https://names.celo.org/)
 
 ## Parent Domain
 
