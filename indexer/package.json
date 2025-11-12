@@ -9,7 +9,8 @@
     "db": "ponder db",
     "codegen": "ponder codegen",
     "lint": "eslint .",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "serve": "ponder serve"
   },
   "dependencies": {
     "@ensdomains/address-encoder": "^1.1.4",

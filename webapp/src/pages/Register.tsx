@@ -434,7 +434,15 @@ function RegisterNew() {
           selectedCurrency.address
         );
       }
-    } catch (err) {
+    } catch (err: any) {
+
+      if (err.details && typeof err.details === "string") {
+        const errDetails = err.details as string;
+        if (errDetails.includes("User rejected the request")) {
+          setIsWaitingWallet(false)
+          return;
+        }
+      }
 
       const hasEnoughBalance = await hasBalance();
 
@@ -565,6 +573,9 @@ function RegisterNew() {
                   </Text>
                 }
               />
+              {(label.length > 0 && label.length < MIN_NAME_LENGTH) && <div className="mt-2">
+                <Text size="sm" color="gray">Name must contain at least {MIN_NAME_LENGTH} characters</Text>
+              </div> }
 
               {/* Name availability display */}
               {label.length >= MIN_NAME_LENGTH && (
@@ -866,24 +877,17 @@ function RegisterNew() {
                 >
                   {label}.{ENV.PARENT_NAME}
                 </Text>
-                <Text
-                  size="sm"
-                  weight="normal"
-                  color="gray"
-                  className="success-subtitle"
-                >
+                <Text weight="normal" color="gray">
                   You can now claim this name for free
                 </Text>
                 {!selfClaimCount.isChecking && (
-                  <Text
-                    size="sm"
-                    weight="normal"
-                    color="gray"
-                    className="success-subtitle mt-1"
-                  >
+                  <Text weight="bold" color="black">
                     Claims used: {selfClaimCount.value}/{ENV.MAX_SELF_CLAIM_COUNT}
                   </Text>
                 )}
+                <div className="mt-2 claim-expiry-banner">
+                  <Text color="gray" size="xs">Names claimed via Self Verification have 1 year expiry and can be extended for 1 cent per year.</Text>
+                </div>
               </div>
 
               {/* Add Profile and Claim buttons */}
