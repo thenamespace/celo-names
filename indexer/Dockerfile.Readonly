@@ -1,0 +1,26 @@
+# Use Node.js 18 LTS
+FROM node:20-alpine
+
+# Set working directory
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy source code
+COPY . .
+
+# Generate GraphQL schema
+RUN npm run codegen
+
+# Expose port (Ponder default is 42069)
+EXPOSE 42069
+
+# Set environment variables
+ENV NODE_ENV=production
+
+# Start the indexer
+CMD ["npm", "run", "serve"]

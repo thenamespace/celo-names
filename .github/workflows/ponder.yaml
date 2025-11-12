@@ -2,9 +2,13 @@ name: Ponder - Build & Push
 
 on:
   workflow_dispatch:
+    inputs:
+      read-only:
+        description: 'Build read-only Docker image'
+        type: boolean
+        default: false
 
 env:
-  IMAGE_NAME: ponder
   REGION: ${{ secrets.GHEC_REGION }}
   PROJECT_ID: ${{ secrets.GHEC_PROJECT }}
   REPO: ${{ secrets.GHEC_REPOSITORY }}
@@ -35,6 +39,15 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Set image name
+        id: set_image_name
+        run: |
+          if [ "${{ inputs.read-only }}" == "true" ]; then
+            echo "IMAGE_NAME=ponder-readonly" >> $GITHUB_ENV
+          else
+            echo "IMAGE_NAME=ponder" >> $GITHUB_ENV
+          fi
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v1
         with:
@@ -51,7 +64,11 @@ jobs:
       - name: Build Docker image
         run: |
           VERSION=${{ needs.prepare.outputs.version }}
-          docker build -t ${{ env.IMAGE_NAME }}:${VERSION} -f ./indexer/Dockerfile ./indexer
+          if [ "${{ inputs.read-only }}" == "true" ]; then
+            docker build -t ${{ env.IMAGE_NAME }}:${VERSION} -f ./indexer/Dockerfile.Readonly ./indexer
+          else
+            docker build -t ${{ env.IMAGE_NAME }}:${VERSION} -f ./indexer/Dockerfile ./indexer
+          fi
 
       - name: Tag Docker image for Artifact Registry
         run: |
