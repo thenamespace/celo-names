@@ -3,7 +3,7 @@ import { normalize } from "viem/ens";
 import { useAccount, useSwitchChain, usePublicClient } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useNavigate } from "react-router-dom";
-import { Plus, CheckCircle } from "lucide-react";
+import { Plus, CheckCircle, Check, User } from "lucide-react";
 import { toast } from "react-toastify";
 import { ContractFunctionExecutionError, zeroHash, type Hash } from "viem";
 import Text from "@components/Text";
@@ -21,7 +21,7 @@ import { useRegistrar } from "@/hooks/useRegistrar";
 import { useTransactionModal } from "@/hooks/useTransactionModal";
 import { useERC20Permit } from "@/hooks/useERC20Permit";
 import { useBalanceCheck } from "@/hooks/useBalanceCheck";
-import { CELO_TOKEN, L2_CHAIN_ID, type PaymentToken } from "@/constants";
+import { CELO_TOKEN, L2_CHAIN_ID, USDC_TOKEN, type PaymentToken } from "@/constants";
 import { formatUnits } from "viem";
 import { ENV } from "@/constants/environment";
 import { debounce } from "lodash";
@@ -77,6 +77,7 @@ function RegisterNew() {
     paymentToken: CELO_TOKEN,
     price: 0,
   });
+  const [usdcPrice, setUsdcPrice] = useState<number>(0);
   const [durationInYears, setDurationInYears] = useState(1);
   const [selectedCurrency, setSelectedCurrency] =
     useState<PaymentToken>(CELO_TOKEN);
@@ -131,7 +132,7 @@ function RegisterNew() {
       })
     }
 
-  },[address])
+  }, [address])
 
 
   const recordsToAdd = useMemo(() => {
@@ -150,6 +151,17 @@ function RegisterNew() {
       }
     })
     return count;
+  }, [records])
+
+  // Check if profile has been set (has any text records)
+  const hasProfileSet = useMemo(() => {
+    return records.texts.some(text => text.value.length > 0);
+  }, [records])
+
+  // Get avatar from records
+  const avatarUrl = useMemo(() => {
+    const avatarRecord = records.texts.find(text => text.key === 'avatar');
+    return avatarRecord?.value || null;
   }, [records])
 
   // Initialize records with user's address when they connect
@@ -223,6 +235,20 @@ function RegisterNew() {
       price: parsedPrice,
       paymentToken: tokenToUse,
     });
+
+    // Fetch USDC price when CELO is selected
+    if (tokenToUse.name === "CELO") {
+      try {
+        const _usdcPrice = await rentPrice(label, 1, USDC_TOKEN.address);
+        const parsedUsdcPrice = Number(formatUnits(_usdcPrice, USDC_TOKEN.decimals));
+        setUsdcPrice(parsedUsdcPrice);
+      } catch (error) {
+        console.error("Error fetching USDC price:", error);
+        setUsdcPrice(0);
+      }
+    } else {
+      setUsdcPrice(0);
+    }
   };
 
   const handleCurrencyChange = (currency: PaymentToken) => {
@@ -613,6 +639,7 @@ function RegisterNew() {
                 selectedCurrency={selectedCurrency}
                 onCurrencyChange={handleCurrencyChange}
                 price={namePrice.price}
+                usdcPrice={usdcPrice}
                 isCheckingPrice={namePrice.isChecking}
               />
             </div>
@@ -716,19 +743,45 @@ function RegisterNew() {
                   </div>
                 </div>
               </div>
-
-              {/* Set Profile and Back/Register buttons */}
               <div className="button-column mt-3">
-                <Button
-                  onClick={handleAddProfile}
-                  variant="secondary"
-                  className="set-profile-button"
-                >
-                  <Plus size={16} />
-                  <Text size="base" weight="medium" color="black">
-                    Set Profile
-                  </Text>
-                </Button>
+                {!hasProfileSet && (
+                  <Button
+                    onClick={handleAddProfile }
+                    variant="secondary"
+                    className="set-profile-button"
+                  >
+                    <Plus size={16} />
+                    <Text size="base" weight="medium" color="black">
+                      Set Profile
+                    </Text>
+                  </Button>
+                )}
+                {hasProfileSet && (
+                  <div
+                    onClick={handleAddProfile}
+                    className="profile-updated-notification"
+                  >
+                    <div className="profile-updated-avatar-container">
+                      <img
+                        src={avatarUrl ? avatarUrl : "https://avtr.cc/celo/avatar.png"}
+                        alt="Profile"
+                        className="profile-updated-avatar"
+                      />
+
+                    </div>
+                    <div className="profile-updated-text-container">
+                      <Text size="base" weight="semibold" color="black">
+                        Profile updated!
+                      </Text>
+                      <Text size="sm" weight="normal" color="gray">
+                        All set! Finish your registration.
+                      </Text>
+                    </div>
+                    <div className="profile-updated-check-container">
+                      <Check size={20} color="#FFFFFF" />
+                    </div>
+                  </div>
+                )}
                 <div className="button-row">
                   <Button
                     onClick={() => setCurrentStep(RegisterStep.PRICING)}
@@ -849,6 +902,37 @@ function RegisterNew() {
                     Set Profile
                   </Text>
                 </Button>
+                {hasProfileSet && (
+                  <div
+                    onClick={handleAddProfile}
+                    className="profile-updated-notification"
+                  >
+                    <div className="profile-updated-avatar-container">
+                      {avatarUrl ? (
+                        <img
+                          src={avatarUrl}
+                          alt="Profile"
+                          className="profile-updated-avatar"
+                        />
+                      ) : (
+                        <div className="profile-updated-avatar-placeholder">
+                          <User size={20} color="#6B7280" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="profile-updated-text-container">
+                      <Text size="base" weight="semibold" color="black">
+                        Profile updated!
+                      </Text>
+                      <Text size="sm" weight="normal" color="gray">
+                        All set! Finish your registration.
+                      </Text>
+                    </div>
+                    <div className="profile-updated-check-container">
+                      <Check size={20} color="#FFFFFF" />
+                    </div>
+                  </div>
+                )}
                 <div className="button-row">
                   <Button
                     onClick={() => setCurrentStep(RegisterStep.PRICING)}
@@ -888,7 +972,7 @@ function RegisterNew() {
                   color="gray"
                   className="warning-subtitle"
                 >
-                  You have claimed the maximum number of names {`${selfClaimCount.value}/${ENV.MAX_SELF_CLAIM_COUNT}`}. 
+                  You have claimed the maximum number of names {`${selfClaimCount.value}/${ENV.MAX_SELF_CLAIM_COUNT}`}.
                   Please register additional names using the standard registration process.
                 </Text>
               </div>

@@ -78,6 +78,17 @@
   margin-bottom: 0;
 }
 
+.price-value-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  align-items: flex-start;
+}
+
+.usdc-price-text {
+  margin-top: 0.125rem;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .price-row {

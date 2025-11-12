@@ -12,6 +12,7 @@ interface DurationCurrencySelectorProps {
   selectedCurrency: PaymentToken;
   onCurrencyChange: (currency: PaymentToken) => void;
   price: number;
+  usdcPrice?: number;
   isCheckingPrice: boolean;
 }
 
@@ -21,6 +22,7 @@ export default function DurationCurrencySelector({
   selectedCurrency,
   onCurrencyChange,
   price,
+  usdcPrice,
   isCheckingPrice,
 }: DurationCurrencySelectorProps) {
   return (
@@ -74,20 +76,7 @@ export default function DurationCurrencySelector({
       ) : price > 0 ? (
         <div className="price-display">
           <div className="price-row">
-            <div className="price-section">
-              <Text
-                size="sm"
-                weight="normal"
-                color="gray"
-                className="price-label"
-              >
-                Total
-              </Text>
-              <Text size="lg" weight="semibold" color="black">
-                {(price * durationInYears).toFixed(2)}{" "}
-                {selectedCurrency.name}
-              </Text>
-            </div>
+
             <div className="currency-section">
               <Text
                 size="sm"
@@ -101,6 +90,28 @@ export default function DurationCurrencySelector({
                 selectedCurrency={selectedCurrency}
                 onCurrencyChange={onCurrencyChange}
               />
+            </div>
+
+            <div className="price-section">
+              <Text
+                size="sm"
+                weight="normal"
+                color="gray"
+                className="price-label"
+              >
+                Total
+              </Text>
+              <div className="price-value-container">
+                <Text size="lg" weight="semibold" color="black">
+                  {(price * durationInYears).toFixed(2)}{" "}
+                  {selectedCurrency.name}
+                </Text>
+                {selectedCurrency.name === "CELO" && usdcPrice && usdcPrice > 0 && (
+                  <Text size="sm" weight="normal" color="gray" className="usdc-price-text">
+                    ({(usdcPrice * durationInYears).toFixed(2)} USD)
+                  </Text>
+                )}
+              </div>
             </div>
           </div>
         </div>
