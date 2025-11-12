@@ -21,7 +21,7 @@ import { useRegistrar } from "@/hooks/useRegistrar";
 import { useTransactionModal } from "@/hooks/useTransactionModal";
 import { useERC20Permit } from "@/hooks/useERC20Permit";
 import { useBalanceCheck } from "@/hooks/useBalanceCheck";
-import { CELO_TOKEN, L2_CHAIN_ID, type PaymentToken } from "@/constants";
+import { CELO_TOKEN, L2_CHAIN_ID, USDC_TOKEN, type PaymentToken } from "@/constants";
 import { formatUnits } from "viem";
 import { ENV } from "@/constants/environment";
 import { debounce } from "lodash";
@@ -77,6 +77,7 @@ function RegisterNew() {
     paymentToken: CELO_TOKEN,
     price: 0,
   });
+  const [usdcPrice, setUsdcPrice] = useState<number>(0);
   const [durationInYears, setDurationInYears] = useState(1);
   const [selectedCurrency, setSelectedCurrency] =
     useState<PaymentToken>(CELO_TOKEN);
@@ -223,6 +224,20 @@ function RegisterNew() {
       price: parsedPrice,
       paymentToken: tokenToUse,
     });
+    
+    // Fetch USDC price when CELO is selected
+    if (tokenToUse.name === "CELO") {
+      try {
+        const _usdcPrice = await rentPrice(label, 1, USDC_TOKEN.address);
+        const parsedUsdcPrice = Number(formatUnits(_usdcPrice, USDC_TOKEN.decimals));
+        setUsdcPrice(parsedUsdcPrice);
+      } catch (error) {
+        console.error("Error fetching USDC price:", error);
+        setUsdcPrice(0);
+      }
+    } else {
+      setUsdcPrice(0);
+    }
   };
 
   const handleCurrencyChange = (currency: PaymentToken) => {
@@ -602,6 +617,7 @@ function RegisterNew() {
                 selectedCurrency={selectedCurrency}
                 onCurrencyChange={handleCurrencyChange}
                 price={namePrice.price}
+                usdcPrice={usdcPrice}
                 isCheckingPrice={namePrice.isChecking}
               />
             </div>
@@ -705,8 +721,6 @@ function RegisterNew() {
                   </div>
                 </div>
               </div>
-
-              {/* Set Profile and Back/Register buttons */}
               <div className="button-column mt-3">
                 <Button
                   onClick={handleAddProfile}
