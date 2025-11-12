@@ -744,8 +744,7 @@ function RegisterNew() {
                 </div>
               </div>
               <div className="button-column mt-3">
-                {!hasProfileSet && (
-                  <Button
+                <Button
                     onClick={handleAddProfile }
                     variant="secondary"
                     className="set-profile-button"
@@ -755,33 +754,6 @@ function RegisterNew() {
                       Set Profile
                     </Text>
                   </Button>
-                )}
-                {hasProfileSet && (
-                  <div
-                    onClick={handleAddProfile}
-                    className="profile-updated-notification"
-                  >
-                    <div className="profile-updated-avatar-container">
-                      <img
-                        src={avatarUrl ? avatarUrl : "https://avtr.cc/celo/avatar.png"}
-                        alt="Profile"
-                        className="profile-updated-avatar"
-                      />
-
-                    </div>
-                    <div className="profile-updated-text-container">
-                      <Text size="base" weight="semibold" color="black">
-                        Profile updated!
-                      </Text>
-                      <Text size="sm" weight="normal" color="gray">
-                        All set! Finish your registration.
-                      </Text>
-                    </div>
-                    <div className="profile-updated-check-container">
-                      <Check size={20} color="#FFFFFF" />
-                    </div>
-                  </div>
-                )}
                 <div className="button-row">
                   <Button
                     onClick={() => setCurrentStep(RegisterStep.PRICING)}
