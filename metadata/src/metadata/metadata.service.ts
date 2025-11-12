@@ -68,9 +68,6 @@ export class MetadataService implements OnModuleInit {
 		const baseUrl = this.configService.get<string>("BASE_URL");
 		const label = name.split(".")[0] ?? "";
 		return {
-			name,
-			description: "Celo ENS Name",
-			image: `${baseUrl}/metadata/${name}/image`,
 			attributes: [
 				{
 					trait_type: "Length",
@@ -78,6 +75,9 @@ export class MetadataService implements OnModuleInit {
 					value: label.length,
 				},
 			],
+			name,
+			description: "Celo ENS Name",
+			image: `${baseUrl}/metadata/${name}/image`,
 		};
 	}
 
