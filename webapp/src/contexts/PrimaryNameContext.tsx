@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import { mainnet } from "viem/chains";
-import { useAccount, usePublicClient } from "wagmi";
+import { useAccount, useEnsAvatar, usePublicClient } from "wagmi";
 
 interface PrimaryNameContextType {
   primaryName: string | null;
@@ -22,6 +22,7 @@ export function PrimaryNameProvider({ children }: { children: ReactNode }) {
   const [primaryName, setPrimaryName] = useState<string | null>(null);
   const [avatar, setAvatar] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const {} = useEnsAvatar({ name: "artii.eth "})
 
   const fetchPrimaryName = async (cache: boolean = true) => {
     if (!address || !isConnected) {

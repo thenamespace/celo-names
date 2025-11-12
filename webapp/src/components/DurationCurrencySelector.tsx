@@ -75,29 +75,13 @@ export default function DurationCurrencySelector({
         </div>
       ) : price > 0 ? (
         <div className="price-display">
-          <div className="price-row">
-
-            <div className="currency-section">
+          <div className="d-flex justify-content-between">
+          <div className="d-flex flex-column align-items-start">
               <Text
                 size="sm"
+                className="mb-2"
                 weight="normal"
                 color="gray"
-                className="currency-label"
-              >
-                Select token
-              </Text>
-              <CurrencyDropdown
-                selectedCurrency={selectedCurrency}
-                onCurrencyChange={onCurrencyChange}
-              />
-            </div>
-
-            <div className="price-section">
-              <Text
-                size="sm"
-                weight="normal"
-                color="gray"
-                className="price-label"
               >
                 Total
               </Text>
@@ -107,11 +91,25 @@ export default function DurationCurrencySelector({
                   {selectedCurrency.name}
                 </Text>
                 {selectedCurrency.name === "CELO" && usdcPrice && usdcPrice > 0 && (
-                  <Text size="sm" weight="normal" color="gray" className="usdc-price-text">
+                  <Text size="xs" weight="normal" color="gray" className="usdc-price-text">
                     ({(usdcPrice * durationInYears).toFixed(2)} USD)
                   </Text>
                 )}
               </div>
+            </div>
+            <div className="d-flex flex-column align-items-end">
+              <Text
+                size="sm"
+                weight="normal"
+                color="gray"
+                className="mb-2"
+              >
+                Select token
+              </Text>
+              <CurrencyDropdown
+                selectedCurrency={selectedCurrency}
+                onCurrencyChange={onCurrencyChange}
+              />
             </div>
           </div>
         </div>

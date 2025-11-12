@@ -1,0 +1,50 @@
+.profile-banner-set-wrapper {
+  padding: 0.8rem;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.profile-banner-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.profile-banner-main {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.profile-banner-button {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.profile-banner-set-wrapper .banner-avatar {
+  border-radius: 5px;
+  width: 50px;
+  height: 50px;
+}
+
+/* Stack vertically on small screens */
+@media (max-width: 768px) {
+  .profile-banner-content {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .profile-banner-main {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .profile-banner-button {
+    width: 100%;
+  }
+
+  .profile-banner-button button {
+    width: 100%;
+  }
+}
