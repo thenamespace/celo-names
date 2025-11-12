@@ -1,6 +1,11 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { createCanvas, loadImage, registerFont, CanvasRenderingContext2D } from 'canvas';
+import {
+  createCanvas,
+  loadImage,
+  registerFont,
+  CanvasRenderingContext2D,
+} from 'canvas';
 import { join } from 'path';
 import { NameMetadata } from './metadata.types';
 
@@ -16,7 +21,12 @@ export class MetadataService implements OnModuleInit {
   async onModuleInit() {
     // Load font at startup
     try {
-      const fontPath = join(process.cwd(), 'src', 'assets', 'InterSemiBold.ttf');
+      const fontPath = join(
+        process.cwd(),
+        'src',
+        'assets',
+        'InterSemiBold.ttf',
+      );
       registerFont(fontPath, { family: 'InterRegular' });
     } catch (error) {
       console.error('Error loading font at startup:', error);
@@ -26,7 +36,7 @@ export class MetadataService implements OnModuleInit {
     try {
       const celoLogoPath = join(process.cwd(), 'src', 'assets', 'celo.png');
       this.celoLogo = await loadImage(celoLogoPath);
-      
+
       const ensLogoPath = join(process.cwd(), 'src', 'assets', 'ens.png');
       this.ensLogo = await loadImage(ensLogoPath);
     } catch (error) {
@@ -56,20 +66,33 @@ export class MetadataService implements OnModuleInit {
 
   public getMetadata(name: string): NameMetadata {
     const baseUrl = this.configService.get<string>('BASE_URL');
+    const label = name.split('.')[0] ?? '';
     return {
+      attributes: [
+        {
+          trait_type: 'Length',
+          display_type: 'number',
+          value: label.length,
+        },
+      ],
       name,
       description: 'Celo ENS Name',
-      image: `${baseUrl}/metadata/${name}/image`
+      image: `${baseUrl}/metadata/${name}/image`,
     };
   }
 
-  public getCacheSize(): { current: number; max: number; sizeMB: number; maxMB: number } {
+  public getCacheSize(): {
+    current: number;
+    max: number;
+    sizeMB: number;
+    maxMB: number;
+  } {
     const totalBytes = this.getCacheSizeBytes();
-    
+
     // Convert to MB (1 MB = 1024 * 1024 bytes)
     const sizeMB = totalBytes / (1024 * 1024);
     const maxMB = this.MAX_CACHE_SIZE_BYTES / (1024 * 1024);
-    
+
     return {
       current: this.imageCache.size,
       max: this.imageCache.size, // Number of entries (no longer a fixed limit)
@@ -82,7 +105,10 @@ export class MetadataService implements OnModuleInit {
    * Parse domain name to extract parts
    * e.g., "test.celo.eth" -> ["test", "test.eth"]
    */
-  private parseDomainName(name: string): { firstLevel: string; secondLevel: string } {
+  private parseDomainName(name: string): {
+    firstLevel: string;
+    secondLevel: string;
+  } {
     const parts = name.split('.');
     if (parts.length >= 3) {
       // 3-level domain: test.celo.eth
@@ -137,7 +163,13 @@ export class MetadataService implements OnModuleInit {
       ctx.drawImage(logo, padding, padding, logoSize, logoSize);
     } else {
       // ENS logo is slightly larger
-      ctx.drawImage(logo, width - logoSize - padding, padding, logoSize + 5, logoSize + 5);
+      ctx.drawImage(
+        logo,
+        width - logoSize - padding,
+        padding,
+        logoSize + 5,
+        logoSize + 5,
+      );
     }
   }
 
