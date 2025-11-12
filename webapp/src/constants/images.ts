@@ -1,0 +1,1 @@
+export const CELO_AVATAR_URL = "https://avtr.cc/celo/avatar.png"

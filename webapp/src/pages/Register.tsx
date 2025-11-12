@@ -26,7 +26,7 @@ import { formatUnits } from "viem";
 import { ENV } from "@/constants/environment";
 import { debounce } from "lodash";
 import { SelfQrCode } from "../components/SelfQrCode";
-import { sleep } from "@/utils";
+import { deepCopy, sleep } from "@/utils";
 import {
   getSupportedAddressByCoin,
   getSupportedAddressByName,
@@ -34,6 +34,7 @@ import {
   type EnsRecords,
   type SupportedEnsAddress,
 } from "@thenamespace/ens-components";
+import { ProfileSetBanner } from "@/components/ProfileSetBanner";
 
 const MIN_NAME_LENGTH = 3;
 const USER_DENIED_TX_ERROR = "User denied transaction";
@@ -60,6 +61,7 @@ function RegisterNew() {
   const publicClient = usePublicClient({ chainId: L2_CHAIN_ID });
   const navigate = useNavigate();
   const [label, setLabel] = useState("");
+  const [markProfileAsSet, setMarkProfileAsSet] = useState(false);
 
   const [nameAvailable, setNameAvailable] = useState<{
     isChecking: boolean;
@@ -89,6 +91,10 @@ function RegisterNew() {
     addresses: [],
     texts: [],
   });
+  const [initialRecords, setInitialRecords] = useState<EnsRecords>({
+    addresses: [],
+    texts: []
+  })
   const [isWaitingWallet, setIsWaitingWallet] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
@@ -153,15 +159,11 @@ function RegisterNew() {
     return count;
   }, [records])
 
-  // Check if profile has been set (has any text records)
-  const hasProfileSet = useMemo(() => {
-    return records.texts.some(text => text.value.length > 0);
-  }, [records])
 
   // Get avatar from records
   const avatarUrl = useMemo(() => {
     const avatarRecord = records.texts.find(text => text.key === 'avatar');
-    return avatarRecord?.value || null;
+    return avatarRecord?.value || undefined;
   }, [records])
 
   // Initialize records with user's address when they connect
@@ -509,6 +511,19 @@ function RegisterNew() {
     }
   };
 
+  const handleRecordsAdded = () => {
+    const _initialRecords = deepCopy(records);
+    setInitialRecords(_initialRecords);
+    const anyRecordsSet = records.texts.length > 0 && (records.texts.find(txt => txt.value.length > 0) !== undefined);
+    setMarkProfileAsSet(anyRecordsSet)
+    setIsModalOpen(false);
+  }
+
+  const handleRecordsCancel = () => {
+    setRecords(deepCopy(initialRecords))
+    setIsModalOpen(false);
+  }
+
   const handleContinueSuccess = () => {
     navigate(`/name/${label}.${ENV.PARENT_NAME}`);
   };
@@ -744,7 +759,8 @@ function RegisterNew() {
                 </div>
               </div>
               <div className="button-column mt-3">
-                <Button
+                <div>
+                  {!markProfileAsSet && <Button
                     onClick={handleAddProfile }
                     variant="secondary"
                     className="set-profile-button"
@@ -753,7 +769,9 @@ function RegisterNew() {
                     <Text size="base" weight="medium" color="black">
                       Set Profile
                     </Text>
-                  </Button>
+                  </Button>}
+                  {markProfileAsSet && <ProfileSetBanner avatar={avatarUrl} onClick={() => handleAddProfile()}/>}
+                </div>
                 <div className="button-row">
                   <Button
                     onClick={() => setCurrentStep(RegisterStep.PRICING)}
@@ -864,47 +882,17 @@ function RegisterNew() {
 
               {/* Add Profile and Claim buttons */}
               <div className="button-column">
-                <Button
-                  onClick={handleAddProfile}
-                  variant="secondary"
-                  className="add-profile-button"
-                >
-                  <Plus size={16} />
-                  <Text size="base" weight="medium" color="black">
-                    Set Profile
-                  </Text>
-                </Button>
-                {hasProfileSet && (
-                  <div
-                    onClick={handleAddProfile}
-                    className="profile-updated-notification"
+                {!markProfileAsSet && <Button
+                    onClick={handleAddProfile }
+                    variant="secondary"
+                    className="set-profile-button"
                   >
-                    <div className="profile-updated-avatar-container">
-                      {avatarUrl ? (
-                        <img
-                          src={avatarUrl}
-                          alt="Profile"
-                          className="profile-updated-avatar"
-                        />
-                      ) : (
-                        <div className="profile-updated-avatar-placeholder">
-                          <User size={20} color="#6B7280" />
-                        </div>
-                      )}
-                    </div>
-                    <div className="profile-updated-text-container">
-                      <Text size="base" weight="semibold" color="black">
-                        Profile updated!
-                      </Text>
-                      <Text size="sm" weight="normal" color="gray">
-                        All set! Finish your registration.
-                      </Text>
-                    </div>
-                    <div className="profile-updated-check-container">
-                      <Check size={20} color="#FFFFFF" />
-                    </div>
-                  </div>
-                )}
+                    <Plus size={16} />
+                    <Text size="base" weight="medium" color="black">
+                      Set Profile
+                    </Text>
+                  </Button>}
+                  {markProfileAsSet && <ProfileSetBanner avatar={avatarUrl} onClick={() => handleAddProfile()}/>}
                 <div className="button-row">
                   <Button
                     onClick={() => setCurrentStep(RegisterStep.PRICING)}
@@ -979,7 +967,7 @@ function RegisterNew() {
           style={{ background: "#f4f4f4", gap: "7px", display: "flex" }}
         >
           <Button
-            onClick={() => setIsModalOpen(false)}
+            onClick={() => handleRecordsCancel()}
             variant="secondary"
             className="w-50"
             size="large"
@@ -987,7 +975,7 @@ function RegisterNew() {
             Cancel
           </Button>
           <Button
-            onClick={() => setIsModalOpen(false)}
+            onClick={() => handleRecordsAdded()}
             size="large"
             className="w-50"
           >
