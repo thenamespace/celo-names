@@ -3,7 +3,7 @@ import { normalize } from "viem/ens";
 import { useAccount, useSwitchChain, usePublicClient } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useNavigate } from "react-router-dom";
-import { Plus, CheckCircle, Check, User } from "lucide-react";
+import { Plus, CheckCircle } from "lucide-react";
 import { toast } from "react-toastify";
 import { ContractFunctionExecutionError, zeroHash, type Hash } from "viem";
 import Text from "@components/Text";
