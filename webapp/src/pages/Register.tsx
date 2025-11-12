@@ -408,7 +408,15 @@ function RegisterNew() {
           selectedCurrency.address
         );
       }
-    } catch (err) {
+    } catch (err: any) {
+
+      if (err.details && typeof err.details === "string") {
+        const errDetails = err.details as string;
+        if (errDetails.includes("User rejected the request")) {
+          setIsWaitingWallet(false)
+          return;
+        }
+      }
 
       const hasEnoughBalance = await hasBalance();
 
