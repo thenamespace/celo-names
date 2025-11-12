@@ -27,10 +27,6 @@ COPY --from=build /app/dist /usr/share/nginx/html
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
-# Copy password file (must be created first - see README for instructions)
-# To create: htpasswd -c .htpasswd username
-COPY .htpasswd /etc/nginx/.htpasswd
-
 # Expose port 80
 EXPOSE 80
 
