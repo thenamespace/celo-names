@@ -38,7 +38,7 @@ export const ProfileSetBanner = ({
           </div>
         </div>
         <div className="profile-banner-button">
-          <Button style={{ background: "black", color: "white" }}>Update</Button>
+          <Button style={{ background: "black", color: "white" }}>Edit</Button>
         </div>
       </div>
     </div>
