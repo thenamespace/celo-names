@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import { Calendar, User } from "lucide-react";
+import { Calendar, Sparkles, User } from "lucide-react";
 import Text from "@components/Text";
 import Button from "@components/Button";
 import { useCeloIndexer } from "@/hooks/useCeloIndexer";
@@ -23,9 +23,10 @@ import {
   type EnsRecords,
   type EnsTextRecord,
 } from "@thenamespace/ens-components";
-import { useAccount } from "wagmi";
-import { zeroAddress } from "viem";
+import { useAccount, usePublicClient } from "wagmi";
+import { isAddress, zeroAddress } from "viem";
 import { usePrimaryName } from "@/contexts/PrimaryNameContext";
+import { mainnet } from "viem/chains";
 
 type TabType = "records" | "addresses" | "ownership";
 
@@ -60,12 +61,37 @@ function NameProfile() {
   const { address } = useAccount();
   const { name } = useParams<{ name: string }>();
   const { getNameById, loading, error } = useCeloIndexer();
+  // Read primary name from mainnet
+  const mainnetClient = usePublicClient({ chainId: mainnet.id });
   const { primaryName } = usePrimaryName();
   const [nameData, setNameData] = useState<Name | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>("records");
   const [showExtendModal, setShowExtendModal] = useState(false);
   const [showRecordModal, setShowRecordModal] = useState(false);
   const [showSetPrimaryModal, setShowSetPrimaryModal] = useState(false);
+  const [ownerPrimaryName, setOwnerPrimaryName] = useState<{
+    fetching: boolean;
+    value?: string;
+  }>({
+    fetching: true,
+  });
+
+  useEffect(() => {
+    if (nameData?.owner && isAddress(nameData.owner) && mainnetClient) {
+      mainnetClient!
+        .getEnsName({ address: nameData.owner })
+        .then((res) => {
+          setOwnerPrimaryName({
+            fetching: false,
+            value: res ? res : undefined,
+          });
+        })
+        .catch((er) => {
+          console.error("Error while fetching primary name", er);
+          setOwnerPrimaryName({ fetching: false });
+        });
+    }
+  }, [nameData?.owner, mainnetClient]);
 
   const [initialRecords, setInitialRecords] = useState<EnsRecords>({
     texts: [],
@@ -84,9 +110,9 @@ function NameProfile() {
 
   const handleRecordsUpdated = () => {
     setTimeout(() => {
-      fetchName()
+      fetchName();
       setShowRecordModal(false);
-    },1500)
+    }, 1500);
   };
 
   const fetchName = async () => {
@@ -125,7 +151,6 @@ function NameProfile() {
     if (!primaryName || !nameData?.full_name) return false;
     return primaryName.toLowerCase() === nameData.full_name.toLowerCase();
   }, [primaryName, nameData?.full_name]);
-
 
   if (loading) {
     return (
@@ -169,7 +194,7 @@ function NameProfile() {
       <div className="page">
         <div className="page-content">
           <div className="not-found-state">
-            <User size={64} color="#9CA3AF" />
+            <Sparkles size={64} color="#9CA3AF" />
             <Text
               size="2xl"
               weight="semibold"
@@ -178,20 +203,13 @@ function NameProfile() {
             >
               Name not registered
             </Text>
-            <Text size="lg" weight="normal" color="gray" className="mb-2">
-              The name{" "}
-              <strong>
-                {name}.{ENV.PARENT_NAME}
-              </strong>{" "}
-              is not registered yet.
-            </Text>
             <Text size="base" weight="normal" color="gray" className="mb-6">
-              Would you like to register it?
+              Would you like to register {`${name}.${ENV.PARENT_NAME}`}?
             </Text>
-            <Link to="/">
-              <Button variant="primary">
+            <Link to="/" className="mt-3">
+              <Button variant="primary" style={{width: 200}}>
                 <Text size="base" weight="medium" color="black">
-                  Register {name}
+                  Register
                 </Text>
               </Button>
             </Link>
@@ -199,6 +217,10 @@ function NameProfile() {
         </div>
       </div>
     );
+  }
+
+  const hasPrimary = () => {
+    return !ownerPrimaryName.fetching && ownerPrimaryName.value !== undefined;
   }
 
   return (
@@ -262,18 +284,15 @@ function NameProfile() {
                       Owner:
                     </Text>
                     <a
-                      href={`https://celoscan.io/address/${nameData.owner}`}
+                      href={hasPrimary() ? `https://app.ens.domains/${ownerPrimaryName.value}` : `https://celoscan.io/address/${nameData.owner}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="owner-link"
                     >
-                      <Text
-                        size="sm"
-                        weight="medium"
-                        color="gray"
-                        className="mono"
-                      >
-                        {truncateAddress(nameData.owner)}
+                      <Text size="sm" weight="medium" color="gray">
+                        {!hasPrimary() 
+                          ? `${truncateAddress(nameData.owner)}`
+                          : `${ownerPrimaryName.value}`}
                       </Text>
                     </a>
                   </div>
@@ -325,7 +344,13 @@ function NameProfile() {
                       </Text>
                     </Button>
                   ) : (
-                    <div className="meta-badge" style={{ backgroundColor: "#F0FDF4", border: "1px solid #35D07F" }}>
+                    <div
+                      className="meta-badge"
+                      style={{
+                        backgroundColor: "#F0FDF4",
+                        border: "1px solid #35D07F",
+                      }}
+                    >
                       <Text size="sm" weight="medium" color="green">
                         Primary Name
                       </Text>

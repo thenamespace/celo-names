@@ -87,7 +87,7 @@ export const useRegistrar = () => {
       (txt) => txt.key === "avatar"
     ) !== undefined
     const hasHeaderRecord = originalRecords?.texts.find(
-      (txt) => txt.key === "Header"
+      (txt) => txt.key === "header"
     ) !== undefined
 
     // if user sets these records, we wont use defaults
