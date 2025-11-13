@@ -13,3 +13,9 @@
 .app-content {
   flex: 1;
 }
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

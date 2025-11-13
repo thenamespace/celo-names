@@ -68,7 +68,7 @@ export function RecordsTab({ nameData }: RecordsTabProps) {
               const content = (
                 <>
                   <Icon name={supported.icon} size={16} />
-                  <Text size="sm" weight="normal" color="black">
+                  <Text size="sm" weight="normal" color="black" className="truncate"  >
                     {record.value}
                   </Text>
                   {isUrl && (
