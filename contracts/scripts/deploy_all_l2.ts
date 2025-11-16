@@ -8,15 +8,11 @@ import {
 import { viem } from 'hardhat';
 import { getBlackList } from './blacklist';
 
-// CELO Mainnet parameters
-
-export const CONTRACT_OWNER: Address =
-  '0x7a1439668d09735576817fed278d6e414dcf8c19';
-
+// Contract Owner
 export const CONTRACT_OWNER_MULTISIG: Address =
   '0xd3268C4f8C2e44b02FE7E6A6a7Fb1902e51F4248';
 
-// CELO Treasury wallet for receiving registration/renewal fees
+// Treasury wallet for receiving registration/renewal fees
 export const CELO_OFFICIAL_TREASURY: Address =
   '0x7A1E98FC9a008107DbD1f430a05Ace8cf6f3FE19';
 
@@ -24,6 +20,7 @@ export const CELO_OFFICIAL_TREASURY: Address =
 export const ENS_MULTISIG_TREASURY: Address =
   '0xcb2C613415e254477E39F1640eC6fC1414634F9E';
 
+// CELO/USD stable oracle on CELO network
 export const USD_STABLE_ORACLE = '0x0568fD19986748cEfF3301e55c0eb1E729E0Ab7e';
 export const ENS_FEES_PERCENT = 1000; // equivalent to 10%, we use 1-10000
 export const CENT_MULTIPLIER = 100n;
@@ -31,8 +28,7 @@ export const SELF_UNIVERSAL_VERIFIER =
   '0xe57F4773bd9c9d8b6Cd70431117d353298B9f5BF';
 export const SELF_SCOPE_SEED = 'celo-names';
 
-// Self verified users can claim 3 names
-// this should be 1 when we go with celo
+// Self verified users can claim 1 name
 export const SELF_MAX_CLAIM = 1n;
 
 // Stablecoin addresses on CELO
@@ -46,6 +42,7 @@ const STABLECOINS: Address[] = [
   CUSD_TOKEN_ADDRESS,
 ];
 
+// Registry/NFT configuration
 const registryConfig: RegistryConfig = {
   name: 'Celonames',
   symbol: 'CENS',
@@ -102,7 +99,7 @@ const selfRegistrarCfg: SelfRegistrarConfig = {
 async function main() {
   const registryDeployer = await viem.deployContract('L2RegistryDeployer', [
     registryConfig,
-    CONTRACT_OWNER,
+    CONTRACT_OWNER_MULTISIG,
   ]);
 
   const registryAddress = await registryDeployer.read.registry();
@@ -114,7 +111,7 @@ async function main() {
     storageConfig,
     registrarConfig,
     selfRegistrarCfg,
-    CONTRACT_OWNER,
+    CONTRACT_OWNER_MULTISIG,
     registryAddress,
   ]);
 
@@ -141,6 +138,8 @@ async function main() {
     true,
   ]);
   await pc.waitForTransactionReceipt({ hash: tx02 });
+
+  // Transfer ownership to the right contract
 }
 
 main().catch((error) => {

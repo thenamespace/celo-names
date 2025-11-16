@@ -1,149 +1,237 @@
-# Celo Names - ERC721 NFT Contract
+# Celo Names - Smart Contracts
 
-A simple ERC721 NFT contract for managing unique names on the Celo network, built with Hardhat, TypeScript, and OpenZeppelin.
+Smart contracts for managing ENS-compatible names on the Celo network. This system enables subdomain registration, resolution, and management through a combination of L1 and L2 contracts.
 
-## Features
+## Overview
 
-- **ERC721 Compliance**: Full ERC721 standard implementation with metadata support
-- **Unique Names**: Each NFT is associated with a unique name that cannot be duplicated
-- **Owner-Only Minting**: Only the contract owner can mint new NFTs
-- **Name Management**: Query names by token ID and check name availability
-- **Metadata Support**: Configurable base URI for token metadata
-- **Gas Optimized**: Efficient storage and gas usage
+The Celo Names system consists of four main contracts that work together to provide a complete naming service:
 
-## Contract Overview
+- **L1Resolver**: Resolves names on Ethereum mainnet and proxies subname resolution to L2 via CCIP-Read
+- **L2Registry**: ERC721-based registry that manages subdomains as NFTs on Celo L2
+- **L2Registrar**: Handles paid registration and renewal of subdomains
+- **L2SelfRegistrar**: Allows Self-verified users to claim free subdomains
 
-The `Names` contract extends OpenZeppelin's ERC721 and Ownable contracts to provide:
+## Core Contracts
 
-- **Minting**: `mint(address to, string memory name)` - Mint a new NFT with a unique name
-- **Name Queries**: `getName(uint256 tokenId)` - Get the name associated with a token
-- **Availability Check**: `isNameAvailable(string memory name)` - Check if a name is available
-- **Supply Tracking**: `totalSupply()` - Get the total number of minted tokens
-- **URI Management**: `setBaseURI(string memory baseURI)` - Update the base URI for metadata
+### L1Resolver
+
+The L1Resolver serves two primary purposes:
+
+1. **On-chain Resolution**: Acts as a resolver for storing records for the parent name (e.g., `celo.eth`) on Ethereum mainnet
+2. **Off-chain Proxy**: Uses wildcard resolution with CCIP-Read (ENSIP-10) to proxy subname resolution requests to the gateway server, which then queries the L2 registry
+
+Key features:
+- Supports standard ENS resolver interfaces (AddrResolver, TextResolver, ContentHashResolver)
+- Implements CCIP-Read for off-chain resolution
+- Manages authorized signers for off-chain responses
+- Configurable gateway URLs for CCIP requests
+
+### L2Registry
+
+L2Registry is an ERC721-based registry that manages subdomains as NFTs on the Celo network. Each subdomain is minted as an NFT, providing ownership and transfer capabilities. Additionally, L2Registry implements resolver functionality, allowing it to store and read ENS records (addresses, text records, content hashes, etc.) directly on-chain.
+
+### L2Registrar
+
+L2Registrar handles paid registration and renewal of subdomains. It integrates with the L2Registry to create subdomains and manages pricing based on label length and duration.
+
+### L2SelfRegistrar
+
+L2SelfRegistrar allows users who have completed identity verification through the Self protocol to claim free subdomains. This provides a way for verified users to obtain their first subdomain without payment.
 
 ## Project Structure
 
 ```
 contracts/
 ├── contracts/
-│   └── Names.sol              # Main ERC721 contract
-├── test/
-│   └── Names.test.ts          # Comprehensive test suite
-├── scripts/
-│   └── deploy.ts              # Deployment script
-├── hardhat.config.ts          # Hardhat configuration
-├── package.json               # Dependencies and scripts
-└── tsconfig.json             # TypeScript configuration
+│   ├── L1Resolver.sol              # L1 resolver with CCIP-Read support
+│   ├── L2Registry.sol             # ERC721 registry for subdomains
+│   ├── L2Registrar.sol            # Paid registration registrar
+│   ├── L2SelfRegistrar.sol        # Free claims for verified users
+│   ├── L2Resolver.sol             # Resolver implementation for L2
+│   ├── common/                    # Shared utilities
+│   ├── interfaces/                # Contract interfaces
+│   ├── registrar/                 # Registrar components (pricing, treasury, rules)
+│   ├── resolver/                  # Resolver profiles (ABI, Addr, Text, etc.)
+│   └── deployment/                # Deployment helpers
+├── test/                          # Comprehensive test suite
+├── scripts/                       # Deployment and utility scripts
+│   ├── deploy_all_l2.ts          # Main deployment script
+│   ├── blacklist.ts              # Blacklist management
+│   └── premint.ts                # Premint script
+├── hardhat.config.ts             # Hardhat configuration
+└── package.json                  # Dependencies and scripts
 ```
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js (v16 or later)
+- Node.js (v20 or later)
 - npm or yarn
+- Git
 
 ### Installation
 
-1. Install dependencies:
+1. Clone the repository and navigate to the contracts directory:
+
+```bash
+cd contracts
+```
+
+2. Install dependencies:
 
 ```bash
 npm install
 ```
 
-2. Compile contracts:
+3. Set up environment variables:
+
+Create a `.env` file in the contracts directory (see `env.example` for reference):
+
+```bash
+DEPLOYER_KEY=your_private_key_here
+CELO_RPC_URL=https://forno.celo.org
+CELO_SEPOLIA_RPC=https://sepolia-forno.celo.org
+MAINNET_RPC_URL=https://eth.llamarpc.com
+```
+
+### Compilation
+
+Compile the contracts:
 
 ```bash
 npm run compile
 ```
 
-3. Run tests:
+### Testing
+
+Run the test suite:
 
 ```bash
 npm test
 ```
 
-4. Run tests with gas reporting:
+Run tests with gas reporting:
 
 ```bash
 npm run test:gas
 ```
 
-### Deployment
+Generate coverage report:
 
-Deploy to local network:
+```bash
+npm run coverage
+```
+
+
+### Code Formatting
+
+Format code using Prettier:
+
+```bash
+npm run format
+```
+
+Check formatting without making changes:
+
+```bash
+npm run format:check
+```
+
+## Deployment
+
+### Local Development
+
+Start a local Hardhat node:
+
+```bash
+npm run node
+```
+
+In a separate terminal, deploy to localhost:
 
 ```bash
 npm run deploy:local
 ```
 
-Deploy to mainnet/testnet:
+### Testnet Deployment
+
+Deploy to Celo Sepolia testnet:
 
 ```bash
-npm run deploy
+npm run deploy --network celotest
 ```
+
+### Mainnet Deployment
+
+Deploy to Celo mainnet:
+
+```bash
+npm run deploy --network celo
+```
+
+Deploy to Ethereum mainnet (for L1Resolver):
+
+```bash
+npm run deploy --network mainnet
+```
+
+### Deployment Process
+
+The deployment script (`scripts/deploy_all_l2.ts`) follows this order:
+
+1. Deploy `L2RegistryDeployer` which deploys the `L2Registry` with root name configuration
+2. Deploy `L2RegistrarDeployer` which deploys:
+   - `RegistrarStorage` for whitelist/blacklist management
+   - `L2Registrar` with pricing and treasury configuration
+   - `L2SelfRegistrar` with Self protocol integration
+3. Configure registrars in the registry (set both L2Registrar and L2SelfRegistrar as authorized registrars)
+4. Transfer ownership to multisig
 
 ## Usage Examples
 
-### Minting a Name
+### Registering a Subdomain
 
 ```solidity
-// Only the contract owner can mint
-await names.mint(userAddress, "alice");
+// Register with native token (CELO)
+await l2Registrar.register(
+  "alice",           // label
+  1,                 // duration in years
+  userAddress,       // owner
+  []                 // optional resolver data
+);
+
+// Register with ERC20 stablecoin
+await l2Registrar.registerERC20(
+  "bob",
+  1,
+  userAddress,
+  [],
+  USDC_ADDRESS,
+  permitData
+);
 ```
 
-### Querying Names
+### Renewing a Subdomain
 
 ```solidity
-// Get the name associated with token ID 0
-string memory name = await names.getName(0);
+// Renew with native token
+await l2Registrar.renew("alice", 1);
 
-// Check if a name is available
-bool available = await names.isNameAvailable("bob");
+// Renew with ERC20 stablecoin
+await l2Registrar.renewERC20("alice", 1, USDC_ADDRESS, permitData);
 ```
 
-### Transferring NFTs
+### Claiming via Self Registrar
 
 ```solidity
-// Transfer NFT from one address to another
-await names.transferFrom(fromAddress, toAddress, tokenId);
+// After completing Self verification
+await l2SelfRegistrar.claim(
+  "charlie",
+  userAddress,
+  []  // optional resolver data
+);
 ```
-
-## Testing
-
-The test suite includes comprehensive coverage for:
-
-- Contract deployment and initialization
-- Minting functionality and access control
-- Name management and uniqueness
-- ERC721 compliance and metadata
-- Edge cases and error handling
-
-Run the full test suite:
-
-```bash
-npm test
-```
-
-## Gas Usage
-
-The contract is optimized for gas efficiency:
-
-- **Mint**: ~127,667 - 885,482 gas (depending on name length)
-- **Transfer**: ~55,031 gas
-- **Set Base URI**: ~40,613 gas
-- **Deployment**: ~1,425,938 gas
-
-## Security Features
-
-- **Access Control**: Only the contract owner can mint new NFTs
-- **Name Uniqueness**: Prevents duplicate names across all tokens
-- **Input Validation**: Validates name length and address validity
-- **OpenZeppelin Security**: Built on battle-tested OpenZeppelin contracts
-
-## License
-
-MIT License - see LICENSE file for details.
 
 ## Contributing
 
@@ -152,8 +240,9 @@ MIT License - see LICENSE file for details.
 3. Make your changes
 4. Add tests for new functionality
 5. Ensure all tests pass
-6. Submit a pull request
+6. Run code formatting
+7. Submit a pull request
 
 ## Support
 
-For questions or issues, please open an issue on the GitHub repository.
+For questions or issues, please open an issue on the GitHub repository or join the [Celonames support Telegram group](https://t.me/+ws37-CaE6zI5YjM6).
