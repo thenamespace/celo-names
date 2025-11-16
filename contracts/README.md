@@ -182,51 +182,6 @@ The deployment script (`scripts/deploy_all_l2.ts`) follows this order:
 3. Configure registrars in the registry (set both L2Registrar and L2SelfRegistrar as authorized registrars)
 4. Transfer ownership to multisig
 
-## Usage Examples
-
-### Registering a Subdomain
-
-```solidity
-// Register with native token (CELO)
-await l2Registrar.register(
-  "alice",           // label
-  1,                 // duration in years
-  userAddress,       // owner
-  []                 // optional resolver data
-);
-
-// Register with ERC20 stablecoin
-await l2Registrar.registerERC20(
-  "bob",
-  1,
-  userAddress,
-  [],
-  USDC_ADDRESS,
-  permitData
-);
-```
-
-### Renewing a Subdomain
-
-```solidity
-// Renew with native token
-await l2Registrar.renew("alice", 1);
-
-// Renew with ERC20 stablecoin
-await l2Registrar.renewERC20("alice", 1, USDC_ADDRESS, permitData);
-```
-
-### Claiming via Self Registrar
-
-```solidity
-// After completing Self verification
-await l2SelfRegistrar.claim(
-  "charlie",
-  userAddress,
-  []  // optional resolver data
-);
-```
-
 ## Contributing
 
 1. Fork the repository
