@@ -7,7 +7,7 @@ Smart contracts for managing ENS-compatible names on the Celo network. This syst
 The Celo Names system consists of four main contracts that work together to provide a complete naming service:
 
 - **L1Resolver**: Resolves names on Ethereum mainnet and proxies subname resolution to L2 via CCIP-Read
-- **L2Registry**: ERC721-based registry that manages subdomains as NFTs on Celo L2
+- **L2Registry**: ERC721-based registry that manages subdomains as NFTs on Celo L2. It also acts on ENS compatible resolver that stores records for a name
 - **L2Registrar**: Handles paid registration and renewal of subdomains
 - **L2SelfRegistrar**: Allows Self-verified users to claim free subdomains
 
@@ -19,12 +19,6 @@ The L1Resolver serves two primary purposes:
 
 1. **On-chain Resolution**: Acts as a resolver for storing records for the parent name (e.g., `celo.eth`) on Ethereum mainnet
 2. **Off-chain Proxy**: Uses wildcard resolution with CCIP-Read (ENSIP-10) to proxy subname resolution requests to the gateway server, which then queries the L2 registry
-
-Key features:
-- Supports standard ENS resolver interfaces (AddrResolver, TextResolver, ContentHashResolver)
-- Implements CCIP-Read for off-chain resolution
-- Manages authorized signers for off-chain responses
-- Configurable gateway URLs for CCIP requests
 
 ### L2Registry
 
