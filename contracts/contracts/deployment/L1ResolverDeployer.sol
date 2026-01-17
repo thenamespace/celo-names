@@ -8,7 +8,6 @@ contract L1ResolverDeployer {
   address immutable ens_registry = 0x00000000000C2E074eC69A0dFb2997BA6C7d2e1e;
 
   constructor(
-    string memory root_ens_name,
     string[] memory gateway_urls,
     address[] memory signers,
     address name_wrapper,
@@ -17,7 +16,6 @@ contract L1ResolverDeployer {
     L1Resolver _resolver = new L1Resolver(
       signers,
       gateway_urls,
-      root_ens_name,
       name_wrapper,
       ens_registry
     );

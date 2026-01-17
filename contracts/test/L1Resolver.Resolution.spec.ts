@@ -35,7 +35,6 @@ describe('L1Resolver - Resolution', () => {
       await viem.deployContract('L1Resolver', [
         initialSigners,
         initialGatewayUrls,
-        ROOT_NAME,
         mockedNameWrapper.address,
         mockedEnsRegistry.address,
       ]);

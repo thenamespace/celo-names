@@ -20,9 +20,6 @@ describe('L1Resolver - Access Control', () => {
       'https://gateway2.example.com'
     ];
     
-    // Root name
-    const rootName = 'celo.eth';
-    
     // Name wrapper address (using zero address for testing)
     const nameWrapper = '0x0000000000000000000000000000000000000000';
     
@@ -33,7 +30,6 @@ describe('L1Resolver - Access Control', () => {
       await viem.deployContract('L1Resolver', [
         initialSigners,
         initialGatewayUrls,
-        rootName,
         nameWrapper,
         ensRegistry,
       ]);
@@ -49,7 +45,6 @@ describe('L1Resolver - Access Control', () => {
       user03,
       initialSigners,
       initialGatewayUrls,
-      rootName,
       nameWrapper,
     };
   };
