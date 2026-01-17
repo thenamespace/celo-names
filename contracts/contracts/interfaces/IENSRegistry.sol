@@ -5,4 +5,5 @@ pragma solidity ^0.8.28;
 // for ENS Registry contract
 interface IENSRegistry {
     function owner(bytes32 node) external view returns (address);
+    function resolver(bytes32 node) external view returns (address);
 }

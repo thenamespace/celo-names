@@ -12,6 +12,7 @@ import {InterfaceResolver} from './resolver/InterfaceResolver.sol';
 import {IOffchainResolver} from './interfaces/IOffchainResolver.sol';
 import {ExtendedResolver} from './resolver/ExtendedResolver.sol';
 import {ENSDNSUtils} from './common/ENSDNSUtils.sol';
+import {ENSNamehash} from './common/ENSNamehash.sol';
 import {IENSRegistry} from './interfaces/IENSRegistry.sol';
 import {INameWrapper} from './interfaces/INameWrapper.sol';
 
@@ -42,10 +43,6 @@ contract L1Resolver is
 
   /// @dev Array of CCIP gateway URLs for offchain resolution
   string[] private ccip_gateway_urls;
-
-  /// @dev Root names for this resolver (e.g., _hash("celo.eth") => true)
-  /// these will be resolved onchain and the resolver would not try to use CCIP-read
-  mapping(bytes32 => bool) root_names;
 
   /// @dev ENS registry contract
   IENSRegistry immutable ens;
@@ -83,19 +80,16 @@ contract L1Resolver is
   /// @dev Initialize the L1Resolver with signers, gateway URLs, and contracts
   /// @param _signers Array of authorized signer addresses
   /// @param _ccip_gateway_urls Array of CCIP gateway URLs for offchain resolution
-  /// @param _root_name Root name for this resolver (e.g., "celo.eth")
   /// @param _name_wrapper Address of the ENS name wrapper contract
   /// @param _ens_registry Address of the ENS registry contract
   constructor(
     address[] memory _signers,
     string[] memory _ccip_gateway_urls,
-    string memory _root_name,
     address _name_wrapper,
     address _ens_registry
   ) Ownable(_msgSender()) {
     setSigners(_signers);
     setOffchainGatewayUrls(_ccip_gateway_urls);
-    setRootName(_root_name, true);
     name_wrapper = INameWrapper(_name_wrapper);
     ens = IENSRegistry(_ens_registry);
   }
@@ -103,6 +97,9 @@ contract L1Resolver is
   // ============ Public Functions ============
 
   /// @dev Main resolution function that handles both onchain and offchain resolution
+  /// @dev Dynamically determines if a name should be resolved on-chain or off-chain
+  ///      by checking if a resolver is set in the ENS registry. If resolver is set
+  ///      (non-zero address), resolves on-chain. Otherwise, resolves off-chain via CCIP-Read.
   /// @param name DNS-encoded name to resolve
   /// @param data ABI encoded data for the underlying resolution function
   /// @return ABI encoded result from the resolution function
@@ -111,10 +108,16 @@ contract L1Resolver is
     bytes calldata data
   ) external view override returns (bytes memory) {
     string memory dns_decoded = ENSDNSUtils.dnsDecode(name);
-    if (root_names[_hash(dns_decoded)]) {
+    bytes32 node = namehash(dns_decoded);
+    
+    // Check if resolver is set in ENS registry for this node
+    // If resolver returns address(0), no resolver is set, resolve off-chain
+    address nodeResolver = ens.resolver(node);
+    if (nodeResolver != address(0)) {
       return _resolve(name, data);
     }
 
+    // No resolver set in registry, resolve off-chain
     return _resolveOffchain(name, data, ccip_gateway_urls);
   }
 
@@ -226,8 +229,11 @@ contract L1Resolver is
       name_wrapper.canModifyName(node, _msgSender());
   }
 
-  function _hash(string memory str) internal pure returns (bytes32) {
-    return keccak256(bytes(str));
+  /// @dev Computes the namehash (node) for an ENS name
+  /// @param name The ENS name (e.g., "test.eth" or "sub.test.eth")
+  /// @return The namehash (node) for the given name
+  function namehash(string memory name) public pure returns (bytes32) {
+    return ENSNamehash.namehash(name);
   }
 
   // ============ Owner Functions ============
@@ -240,17 +246,6 @@ contract L1Resolver is
       versionable_signers[signers_version][_signers[i]] = true;
     }
     emit SignerChanged(_signers);
-  }
-
-  /// @dev Sets root name in mapping
-  /// The root names are resolved on current resolver
-  /// and do not trigger CCIP-read request
-  /// @param _root_name ENS name in string format
-  function setRootName(
-    string memory _root_name,
-    bool enabled
-  ) public onlyOwner {
-    root_names[_hash(_root_name)] = enabled;
   }
 
   /// @dev Set CCIP gateway URLs for offchain resolution
