@@ -1,7 +1,9 @@
+import "./SelfQrCode.css";
 import { CONTRACT_ADDRESSES, SELF_SCOPE_SEED } from "@/constants";
 import {
   SelfAppBuilder,
   SelfQRcodeWrapper,
+  getUniversalLink,
   type SelfApp,
 } from "@selfxyz/qrcode";
 import { useEffect, useState } from "react";
@@ -23,6 +25,13 @@ export const SelfQrCode = ({
   width = 200
 }: SelfQrCodeProps) => {
   const [selfApp, setSelfApp] = useState<SelfApp>();
+  const [isSmallScreen, setIsSmallScreen] = useState(window.innerWidth < 700);
+
+  useEffect(() => {
+    const handleResize = () => setIsSmallScreen(window.innerWidth < 700);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     const _selfApp = new SelfAppBuilder({
@@ -41,16 +50,23 @@ export const SelfQrCode = ({
     setSelfApp(_selfApp);
   }, [owner]);
 
+  if (!selfApp) return null;
+
+  const deepLink = getUniversalLink(selfApp);
+
   return (
-    <>
-      {selfApp && (
-        <SelfQRcodeWrapper
-            selfApp={selfApp}
-            onError={(err) => onError(err)}
-            onSuccess={() => onVerified()}
-            size={width}
-          ></SelfQRcodeWrapper>
+    <div className="self-qr-wrapper">
+      <SelfQRcodeWrapper
+        selfApp={selfApp}
+        onError={(err) => onError(err)}
+        onSuccess={() => onVerified()}
+        size={width}
+      />
+      {isSmallScreen && (
+        <a href={deepLink} className="self-deep-link-btn">
+          Open in Self App
+        </a>
       )}
-    </>
+    </div>
   );
 };
