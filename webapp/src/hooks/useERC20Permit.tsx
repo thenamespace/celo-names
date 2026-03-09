@@ -1,7 +1,6 @@
-import { useWeb3Client } from "@thenamespace/ens-components";
 import { ABIS, type PaymentToken } from "@/constants";
 import { type Address, type Hash } from "viem";
-import { useAccount } from "wagmi";
+import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 import type { ERC20Permit } from "./useRegistrar";
 
 const PERMIT_TYPES = {
@@ -15,7 +14,8 @@ const PERMIT_TYPES = {
 }
 
 export const useERC20Permit = ({ chainId }: { chainId: number }) => {
-  const { publicClient, walletClient } = useWeb3Client({ chainId });
+  const publicClient = usePublicClient({chainId: chainId})
+  const { data: walletClient } = useWalletClient({chainId})
   const { address } = useAccount();
 
   const createSignedPermit = async (
