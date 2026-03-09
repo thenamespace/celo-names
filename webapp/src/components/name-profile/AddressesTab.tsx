@@ -1,5 +1,5 @@
 import Text from "@components/Text";
-import { ChainIcon } from "@thenamespace/ens-components";
+import { ChainIcon, type ChainName } from "@thenamespace/ens-components";
 import type { Name } from "@/types/indexer";
 import { CopyButton } from "./CopyButton";
 import { truncateAddress } from "@/utils";
@@ -28,7 +28,7 @@ export function AddressesTab({ nameData }: AddressesTabProps) {
 
           return (
             <div key={idx} className="text-record-badge">
-              <ChainIcon chain={name} size={20} />
+              <ChainIcon chain={name as unknown as ChainName} size={20} />
               <Text size="sm">
                 {truncateAddress(address.value, 6)}
               </Text>
